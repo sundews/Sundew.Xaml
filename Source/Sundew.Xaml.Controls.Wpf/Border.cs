@@ -19,6 +19,11 @@ public class Border : System.Windows.Controls.Border
     private static readonly Point TopLeft = new Point(0, 0);
     private static readonly Point BottomRight = new Point(1, 1);
 
+    public Border()
+    {
+        UseLayoutRounding = true;
+        SnapsToDevicePixels = true;
+    }
 
     public SideBrushes? SideBrushes
     {
@@ -57,7 +62,7 @@ public class Border : System.Windows.Controls.Border
         var maxBottomRight = Math.Min(Math.Max(this.CornerRadius.BottomRight, Math.Max(BorderThickness.Bottom, BorderThickness.Right)), maxWidthOrHeight);
         var maxBottomLeft = Math.Min(Math.Max(this.CornerRadius.BottomLeft, Math.Max(BorderThickness.Bottom, BorderThickness.Left)), maxWidthOrHeight);
 
-        const double overdraw = 0.04;
+        const double overdraw = 0.0;
         var leftStart = new Point(leftOffset, maxTopLeft - overdraw);
         var leftEnd = new Point(leftOffset, this.ActualHeight - maxBottomLeft + overdraw);
         var leftDrawing =
@@ -84,16 +89,17 @@ public class Border : System.Windows.Controls.Border
                 new LineGeometry(topStart, topEnd));
 
         var topRightStart = new Point(this.ActualWidth - maxTopRight, topOffset);
-        var topRightAnchor = new Point(this.ActualWidth - rightOffset, topOffset);
-        var topRightEnd = new Point(this.ActualWidth - rightOffset, maxTopRight);
+        var rightX = this.ActualWidth - rightOffset;
+        var topRightAnchor = new Point(rightX, topOffset);
+        var topRightEnd = new Point(rightX, maxTopRight);
         var topRightDrawing =
             new GeometryDrawing(
                 Brushes.Transparent,
                 new Pen(cornerBrushes.TopRight, (BorderThickness.Top + BorderThickness.Right) / 2.0),
                 new PathGeometry([new PathFigure(topRightStart, [new QuadraticBezierSegment(topRightAnchor, topRightEnd, true),], false)]));
 
-        var rightStart = new Point(this.ActualWidth - rightOffset, maxTopRight - overdraw);
-        var rightEnd = new Point(this.ActualWidth - rightOffset, this.ActualHeight - maxBottomRight + overdraw);
+        var rightStart = new Point(rightX, maxTopRight - overdraw);
+        var rightEnd = new Point(rightX, this.ActualHeight - maxBottomRight + overdraw);
         var rightDrawing =
             new GeometryDrawing(
                 Brushes.Transparent,
@@ -101,17 +107,18 @@ public class Border : System.Windows.Controls.Border
                 new LineGeometry(rightStart, rightEnd)
             );
 
-        var bottomRightStart = new Point(this.ActualWidth - rightOffset, this.ActualHeight - maxBottomRight);
-        var bottomRightAnchor = new Point(this.ActualWidth - rightOffset, this.ActualHeight - bottomOffset);
-        var bottomRightEnd = new Point(this.ActualWidth - maxBottomRight, this.ActualHeight - bottomOffset);
+        var bottom = this.ActualHeight - bottomOffset;
+        var bottomRightStart = new Point(rightX, this.ActualHeight - maxBottomRight);
+        var bottomRightAnchor = new Point(rightX, bottom);
+        var bottomRightEnd = new Point(this.ActualWidth - maxBottomRight, bottom);
         var bottomRightDrawing =
             new GeometryDrawing(
                 Brushes.Transparent,
                 new Pen(cornerBrushes.BottomRight, (BorderThickness.Bottom + BorderThickness.Right) / 2.0),
                 new PathGeometry([new PathFigure(bottomRightStart, [new QuadraticBezierSegment(bottomRightAnchor, bottomRightEnd, true),], false)]));
 
-        var bottomStart = new Point(maxBottomLeft - overdraw, this.ActualHeight - bottomOffset);
-        var bottomEnd = new Point(this.ActualWidth - maxBottomRight + overdraw, this.ActualHeight - bottomOffset);
+        var bottomStart = new Point(maxBottomLeft - overdraw, bottom);
+        var bottomEnd = new Point(this.ActualWidth - maxBottomRight + overdraw, bottom);
         var bottomDrawing =
             new GeometryDrawing(
                 Brushes.Transparent,
@@ -119,8 +126,8 @@ public class Border : System.Windows.Controls.Border
                 new LineGeometry(bottomStart, bottomEnd));
 
         var bottomLeftStart = new Point(leftOffset, this.ActualHeight - maxBottomLeft);
-        var bottomLeftAnchor = new Point(leftOffset, this.ActualHeight - bottomOffset);
-        var bottomLeftEnd = new Point(maxBottomLeft, this.ActualHeight - bottomOffset);
+        var bottomLeftAnchor = new Point(leftOffset, bottom);
+        var bottomLeftEnd = new Point(maxBottomLeft, bottom);
         var bottomLeftDrawing =
             new GeometryDrawing(
                 Brushes.Transparent,
