@@ -8,7 +8,8 @@
 
 ### Known issues/Todo:
 * DPI scaling?
-* Drawing the corners so they align is hard
-* Only supports uniform Border thickness (How to immitate a variable sized Pen?)
+* Drawing the corners so they align is hard, probably some better pixel alignment is needed.
+* Only supports uniform Border thickness (How to immitate a variable sized Pen? when drawing borders)
 * Port to WinUI, Avalonia, Maui?
 * Support LinearGradientBrush on sides
+* Performance optimizations

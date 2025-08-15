@@ -10,10 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\Resources\Examples.png" Link="Examples.png" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.Wpf\Sundew.Xaml.Controls.Wpf.csproj" />
   </ItemGroup>
 
