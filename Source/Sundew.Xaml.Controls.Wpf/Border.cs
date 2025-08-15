@@ -160,27 +160,88 @@ public class Border : System.Windows.Controls.Border
 
     private (Brush TopLeft, Brush TopRight, Brush BottomRight, Brush BottomLeft) GetCornerBrushes(SideBrushes sideBrushes, CornerStops cornerStops)
     {
-        var topLeftBrush = GetBrush(sideBrushes.Top, sideBrushes.Left, cornerStops.TopLeft, TopRight, BottomLeft);
-        var topRightBrush = GetBrush(sideBrushes.Top, sideBrushes.Right, cornerStops.TopRight, TopLeft, BottomRight);
-        var bottomRightBrush = GetBrush(sideBrushes.Bottom, sideBrushes.Right, cornerStops.BottomRight, BottomLeft, TopRight);
-        var bottomLeftBrush = GetBrush(sideBrushes.Bottom, sideBrushes.Left, cornerStops.BottomLeft, BottomRight, TopLeft);
+        var topLeftBrush = GetBrush(sideBrushes.Left, sideBrushes.Top, cornerStops.TopLeft, BottomLeft, TopRight, Corner.TopLeft);
+        var topRightBrush = GetBrush(sideBrushes.Top, sideBrushes.Right, cornerStops.TopRight, TopLeft, BottomRight, Corner.TopRight);
+        var bottomRightBrush = GetBrush(sideBrushes.Right, sideBrushes.Bottom, cornerStops.BottomRight, TopRight, BottomLeft, Corner.BottomRight);
+        var bottomLeftBrush = GetBrush(sideBrushes.Bottom, sideBrushes.Left, cornerStops.BottomLeft, BottomRight, TopLeft, Corner.BottomLeft);
         return (topLeftBrush, topRightBrush, bottomRightBrush, bottomLeftBrush);
     }
 
-    private Brush GetBrush(Brush first, Brush second, Stops stops, Point firstPoint, Point secondPoint)
+    private Brush GetBrush(Brush first, Brush second, Stops stops, Point firstPoint, Point secondPoint, Corner corner)
     {
         switch ((first, second))
         {
-            case (SolidColorBrush firstBrush, SolidColorBrush secondBrush):
+            case (SolidColorBrush firstBrush1, SolidColorBrush secondBrush1):
                 return new LinearGradientBrush(
                     new GradientStopCollection([
-                        new GradientStop(firstBrush.Color, 0),
-                            new GradientStop(firstBrush.Color, stops.First),
-                            new GradientStop(secondBrush.Color, stops.Second),
-                            new GradientStop(secondBrush.Color, 1)
+                        new GradientStop(firstBrush1.Color, 0),
+                        new GradientStop(firstBrush1.Color, stops.First),
+                        new GradientStop(secondBrush1.Color, stops.Second),
+                        new GradientStop(secondBrush1.Color, 1)
+                    ]), firstPoint, secondPoint);
+            case (SolidColorBrush firstBrush2, LinearGradientBrush secondBrush2):
+                var reverseSecond2 = corner is Corner.TopLeft or Corner.TopRight;
+                var endColor2 = GetSecond(secondBrush2, reverseSecond2);
+                return new LinearGradientBrush(
+                    new GradientStopCollection([
+                        new GradientStop(firstBrush2.Color, 0),
+                        new GradientStop(firstBrush2.Color, stops.First),
+                        new GradientStop(endColor2, stops.Second),
+                        new GradientStop(endColor2, 1)
+                    ]), firstPoint, secondPoint);
+            case (LinearGradientBrush firstBrush, SolidColorBrush secondBrush):
+                var reverseFirst3 = corner is Corner.TopRight or Corner.BottomRight;
+                var firstColor3 = GetFirst(firstBrush, reverseFirst3);
+                return new LinearGradientBrush(
+                    new GradientStopCollection([
+                        new GradientStop(firstColor3, 0),
+                        new GradientStop(firstColor3, stops.First),
+                        new GradientStop(secondBrush.Color, stops.Second),
+                        new GradientStop(secondBrush.Color, 1)
+                    ]), firstPoint, secondPoint);
+            case (LinearGradientBrush firstBrush, LinearGradientBrush secondBrush):
+                var reverseFirst4 = corner is Corner.TopRight or Corner.BottomRight;
+                var reverseSecond4 = corner is Corner.TopLeft or Corner.TopRight;
+                var firstColor4 = GetFirst(firstBrush, reverseFirst4);
+                var endColor4 = GetSecond(secondBrush, reverseSecond4);
+                return new LinearGradientBrush(
+                    new GradientStopCollection([
+                        new GradientStop(firstColor4, 0),
+                        new GradientStop(firstColor4, stops.First),
+                        new GradientStop(endColor4, stops.Second),
+                        new GradientStop(endColor4, 1)
                     ]), firstPoint, secondPoint);
         }
 
         return first;
+    }
+
+    private Color GetFirst(LinearGradientBrush brush, bool reverse)
+    {
+        if (reverse)
+        {
+            return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
+        }
+
+        return brush.GradientStops.Count > 0 ? brush.GradientStops[0].Color : Colors.Transparent;
+
+    }
+
+    private Color GetSecond(LinearGradientBrush brush, bool reverse)
+    {
+        if (reverse)
+        {
+            return brush.GradientStops.Count > 0 ? brush.GradientStops[0].Color : Colors.Transparent;
+        }
+
+        return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
+    }
+
+    private enum Corner
+    {
+        TopLeft,
+        TopRight,
+        BottomRight,
+        BottomLeft,
     }
 }

@@ -5,8 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sx="http://sundew.dev/xaml"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800">
+        Title="MainWindow" Height="800" Width="900">
     <Window.Resources>
+        <LinearGradientBrush x:Key="LeftGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFF0000" />
+            <GradientStop Color="#FF00FF00" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="TopGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FF0000FF" />
+            <GradientStop Color="#FFFF00FF" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="RightGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFFFF00" />
+            <GradientStop Color="SandyBrown" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="BottomGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="LightSeaGreen" />
+            <GradientStop Color="LightSkyBlue" Offset="1"/>
+        </LinearGradientBrush>
         <SolidColorBrush x:Key="Left">#669B50F9</SolidColorBrush>
         <SolidColorBrush x:Key="Top">#669B50F9</SolidColorBrush>
         <SolidColorBrush x:Key="Right">#664F07A7</SolidColorBrush>
@@ -57,12 +73,41 @@
                     <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
+            <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.4,0.6" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                <sx:Border.Background>
+                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" >
+                        <LinearGradientBrush.RelativeTransform>
+                            <TransformGroup>
+                                <ScaleTransform CenterY="0.5" CenterX="0.5"/>
+                                <SkewTransform CenterX="0.5" CenterY="0.5"/>
+                                <RotateTransform Angle="-13" CenterX="0.5" CenterY="0.5"/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </LinearGradientBrush.RelativeTransform>
+                        <GradientStop Color="#FFFF0404" Offset="0.053"/>
+                        <GradientStop Color="#FF44FF00" Offset="0"/>
+                        <GradientStop Color="#FF0208FF" Offset="0.186"/>
+                        <GradientStop Color="#FFDC17FF" Offset="0.783"/>
+                        <GradientStop Color="#FFFFF000" Offset="1"/>
+                    </LinearGradientBrush>
+                </sx:Border.Background>
+                <sx:Border.SideBrushes>
+                    <sx:SideBrushes Left="{StaticResource LeftGradient}"
+                                    Top="{StaticResource TopGradient}"
+                                    Right="{StaticResource RightGradient}"
+                                    Bottom="{StaticResource BottomGradient}"/>
+                </sx:Border.SideBrushes>
+                <Grid>
+                    <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
+                </Grid>
+            </sx:Border>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
