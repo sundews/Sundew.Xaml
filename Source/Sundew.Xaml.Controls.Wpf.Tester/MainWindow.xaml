@@ -20,8 +20,11 @@
             <GradientStop Color="SandyBrown" Offset="1"/>
         </LinearGradientBrush>
         <LinearGradientBrush x:Key="BottomGradient" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="LightSeaGreen" />
-            <GradientStop Color="LightSkyBlue" Offset="1"/>
+            <GradientStop Color="#FF00FF00" Offset=".01"/>
+            <GradientStop Color="#FFFF0000"  Offset="0.2"/>
+            <GradientStop Color="#FF0000FF" Offset="0.5" />
+            <GradientStop Color="#FFFF00FF" Offset="0.8"/>
+            <GradientStop Color="SandyBrown" Offset="1"/>
         </LinearGradientBrush>
         <SolidColorBrush x:Key="Left">#669B50F9</SolidColorBrush>
         <SolidColorBrush x:Key="Top">#669B50F9</SolidColorBrush>
@@ -73,22 +76,22 @@
                     <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.4,0.6" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+            <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.2,0.8" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
                 <sx:Border.Background>
                     <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" >
                         <LinearGradientBrush.RelativeTransform>
                             <TransformGroup>
                                 <ScaleTransform CenterY="0.5" CenterX="0.5"/>
                                 <SkewTransform CenterX="0.5" CenterY="0.5"/>
-                                <RotateTransform Angle="-13" CenterX="0.5" CenterY="0.5"/>
-                                <TranslateTransform/>
+                                <RotateTransform Angle="-8" CenterX="0.5" CenterY="0.5"/>
+                                <TranslateTransform X="0"/>
                             </TransformGroup>
                         </LinearGradientBrush.RelativeTransform>
-                        <GradientStop Color="#FFFF0404" Offset="0.053"/>
-                        <GradientStop Color="#FF44FF00" Offset="0"/>
-                        <GradientStop Color="#FF0208FF" Offset="0.186"/>
-                        <GradientStop Color="#FFDC17FF" Offset="0.783"/>
+                        <GradientStop Color="#FF4FD41E" Offset="0"/>
+                        <GradientStop Color="#FF0208FF" Offset="0.353"/>
+                        <GradientStop Color="#FFDC17FF" Offset="0.808"/>
                         <GradientStop Color="#FFFFF000" Offset="1"/>
+                        <GradientStop Color="#FFEF0413" Offset="0.069"/>
                     </LinearGradientBrush>
                 </sx:Border.Background>
                 <sx:Border.SideBrushes>

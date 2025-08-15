@@ -24,11 +24,11 @@ public class CornerStops
         this.BottomLeft = bottomLeft;
     }
 
-    public Stops TopLeft { get; }
+    public Stops TopLeft { get; set; }
 
-    public Stops TopRight { get; }
+    public Stops TopRight { get; set; }
 
-    public Stops BottomRight { get; }
+    public Stops BottomRight { get; set; }
 
-    public Stops BottomLeft { get; }
+    public Stops BottomLeft { get; set; }
 }
