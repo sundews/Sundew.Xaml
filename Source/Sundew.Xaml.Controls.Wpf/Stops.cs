@@ -1,4 +1,4 @@
-﻿namespace Sundew.Xaml.Controls.Wpf;
+﻿namespace Sundew.Xaml.Controls;
 
 public class Stops
 {

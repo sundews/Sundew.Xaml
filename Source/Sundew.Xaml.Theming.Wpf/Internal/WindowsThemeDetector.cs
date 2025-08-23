@@ -1,0 +1,49 @@
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WindowsThemeDetector.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Sundew.Xaml.Theming.Internal;
+
+using System;
+using Microsoft.Win32;
+
+internal class WindowsThemeDetector
+{
+    private const string PersonalizeKey = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+    private const string AppUseLightTheme = "AppsUseLightTheme";
+    private const string SystemUsesLightTheme = "SystemUsesLightTheme";
+
+    public static ThemeModeVariant GetCurrentTheme()
+    {
+        try
+        {
+            using var personalizeKey = Registry.CurrentUser.OpenSubKey(PersonalizeKey);
+            if (personalizeKey == null)
+            {
+                return ThemeModeVariant.Light;
+            }
+
+            // Check app theme setting
+            var appsValue = personalizeKey.GetValue(AppUseLightTheme);
+            if (appsValue is int themeValue)
+            {
+                return themeValue == 0 ? ThemeModeVariant.Dark : ThemeModeVariant.Light;
+            }
+
+            // Fallback to system theme
+            var systemValue = personalizeKey.GetValue(SystemUsesLightTheme);
+            if (systemValue is int systemThemeValue)
+            {
+                return systemThemeValue == 0 ? ThemeModeVariant.Dark : ThemeModeVariant.Light;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        return ThemeModeVariant.Light;
+    }
+}

@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/SolutionItems/">
+    <File Path="../.github/dependabot.yml" />
+    <File Path="../.github/workflows/dotnet.yml" />
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+  </Folder>
+  <Project Path="Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj" />
+  <Project Path="Sundew.Xaml.Theming.Wpf/Sundew.Xaml.Theming.Wpf.csproj" />
+  <Project Path="Sundew.Xaml.Wpf.Tester/Sundew.Xaml.Wpf.Tester.csproj" />
+</Solution>

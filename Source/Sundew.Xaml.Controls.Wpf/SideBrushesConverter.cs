@@ -1,9 +1,8 @@
-﻿namespace Sundew.Xaml.Controls.Wpf;
+﻿namespace Sundew.Xaml.Controls;
 
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
-
 using System.Windows.Media;
 
 public class SideBrushesConverter : TypeConverter
@@ -42,16 +41,16 @@ public class SideBrushesConverter : TypeConverter
             switch (values.Length)
             {
                 case 1:
-                    var first = (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]);
+                    var first = (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]);
                     return new SideBrushes(first);
                 case 2:
-                    return new SideBrushes((Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]), (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[1]));
+                    return new SideBrushes((Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]), (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[1]));
                 case 4:
                     return new SideBrushes(
-                        (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]),
-                        (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[1]),
-                        (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[2]),
-                        (Brush)brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[3]));
+                        (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[0]),
+                        (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[1]),
+                        (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[2]),
+                        (Brush)this.brushConverter.ConvertFrom(typeDescriptorContext, cultureInfo, values[3]));
             }
         }
 
@@ -60,9 +59,6 @@ public class SideBrushesConverter : TypeConverter
 
     public override object ConvertTo(ITypeDescriptorContext? typeDescriptorContext, CultureInfo? cultureInfo, object? value, Type destinationType)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(destinationType);
-
         if (!(value is SideBrushes sideBrushes))
         {
             throw new ArgumentException("Value must be SideBrushes", nameof(value));

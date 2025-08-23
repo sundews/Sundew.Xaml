@@ -1,4 +1,4 @@
-﻿namespace Sundew.Xaml;
+﻿namespace Sundew.Xaml.Controls;
 
 /// <summary>
 /// Contains constants.

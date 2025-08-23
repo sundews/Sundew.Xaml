@@ -1,8 +1,9 @@
-﻿namespace Sundew.Xaml.Controls.Wpf;
+﻿namespace Sundew.Xaml.Controls;
 
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
+
 public class CornerStopsConverter : TypeConverter
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? typeDescriptorContext, Type sourceType)
@@ -41,9 +42,6 @@ public class CornerStopsConverter : TypeConverter
 
     public override object ConvertTo(ITypeDescriptorContext? typeDescriptorContext, CultureInfo? cultureInfo, object? value, Type destinationType)
     {
-        ArgumentNullException.ThrowIfNull(value);
-        ArgumentNullException.ThrowIfNull(destinationType);
-
         if (!(value is CornerStops))
         {
             throw new ArgumentException("Value must be CornerStops", nameof(value));

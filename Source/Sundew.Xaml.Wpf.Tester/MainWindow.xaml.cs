@@ -1,4 +1,5 @@
-﻿namespace Sundew.Xaml.Controls.Tester;
+﻿namespace Sundew.Xaml.Wpf.Tester;
+
 using System.Windows;
 
 /// <summary>
@@ -8,6 +9,6 @@ public partial class MainWindow : Window
 {
     public MainWindow()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 }

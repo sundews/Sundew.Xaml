@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Markup;
-using Sundew.Xaml;
+using Sundew.Xaml.Controls;
 
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None,            //where theme specific resource dictionaries are located
@@ -11,5 +11,5 @@ using Sundew.Xaml;
                                                 // app, or any theme specific resource dictionaries)
 )]
 
-[assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls.Wpf")]
+[assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls")]
 [assembly: XmlnsPrefix(Constants.SundewXamlXmlNamespace, "sx")]

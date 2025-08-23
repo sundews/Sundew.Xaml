@@ -1,4 +1,5 @@
-﻿namespace Sundew.Xaml.Controls.Wpf;
+﻿namespace Sundew.Xaml.Controls;
+
 using System.ComponentModel;
 using System.Windows.Media;
 

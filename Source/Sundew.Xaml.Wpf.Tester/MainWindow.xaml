@@ -1,9 +1,9 @@
-﻿<Window x:Class="Sundew.Xaml.Controls.Tester.MainWindow"
+﻿<Window x:Class="Sundew.Xaml.Wpf.Tester.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:sx="http://sundew.dev/xaml"
+        xmlns:sx="clr-namespace:Sundew.Xaml.Controls;assembly=Sundew.Xaml.Controls.Wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="800" Width="900">
     <Window.Resources>
@@ -73,7 +73,9 @@
                                     Bottom="{StaticResource Bottom}"/>
                 </sx:Border.SideBrushes>
                 <Grid>
-                    <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
+                    <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum doc:\dev\sundew.xaml.controls\source\sundew.xaml.controls.wpf.tester\mainwindow.xaml.cs
+c:\dev\sundew.xaml.controls\source\sundew.xaml.controls.wpf.tester\mainwindow.xaml
+lor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
             <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.2,0.8" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
