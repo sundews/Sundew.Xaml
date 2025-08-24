@@ -16,7 +16,7 @@ jobs:
     name: .NET
     runs-on: windows-latest
     env:
-      solutionPath: ./Source/Sundew.Xaml.sln
+      solutionPath: ./Source/Sundew.Xaml.slnx
       versioningProjectPath: ./Source/Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj
       repository: 'https://sundew-dev:${{ secrets.SUNDEW_DEV_TOKEN }}@github.com/sundews/Sundew.Xaml.git'
       source: 'https://api.nuget.org/v3/index.json'
