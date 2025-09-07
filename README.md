@@ -6,7 +6,7 @@
 ## Theming:
 * ThemeManager - A theme manager with support for themes and theme modes.
 * ThemeResourceDictionary - A caching resource dictionary for managing themes.
-* ThemeMoodeResourceDictionary - A caching resource dictionary for managing theme modes.
+* ThemeModeResourceDictionary - A caching resource dictionary for managing theme modes.
 
 ### Examples:
 ![Examples](Source/Resources/Examples.png)
