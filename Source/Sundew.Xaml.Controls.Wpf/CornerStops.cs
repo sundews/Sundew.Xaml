@@ -5,6 +5,11 @@ using System.ComponentModel;
 [TypeConverter(typeof(CornerStopsConverter))]
 public class CornerStops
 {
+    public CornerStops()
+        : this(new Stops(0.4, 0.6))
+    {
+    }
+
     public CornerStops(Stops stops)
         : this(stops, stops, stops, stops)
     {

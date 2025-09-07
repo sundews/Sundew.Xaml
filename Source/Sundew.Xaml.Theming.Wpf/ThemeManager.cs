@@ -24,23 +24,24 @@ using Application = System.Windows.Application;
 public sealed class ThemeManager : IThemeManager
 {
     public static readonly RoutedEvent ThemeRefreshEvent = EventManager.RegisterRoutedEvent("ThemeRefresh", RoutingStrategy.Direct, typeof(EventHandler), typeof(ThemeManager));
-
-    private readonly bool respondToSystemTheme;
-    private ThemePair? currentThemePair;
-    private ThemeModePair? currentThemeModePair;
+    private static ThemeManager? currentThemeManager;
+    private AppliedTheme? appliedTheme;
+    private AppliedThemeMode? appliedThemeMode;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ThemeManager" /> class.
     /// </summary>
     /// <param name="themes">The theme infos.</param>
-    public ThemeManager(ObservableCollection<Theme> themes, bool respondToSystemTheme)
+    public ThemeManager(ObservableCollection<Theme> themes, bool autoApplySystemThemeMode)
     {
-        this.Themes = themes;
-        this.respondToSystemTheme = respondToSystemTheme;
-        if (respondToSystemTheme)
+        if (currentThemeManager != null)
         {
-            SystemEvents.UserPreferenceChanged += this.OnSystemEventsUserPreferenceChanged;
+            throw new InvalidOperationException("Only one instance of ThemeManager is allowed.");
         }
+
+        currentThemeManager = this;
+        this.Themes = themes;
+        AutoApplySystemThemeMode = autoApplySystemThemeMode;
     }
 
     /// <summary>
@@ -48,8 +49,34 @@ public sealed class ThemeManager : IThemeManager
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    /// <summary>Occurs when the theme is about to change.</summary>
+    public event EventHandler<ThemeUpdateEventArgs>? ThemeChanging;
+
     /// <summary>Occurs when the theme has changed.</summary>
-    public event EventHandler<ThemeUpdatedEventArgs>? ThemeChanged;
+    public event EventHandler<ThemeUpdateEventArgs>? ThemeChanged;
+
+    public bool AutoApplySystemThemeMode
+    {
+        get => field;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            if (field)
+            {
+                SystemEvents.UserPreferenceChanged -= this.OnSystemEventsUserPreferenceChanged;
+                SystemEvents.UserPreferenceChanged += this.OnSystemEventsUserPreferenceChanged;
+            }
+            else
+            {
+                SystemEvents.UserPreferenceChanged -= this.OnSystemEventsUserPreferenceChanged;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the theme infos.
@@ -60,6 +87,16 @@ public sealed class ThemeManager : IThemeManager
     public ObservableCollection<Theme> Themes { get; }
 
     /// <summary>
+    /// The applied theme.
+    /// </summary>
+    public AppliedTheme? AppliedTheme => this.appliedTheme;
+
+    /// <summary>
+    /// The applied theme mode.
+    /// </summary>
+    public AppliedThemeMode? AppliedThemeMode => this.appliedThemeMode;
+
+    /// <summary>
     /// Gets or sets the current theme.
     /// </summary>
     /// <value>
@@ -67,7 +104,7 @@ public sealed class ThemeManager : IThemeManager
     /// </value>
     public Theme? CurrentTheme
     {
-        get => this.currentThemePair?.Theme;
+        get => this.appliedTheme?.Theme;
         set
         {
             if (value != null)
@@ -82,7 +119,7 @@ public sealed class ThemeManager : IThemeManager
     /// </summary>
     public ThemeMode? CurrentThemeMode
     {
-        get => this.currentThemeModePair?.ThemeMode;
+        get => this.appliedThemeMode?.ThemeMode;
         set
         {
             if (value != null)
@@ -93,42 +130,115 @@ public sealed class ThemeManager : IThemeManager
     }
 
     /// <summary>
+    /// Gets the current theme manager.
+    /// </summary>
+    public static ThemeManager? Current => currentThemeManager;
+
+    /// <summary>
     /// Applies the specified theme.
     /// </summary>
     /// <param name="theme">The theme information.</param>
-    public void ChangeTheme(Theme theme)
+    /// <returns>A value indicating whether the new theme was applied.</returns>
+    public bool ChangeTheme(Theme theme)
     {
-        if (theme == this.currentThemePair?.Theme)
+        if (theme == this.appliedTheme?.Theme)
         {
-            return;
+            return false;
         }
 
-        var oldThemePair = this.currentThemePair;
-        if (this.respondToSystemTheme)
+        if (this.AutoApplySystemThemeMode)
         {
-            this.UpdateThemeMode(theme.ThemeModes, false);
+            var matchingThemeMode = this.GetThemeModeForSystem(theme.ThemeModes);
+            if (matchingThemeMode != null)
+            {
+                return this.ApplyTheme(theme, matchingThemeMode);
+            }
         }
 
-        var themeResources = theme.CreateTheme();
-        this.currentThemePair = new ThemePair(theme, themeResources);
-        Application.Current.Resources.MergedDictionaries.Add(themeResources);
-        if (oldThemePair != null)
+        var themeMode = theme.ThemeModes.FirstOrDefault();
+        if (themeMode != null)
         {
-            Application.Current.Resources.MergedDictionaries.Remove(oldThemePair.ThemeResourceDictionary);
+            return this.ApplyTheme(theme, themeMode);
         }
 
-        this.NotifyPropertyChanged(nameof(this.CurrentTheme));
-        this.ThemeChanged?.Invoke(this, ThemeUpdatedEventArgs.ThemeChanged(oldThemePair?.Theme, theme));
-        this.RaiseThemeRefresh();
+        return false;
+    }
+
+    /// <summary>
+    /// Applies the specified theme.
+    /// </summary>
+    /// <param name="theme">The theme information.</param>
+    /// <param name="selectModeFunc">The select mode func.</param>
+    /// <returns>A value indicating whether the new theme was applied.</returns>
+    public bool ChangeTheme(Theme theme, Func<Theme, ThemeMode> selectModeFunc)
+    {
+        if (theme == this.appliedTheme?.Theme)
+        {
+            return false;
+        }
+
+        this.AutoApplySystemThemeMode = false;
+        var themeMode = selectModeFunc(theme);
+        return this.ApplyTheme(theme, themeMode);
     }
 
     /// <summary>
     /// Applies the specified theme mode.
     /// </summary>
     /// <param name="themeMode">The theme mode.</param>
-    public void ChangeThemeMode(ThemeMode themeMode)
+    public bool ChangeThemeMode(ThemeMode themeMode)
     {
-        ChangeThemeMode(themeMode, true);
+        this.AutoApplySystemThemeMode = false;
+        return this.ApplyTheme(this.appliedTheme?.Theme, themeMode);
+    }
+
+    private bool ApplyTheme(Theme? theme, ThemeMode themeMode)
+    {
+        var oldThemePair = this.appliedTheme;
+        var oldThemeModePair = this.appliedThemeMode;
+        ThemeChangeType? changeType = (oldThemePair?.Theme != theme, oldThemeModePair?.ThemeMode != themeMode) switch
+        {
+            (true, true) => ThemeChangeType.Theme,
+            (true, false) => ThemeChangeType.Theme,
+            (false, true) => ThemeChangeType.ThemeMode,
+            _ => null,
+        };
+
+        if (theme == null || !changeType.HasValue)
+        {
+            return false;
+        }
+
+        var themeUpdateEventArgs = new ThemeUpdateEventArgs(oldThemePair?.Theme, theme, oldThemeModePair?.ThemeMode, themeMode, changeType.Value);
+        this.ThemeChanging?.Invoke(this, themeUpdateEventArgs);
+
+        var themeModeDictionary = themeMode.CreateThemeModeResourceDictionary();
+        this.appliedThemeMode = new AppliedThemeMode(themeMode, themeModeDictionary);
+        Application.Current.Resources.MergedDictionaries.Add(themeModeDictionary);
+        if (oldThemeModePair != null)
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(oldThemeModePair.ThemeModeResourceDictionary);
+        }
+
+        var themeResources = theme.CreateTheme();
+        this.appliedTheme = new AppliedTheme(theme, themeResources);
+        Application.Current.Resources.MergedDictionaries.Add(themeResources);
+        if (oldThemePair != null)
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(oldThemePair.ThemeResourceDictionary);
+        }
+
+        this.NotifyPropertyChanged(nameof(this.CurrentThemeMode));
+        this.NotifyPropertyChanged(nameof(this.AppliedThemeMode));
+        if (changeType == ThemeChangeType.Theme)
+        {
+            this.NotifyPropertyChanged(nameof(this.CurrentTheme));
+            this.NotifyPropertyChanged(nameof(this.AppliedTheme));
+        }
+
+        this.ThemeChanged?.Invoke(this, themeUpdateEventArgs);
+        this.RaiseThemeRefresh();
+        return true;
     }
 
     /// <summary>
@@ -166,44 +276,26 @@ public sealed class ThemeManager : IThemeManager
             e.Category == UserPreferenceCategory.VisualStyle)
         {
             Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
-                this.UpdateThemeMode(this.currentThemePair?.Theme.ThemeModes ?? [], true)));
+                this.UpdateThemeMode(this.appliedTheme?.Theme.ThemeModes ?? [])));
         }
     }
 
-    private void UpdateThemeMode(IReadOnlyCollection<ThemeMode> themeModes, bool raiseThemeChange)
+    private bool UpdateThemeMode(IReadOnlyCollection<ThemeMode> themeModes)
     {
-        var newThemeMode = WindowsThemeDetector.GetCurrentTheme();
-        var newThemeModeInfo = GetMatchingThemeMode(themeModes, newThemeMode);
+        var newThemeModeInfo = this.GetThemeModeForSystem(themeModes);
         if (newThemeModeInfo == null)
         {
-            return;
+            return false;
         }
 
-        this.ChangeThemeMode(newThemeModeInfo, raiseThemeChange);
+        return this.ChangeThemeMode(newThemeModeInfo);
     }
 
-    private void ChangeThemeMode(ThemeMode themeMode, bool raiseThemeChange)
+    private ThemeMode? GetThemeModeForSystem(IReadOnlyCollection<ThemeMode> themeModes)
     {
-        if (themeMode == this.currentThemeModePair?.ThemeMode)
-        {
-            return;
-        }
-
-        var oldThemeModePair = this.currentThemeModePair;
-        var themeModeDictionary = themeMode.CreateThemeModeResourceDictionary();
-        this.currentThemeModePair = new ThemeModePair(themeMode, themeModeDictionary);
-        Application.Current.Resources.MergedDictionaries.Add(themeModeDictionary);
-        if (oldThemeModePair != null)
-        {
-            Application.Current.Resources.MergedDictionaries.Remove(oldThemeModePair.ThemeModeResourceDictionary);
-        }
-
-        this.NotifyPropertyChanged(nameof(this.CurrentThemeMode));
-        if (raiseThemeChange)
-        {
-            this.ThemeChanged?.Invoke(this, ThemeUpdatedEventArgs.ThemeModeChanged(oldThemeModePair?.ThemeMode, themeMode));
-            this.RaiseThemeRefresh();
-        }
+        var newThemeMode = WindowsThemeModeDetector.GetCurrentThemeMode();
+        var newThemeModeInfo = this.GetMatchingThemeMode(themeModes, newThemeMode);
+        return newThemeModeInfo;
     }
 
     private void RaiseThemeRefresh()
@@ -239,7 +331,8 @@ public sealed class ThemeManager : IThemeManager
         return themeModes.FirstOrDefault();
     }
 
-    private sealed record ThemePair(Theme Theme, ResourceDictionary ThemeResourceDictionary);
-
-    private sealed record ThemeModePair(ThemeMode ThemeMode, ResourceDictionary ThemeModeResourceDictionary);
+    void IThemeManager.ChangeTheme(Theme theme)
+    {
+        throw new NotImplementedException();
+    }
 }

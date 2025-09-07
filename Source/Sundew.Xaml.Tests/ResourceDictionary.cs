@@ -1,17 +1,14 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ThemeChangedEventArgs.cs" company="Sundews">
+// <copyright file="ResourceDictionaryTests.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Sundew.Xaml.Theming;
+namespace Sundew.Xaml.Wpf.Tests;
 
-using System;
-using Sundew.DiscriminatedUnions;
+using Sundew.Xaml.Theming;
 
-/// <summary>Event args for the theme changed event.</summary>
-[DiscriminatedUnion]
-public abstract partial class ThemeUpdatedEventArgs : EventArgs
+public sealed class ResourceDictionary : ResourceDictionaryBase<ResourceDictionary>
 {
 }

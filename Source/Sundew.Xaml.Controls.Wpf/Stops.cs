@@ -1,5 +1,8 @@
 ﻿namespace Sundew.Xaml.Controls;
 
+using System.ComponentModel;
+
+[TypeConverter(typeof(StopsConverter))]
 public class Stops
 {
     public Stops()

@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0-windows;net48</TargetFrameworks>
-    <Nullable>enable</Nullable>
+    <TargetFrameworks>net9.0-windows;net8.0-windows;net6.0-windows;net48</TargetFrameworks>
+		<Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>Sundew.Xaml.Controls</RootNamespace>

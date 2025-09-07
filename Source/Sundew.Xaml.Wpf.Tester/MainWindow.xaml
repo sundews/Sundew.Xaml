@@ -38,47 +38,47 @@
         </LinearGradientBrush>
     </Window.Background>
     <Grid Background="#339B50F9">
-        <Grid>
-            <sx:Border Margin="4" Background="Bisque"  CornerRadius="8" BorderThickness="4" CornerStops="0.3,0.7" SideBrushes="Yellow,Green,Purple,Blue">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Slider x:Name="LayoutSlider"  Minimum="0.5" Maximum="4" Value="1"/>
+        <Grid Grid.Row="1">
+            <Grid.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding ElementName=LayoutSlider, Path=Value}" ScaleY="{Binding ElementName=LayoutSlider, Path=Value}"/>
+            </Grid.LayoutTransform>
+            <sx:Border Margin="4" Background="Bisque" CornerRadius="8" BorderThickness="4" LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
                 <Grid>
                     <TextBlock TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border SideBrushes="LightGreen,DarkGreen" Background="Green" Margin="4"  CornerRadius="4" BorderThickness="8" CornerStops="0.3,0.7" Grid.Row="1" Grid.ColumnSpan="2">
+            <sx:Border SideBrushes="LightGreen,DarkGreen" Background="Green" Margin="4"  CornerRadius="4" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="1" Grid.ColumnSpan="2">
                 <Grid>
                     <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border Margin="4"  CornerRadius="16" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" SideBrushes="Red,Purple">
+            <sx:Border Margin="4"  CornerRadius="0,0,64,64" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" SideBrushes="Red,Purple">
                 <Grid>
                     <TextBlock TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border Margin="4" Background="BlueViolet" Padding="8" CornerRadius="16" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
-                <sx:Border.SideBrushes>
-                    <sx:SideBrushes Left="{StaticResource Left}"
-                                     Top="{StaticResource Top}"
-                                     Right="{StaticResource Right}"
-                                     Bottom="{StaticResource Bottom}"/>
-                </sx:Border.SideBrushes>
+            <sx:Border Margin="4" Background="BlueViolet" Padding="8" CornerRadius="16" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                       LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}" RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
                 <Grid>
                     <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border Margin="4" Background="BlueViolet" Padding="16" CornerRadius="900" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3">
-                <sx:Border.SideBrushes>
-                    <sx:SideBrushes Left="{StaticResource Left}"
-                                    Top="{StaticResource Top}"
-                                    Right="{StaticResource Right}"
-                                    Bottom="{StaticResource Bottom}"/>
-                </sx:Border.SideBrushes>
+            <sx:Border Margin="4" Background="BlueViolet" Padding="16" CornerRadius="900" BorderThickness="8" CornerStops="0.4,0.6" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
+                       LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}" RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
                 <Grid>
-                    <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum doc:\dev\sundew.xaml.controls\source\sundew.xaml.controls.wpf.tester\mainwindow.xaml.cs
-c:\dev\sundew.xaml.controls\source\sundew.xaml.controls.wpf.tester\mainwindow.xaml
-lor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
+                    <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>
             </sx:Border>
-            <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.2,0.8" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+            <sx:Border Margin="4" Padding="16" CornerRadius="32" BorderThickness="16" CornerStops="0.2,0.8" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                       LeftBrush="{StaticResource LeftGradient}" 
+                       TopBrush="{StaticResource TopGradient}"
+                       RightBrush="{StaticResource RightGradient}" 
+                       BottomBrush="{StaticResource BottomGradient}">
                 <sx:Border.Background>
                     <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" >
                         <LinearGradientBrush.RelativeTransform>
@@ -96,12 +96,6 @@ lor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidun
                         <GradientStop Color="#FFEF0413" Offset="0.069"/>
                     </LinearGradientBrush>
                 </sx:Border.Background>
-                <sx:Border.SideBrushes>
-                    <sx:SideBrushes Left="{StaticResource LeftGradient}"
-                                    Top="{StaticResource TopGradient}"
-                                    Right="{StaticResource RightGradient}"
-                                    Bottom="{StaticResource BottomGradient}"/>
-                </sx:Border.SideBrushes>
                 <Grid>
                     <TextBlock Foreground="White" TextWrapping="Wrap">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</TextBlock>
                 </Grid>

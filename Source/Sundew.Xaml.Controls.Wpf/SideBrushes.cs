@@ -7,21 +7,21 @@ using System.Windows.Media;
 public class SideBrushes
 {
     public SideBrushes()
-    : this(Brushes.Transparent)
+    : this(Brushes.Black)
     {
     }
 
-    public SideBrushes(Brush brush)
+    public SideBrushes(Brush? brush)
         : this(brush, brush, brush, brush)
     {
     }
 
-    public SideBrushes(Brush topLeft, Brush bottomRight)
+    public SideBrushes(Brush? topLeft, Brush? bottomRight)
         : this(topLeft, topLeft, bottomRight, bottomRight)
     {
     }
 
-    public SideBrushes(Brush left, Brush top, Brush bottom, Brush right)
+    public SideBrushes(Brush? left, Brush? top, Brush? bottom, Brush? right)
     {
         this.Left = left;
         this.Top = top;
@@ -29,11 +29,11 @@ public class SideBrushes
         this.Bottom = right;
     }
 
-    public Brush Bottom { get; set; }
+    public Brush? Bottom { get; set; }
 
-    public Brush Right { get; set; }
+    public Brush? Right { get; set; }
 
-    public Brush Top { get; set; }
+    public Brush? Top { get; set; }
 
-    public Brush Left { get; set; }
+    public Brush? Left { get; set; }
 }

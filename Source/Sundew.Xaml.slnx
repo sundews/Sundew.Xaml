@@ -7,6 +7,7 @@
     <File Path="Directory.Build.targets" />
   </Folder>
   <Project Path="Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj" />
+  <Project Path="Sundew.Xaml.Tests/Sundew.Xaml.Wpf.Tests.csproj" Id="b5cfddc3-ecfe-4de4-885a-167cf8884102" />
   <Project Path="Sundew.Xaml.Theming.Wpf/Sundew.Xaml.Theming.Wpf.csproj" />
   <Project Path="Sundew.Xaml.Wpf.Tester/Sundew.Xaml.Wpf.Tester.csproj" />
 </Solution>

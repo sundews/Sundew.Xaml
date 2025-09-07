@@ -5,19 +5,60 @@ using System.Windows.Media;
 
 public class Border : System.Windows.Controls.Border
 {
-    public static readonly DependencyProperty SideBrushesProperty = DependencyProperty.Register(
-        nameof(SideBrushes), typeof(SideBrushes), typeof(Border), new FrameworkPropertyMetadata(new SideBrushes(Brushes.Black), FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public static readonly DependencyProperty CornerStopsProperty = DependencyProperty.Register(
-        nameof(CornerStops), typeof(CornerStops), typeof(Border), new FrameworkPropertyMetadata(
-            new CornerStops(new Stops(0.2, 0.8)),
-            FrameworkPropertyMetadataOptions.AffectsMeasure |
-            FrameworkPropertyMetadataOptions.AffectsRender));
-
     private static readonly Point TopRight = new Point(1, 0);
     private static readonly Point BottomLeft = new Point(0, 1);
     private static readonly Point TopLeft = new Point(0, 0);
     private static readonly Point BottomRight = new Point(1, 1);
+    private static readonly Pen BackgroundPen = new Pen(null, 0);
+    private static readonly Stops DefaultStops = new Stops(0.2, 0.8);
+
+    public static readonly DependencyProperty LeftBrushProperty = DependencyProperty.Register(
+        nameof(LeftBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
+
+    public static readonly DependencyProperty TopBrushProperty = DependencyProperty.Register(
+        nameof(TopBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
+
+    public static readonly DependencyProperty RightBrushProperty = DependencyProperty.Register(
+        nameof(RightBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
+
+    public static readonly DependencyProperty BottomBrushProperty = DependencyProperty.Register(
+        nameof(BottomBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
+
+    public static readonly DependencyProperty TopLeftStopsProperty = DependencyProperty.Register(
+        nameof(TopLeftStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
+            DefaultStops,
+            FrameworkPropertyMetadataOptions.AffectsMeasure |
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnFreshRenderRequired));
+
+    public static readonly DependencyProperty TopRightStopsProperty = DependencyProperty.Register(
+        nameof(TopRightStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
+            DefaultStops,
+            FrameworkPropertyMetadataOptions.AffectsMeasure |
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnFreshRenderRequired));
+
+    public static readonly DependencyProperty BottomRightStopsProperty = DependencyProperty.Register(
+        nameof(BottomRightStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
+            DefaultStops,
+            FrameworkPropertyMetadataOptions.AffectsMeasure |
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnFreshRenderRequired));
+
+    public static readonly DependencyProperty BottomLeftStopsProperty = DependencyProperty.Register(
+        nameof(BottomLeftStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
+            DefaultStops,
+            FrameworkPropertyMetadataOptions.AffectsMeasure |
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnFreshRenderRequired));
+
+    private Pens? pens = null;
+    private Corners? cornerBrushes = null;
+
+    static Border()
+    {
+        BackgroundPen.Freeze();
+    }
 
     public Border()
     {
@@ -27,197 +68,486 @@ public class Border : System.Windows.Controls.Border
 
     public SideBrushes? SideBrushes
     {
-        get { return (SideBrushes)this.GetValue(SideBrushesProperty); }
-        set { this.SetValue(SideBrushesProperty, value); }
+        get => new SideBrushes(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
+        set
+        {
+            if (value == null)
+            {
+                this.LeftBrush = null;
+                this.TopBrush = null;
+                this.RightBrush = null;
+                this.BottomBrush = null;
+                return;
+            }
+
+            this.LeftBrush = value.Left;
+            this.TopBrush = value.Top;
+            this.RightBrush = value.Right;
+            this.BottomBrush = value.Bottom;
+        }
     }
 
     public CornerStops CornerStops
     {
-        get { return (CornerStops)this.GetValue(CornerStopsProperty); }
-        set { this.SetValue(CornerStopsProperty, value); }
+        get => new(this.TopLeftStops, this.TopRightStops, this.BottomRightStops, this.BottomLeftStops);
+        set
+        {
+            this.TopLeftStops = value.TopLeft;
+            this.TopRightStops = value.TopRight;
+            this.BottomRightStops = value.BottomRight;
+            this.BottomLeftStops = value.BottomLeft;
+        }
+    }
+
+    public Brush? LeftBrush
+    {
+        get => (Brush?)this.GetValue(LeftBrushProperty);
+        set => this.SetValue(LeftBrushProperty, value);
+    }
+
+    public Brush? TopBrush
+    {
+        get => (Brush?)this.GetValue(TopBrushProperty);
+        set => this.SetValue(TopBrushProperty, value);
+    }
+
+    public Brush? RightBrush
+    {
+        get => (Brush?)this.GetValue(RightBrushProperty);
+        set => this.SetValue(RightBrushProperty, value);
+    }
+
+    public Brush? BottomBrush
+    {
+        get => (Brush?)this.GetValue(BottomBrushProperty);
+        set => this.SetValue(BottomBrushProperty, value);
+    }
+    public Stops TopLeftStops
+    {
+        get => (Stops)this.GetValue(TopLeftStopsProperty);
+        set => this.SetValue(TopLeftStopsProperty, value);
+    }
+
+    public Stops TopRightStops
+    {
+        get => (Stops)this.GetValue(TopRightStopsProperty);
+        set => this.SetValue(TopRightStopsProperty, value);
+    }
+
+    public Stops BottomRightStops
+    {
+        get => (Stops)this.GetValue(BottomRightStopsProperty);
+        set => this.SetValue(BottomRightStopsProperty, value);
+    }
+
+    public Stops BottomLeftStops
+    {
+        get => (Stops)this.GetValue(BottomLeftStopsProperty);
+        set => this.SetValue(BottomLeftStopsProperty, value);
     }
 
     protected override void OnRender(DrawingContext drawingContext)
     {
-        if (this.SideBrushes == null)
+        if (this.LeftBrush == null && this.TopBrush == null && this.RightBrush == null && this.BottomBrush == null)
         {
             return;
         }
 
-        var leftBrush = this.SideBrushes.Left;
-        var topBrush = this.SideBrushes.Top;
-        var rightBrush = this.SideBrushes.Right;
-        var bottomBrush = this.SideBrushes.Bottom;
-        var cornerBrushes = this.GetCornerBrushes(this.SideBrushes, this.CornerStops);
+        var sidesBrushes = new Sides(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
+        var dpiScale = VisualTreeHelper.GetDpi(this);
+        var dpiScaleX = dpiScale.DpiScaleX;
+        var dpiScaleY = dpiScale.DpiScaleY;
+        var pens = this.EnsurePens(sidesBrushes, dpiScale);
 
-        var leftOffset = this.BorderThickness.Left / 2.0;
-        var topOffset = this.BorderThickness.Top / 2.0;
+        // Round all base measurements to device pixels
+        var actualWidth = RoundToDevicePixel(this.ActualWidth, dpiScaleX);
+        var actualHeight = RoundToDevicePixel(this.ActualHeight, dpiScaleY);
 
-        var rightOffset = this.BorderThickness.Right / 2.0;
-        var bottomOffset = this.BorderThickness.Bottom / 2.0;
+        var leftThickness = RoundToDevicePixel(this.BorderThickness.Left, dpiScaleX);
+        var topThickness = RoundToDevicePixel(this.BorderThickness.Top, dpiScaleY);
+        var rightThickness = RoundToDevicePixel(this.BorderThickness.Right, dpiScaleX);
+        var bottomThickness = RoundToDevicePixel(this.BorderThickness.Bottom, dpiScaleY);
 
-        var maxWidthOrHeight = Math.Min(this.ActualWidth, this.ActualHeight) / 2;
-        var maxTopLeft = Math.Min(Math.Max(this.CornerRadius.TopLeft, Math.Max(this.BorderThickness.Top, this.BorderThickness.Left)), maxWidthOrHeight);
-        var maxTopRight = Math.Min(Math.Max(this.CornerRadius.TopRight, Math.Max(this.BorderThickness.Top, this.BorderThickness.Right)), maxWidthOrHeight);
-        var maxBottomRight = Math.Min(Math.Max(this.CornerRadius.BottomRight, Math.Max(this.BorderThickness.Bottom, this.BorderThickness.Right)), maxWidthOrHeight);
-        var maxBottomLeft = Math.Min(Math.Max(this.CornerRadius.BottomLeft, Math.Max(this.BorderThickness.Bottom, this.BorderThickness.Left)), maxWidthOrHeight);
+        var leftOffset = leftThickness / 2.0;
+        var topOffset = topThickness / 2.0;
+        var rightOffset = rightThickness / 2.0;
+        var bottomOffset = bottomThickness / 2.0;
 
-        const double overdraw = 0.0;
-        var leftStart = new Point(leftOffset, this.ActualHeight - maxBottomLeft + overdraw);
-        var leftEnd = new Point(leftOffset, maxTopLeft - overdraw);
-        var leftDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(leftBrush, this.BorderThickness.Left),
-                new LineGeometry(leftStart, leftEnd));
+        // Round corner radius values
+        var topLeftRadius = RoundToDevicePixel(this.CornerRadius.TopLeft, Math.Min(dpiScaleX, dpiScaleY));
+        var topRightRadius = RoundToDevicePixel(this.CornerRadius.TopRight, Math.Min(dpiScaleX, dpiScaleY));
+        var bottomRightRadius = RoundToDevicePixel(this.CornerRadius.BottomRight, Math.Min(dpiScaleX, dpiScaleY));
+        var bottomLeftRadius = RoundToDevicePixel(this.CornerRadius.BottomLeft, Math.Min(dpiScaleX, dpiScaleY));
 
-        var topLeftStart = new Point(leftOffset, maxTopLeft);
+
+        var maxWidthOrHeight = Math.Min(actualWidth, actualHeight) / 2;
+        var maxTopLeft = RoundToDevicePixel(Math.Min(Math.Max(topLeftRadius, Math.Max(topThickness, leftThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
+        var maxTopRight = RoundToDevicePixel(Math.Min(Math.Max(topRightRadius, Math.Max(topThickness, rightThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
+        var maxBottomRight = RoundToDevicePixel(Math.Min(Math.Max(bottomRightRadius, Math.Max(bottomThickness, rightThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
+        var maxBottomLeft = RoundToDevicePixel(Math.Min(Math.Max(bottomLeftRadius, Math.Max(bottomThickness, leftThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
+
+        var right = actualWidth - rightOffset;
+        var bottom = actualHeight - bottomOffset;
+
+        // Calculate exact endpoints for perfect alignment
+        var leftEdgeTop = RoundToDevicePixel(maxTopLeft, dpiScaleY);
+        var leftEdgeBottom = RoundToDevicePixel(actualHeight - maxBottomLeft, dpiScaleY);
+        var topEdgeLeft = RoundToDevicePixel(maxTopLeft, dpiScaleX);
+        var topEdgeRight = RoundToDevicePixel(actualWidth - maxTopRight, dpiScaleX);
+        var rightEdgeTop = RoundToDevicePixel(maxTopRight, dpiScaleY);
+        var rightEdgeBottom = RoundToDevicePixel(actualHeight - maxBottomRight, dpiScaleY);
+        var bottomEdgeLeft = RoundToDevicePixel(maxBottomLeft, dpiScaleX);
+        var bottomEdgeRight = RoundToDevicePixel(actualWidth - maxBottomRight, dpiScaleX);
+
+        if (leftEdgeTop > leftEdgeBottom)
+        {
+            leftEdgeTop = leftEdgeBottom;
+        }
+
+        if (rightEdgeTop > rightEdgeBottom)
+        {
+            rightEdgeTop = rightEdgeBottom;
+        }
+
+        if (topEdgeLeft > topEdgeRight)
+        {
+            topEdgeLeft = topEdgeRight;
+        }
+
+        if (bottomEdgeLeft > bottomEdgeRight)
+        {
+            bottomEdgeLeft = bottomEdgeRight;
+        }
+
+        // Edge coordinates - ensure exact alignment at corner boundaries
+        var leftStart = new Point(leftOffset, leftEdgeBottom);
+        var leftEnd = new Point(leftOffset, leftEdgeTop);
+
+        var topLeftStart = new Point(leftOffset, leftEdgeTop);
         var topLeftAnchor = new Point(leftOffset, topOffset);
-        var topLeftEnd = new Point(maxTopLeft, topOffset);
-        var topLeftDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(cornerBrushes.TopLeft, (this.BorderThickness.Top + this.BorderThickness.Left) / 2.0),
-                new PathGeometry([new PathFigure(topLeftStart, [new QuadraticBezierSegment(topLeftAnchor, topLeftEnd, true),], false)]));
+        var topLeftEnd = new Point(topEdgeLeft, topOffset);
 
-        var topStart = new Point(maxTopLeft - overdraw, topOffset);
-        var topEnd = new Point(this.ActualWidth - maxTopRight + overdraw, topOffset);
-        var topDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(topBrush, this.BorderThickness.Top),
-                new LineGeometry(topStart, topEnd));
+        var topStart = new Point(topEdgeLeft, topOffset);
+        var topEnd = new Point(topEdgeRight, topOffset);
 
-        var topRightStart = new Point(this.ActualWidth - maxTopRight, topOffset);
-        var rightX = this.ActualWidth - rightOffset;
-        var topRightAnchor = new Point(rightX, topOffset);
-        var topRightEnd = new Point(rightX, maxTopRight);
-        var topRightDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(cornerBrushes.TopRight, (this.BorderThickness.Top + this.BorderThickness.Right) / 2.0),
-                new PathGeometry([new PathFigure(topRightStart, [new QuadraticBezierSegment(topRightAnchor, topRightEnd, true),], false)]));
+        var topRightStart = new Point(topEdgeRight, topOffset);
+        var topRightAnchor = new Point(right, topOffset);
+        var topRightEnd = new Point(right, rightEdgeTop);
 
-        var rightStart = new Point(rightX, maxTopRight - overdraw);
-        var rightEnd = new Point(rightX, this.ActualHeight - maxBottomRight + overdraw);
-        var rightDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(rightBrush, this.BorderThickness.Right),
-                new LineGeometry(rightStart, rightEnd)
-            );
+        var rightStart = new Point(right, rightEdgeTop);
+        var rightEnd = new Point(right, rightEdgeBottom);
 
-        var bottom = this.ActualHeight - bottomOffset;
-        var bottomRightStart = new Point(rightX, this.ActualHeight - maxBottomRight);
-        var bottomRightAnchor = new Point(rightX, bottom);
-        var bottomRightEnd = new Point(this.ActualWidth - maxBottomRight, bottom);
-        var bottomRightDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(cornerBrushes.BottomRight, (this.BorderThickness.Bottom + this.BorderThickness.Right) / 2.0),
-                new PathGeometry([new PathFigure(bottomRightStart, [new QuadraticBezierSegment(bottomRightAnchor, bottomRightEnd, true),], false)]));
+        var bottomRightStart = new Point(right, rightEdgeBottom);
+        var bottomRightAnchor = new Point(right, bottom);
+        var bottomRightEnd = new Point(bottomEdgeRight, bottom);
 
-        var bottomStart = new Point(maxBottomLeft - overdraw, bottom);
-        var bottomEnd = new Point(this.ActualWidth - maxBottomRight + overdraw, bottom);
-        var bottomDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(bottomBrush, this.BorderThickness.Bottom),
-                new LineGeometry(bottomStart, bottomEnd));
+        var bottomStart = new Point(bottomEdgeRight, bottom);
+        var bottomEnd = new Point(bottomEdgeLeft, bottom);
 
-        var bottomLeftStart = new Point(leftOffset, this.ActualHeight - maxBottomLeft);
+        var bottomLeftStart = new Point(leftOffset, leftEdgeBottom);
         var bottomLeftAnchor = new Point(leftOffset, bottom);
-        var bottomLeftEnd = new Point(maxBottomLeft, bottom);
-        var bottomLeftDrawing =
-            new GeometryDrawing(
-                Brushes.Transparent,
-                new Pen(cornerBrushes.BottomLeft, (this.BorderThickness.Bottom + this.BorderThickness.Left) / 2.0),
-                new PathGeometry([
-                    new PathFigure(bottomLeftStart, [new QuadraticBezierSegment(bottomLeftAnchor, bottomLeftEnd, true),], false)]));
+        var bottomLeftEnd = new Point(bottomEdgeLeft, bottom);
 
-        const double backgroundOverdraw = 0.64;
-        var background = new GeometryDrawing(this.Background, new Pen(Brushes.Transparent, 0), new PathGeometry(
+        // Create guidelines based on actual coordinates used
+        var guidelines = new GuidelineSet();
+
+        // Add X guidelines for all vertical edges
+        AddUniqueGuideline(guidelines.GuidelinesX, leftOffset);
+        AddUniqueGuideline(guidelines.GuidelinesX, right);
+        AddUniqueGuideline(guidelines.GuidelinesX, topEdgeLeft);
+        AddUniqueGuideline(guidelines.GuidelinesX, topEdgeRight);
+        AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeLeft);
+        AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeRight);
+
+        // Add Y guidelines for all horizontal edges  
+        AddUniqueGuideline(guidelines.GuidelinesY, topOffset);
+        AddUniqueGuideline(guidelines.GuidelinesY, bottom);
+        AddUniqueGuideline(guidelines.GuidelinesY, leftEdgeTop);
+        AddUniqueGuideline(guidelines.GuidelinesY, leftEdgeBottom);
+        AddUniqueGuideline(guidelines.GuidelinesY, rightEdgeTop);
+        AddUniqueGuideline(guidelines.GuidelinesY, rightEdgeBottom);
+
+        var drawingGroup = new DrawingGroup() { GuidelineSet = guidelines };
+
+        // Background geometry - ensure proper closure
+        const double backgroundOverdraw = 0.5;
+        var background = new GeometryDrawing(this.Background, BackgroundPen, new PathGeometry(
         [
             new PathFigure(
-                leftStart with { X = leftStart.X + leftOffset},
-                    [
-                        new LineSegment(leftEnd with { X = leftEnd.X + leftOffset}, true),
-                        new QuadraticBezierSegment(new Point(topLeftAnchor.X + leftOffset - backgroundOverdraw, topLeftAnchor.Y + topOffset - backgroundOverdraw), topStart with{ Y = topStart.Y + topOffset}, true),
-                        new LineSegment(topEnd with { Y = topEnd.Y + topOffset}, true),
-                        new QuadraticBezierSegment(new Point(topRightAnchor.X - rightOffset+ backgroundOverdraw, topRightAnchor.Y + topOffset - backgroundOverdraw), rightStart with { X = rightStart.X - rightOffset }, true),
-                        new LineSegment(rightEnd  with { X = rightEnd.X - rightOffset}, true),
-                        new QuadraticBezierSegment(new Point(bottomRightAnchor.X - rightOffset + backgroundOverdraw, bottomRightAnchor.Y - bottomOffset+ backgroundOverdraw), bottomEnd with { Y = bottomEnd.Y - bottomOffset}, true),
-                        new LineSegment(bottomStart  with { Y = bottomStart.Y - bottomOffset}, true),
-                        new QuadraticBezierSegment(new Point(bottomLeftAnchor.X + leftOffset - backgroundOverdraw,  bottomLeftAnchor.Y - bottomOffset+ backgroundOverdraw), leftStart with { X = leftStart.X + leftOffset}, true),
-                    ], true)
+                leftStart with {X = leftStart.X + leftOffset},
+                [
+                    new LineSegment(leftEnd with {X = leftEnd.X + leftOffset}, true),
+                    new QuadraticBezierSegment(
+                        new Point(topLeftAnchor.X + leftOffset - backgroundOverdraw, topLeftAnchor.Y + topOffset - backgroundOverdraw),
+                        topStart with {Y = topStart.Y + topOffset}, true),
+                    new LineSegment(topEnd with {Y = topEnd.Y + topOffset}, true),
+                    new QuadraticBezierSegment(
+                        new Point(topRightAnchor.X - rightOffset + backgroundOverdraw, topRightAnchor.Y + topOffset - backgroundOverdraw),
+                        rightStart with {X = rightStart.X - rightOffset}, true),
+                    new LineSegment(rightEnd with {X = rightEnd.X - rightOffset}, true),
+                    new QuadraticBezierSegment(
+                        new Point(bottomRightAnchor.X - rightOffset + backgroundOverdraw, bottomRightAnchor.Y - bottomOffset + backgroundOverdraw),
+                        bottomStart with {Y = bottomStart.Y - bottomOffset}, true),
+                    new LineSegment(bottomEnd with {Y = bottomEnd.Y - bottomOffset}, true),
+                    new QuadraticBezierSegment(
+                        new Point(bottomLeftAnchor.X + leftOffset - backgroundOverdraw, bottomLeftAnchor.Y - bottomOffset + backgroundOverdraw),
+                        leftStart with {X = leftStart.X + leftOffset}, true),
+                ], true)
         ]));
 
-        drawingContext.DrawDrawing(background);
-        DrawingGroup aDrawingGroup = new DrawingGroup();
-        aDrawingGroup.Children.Add(leftDrawing);
-        aDrawingGroup.Children.Add(topDrawing);
-        aDrawingGroup.Children.Add(topLeftDrawing);
-        aDrawingGroup.Children.Add(rightDrawing);
-        aDrawingGroup.Children.Add(topRightDrawing);
-        aDrawingGroup.Children.Add(bottomDrawing);
-        aDrawingGroup.Children.Add(bottomRightDrawing);
-        aDrawingGroup.Children.Add(bottomLeftDrawing);
-        drawingContext.DrawDrawing(aDrawingGroup);
+        drawingGroup.Children.Add(background);
+
+        // Only draw edges if they have non-zero length
+        var hasLeft = Math.Abs(leftStart.Y - leftEnd.Y) > 0.01;
+        if (hasLeft)
+        {
+            var leftDrawing = new GeometryDrawing(
+                null,
+                pens.Left,
+                new LineGeometry(leftStart, leftEnd));
+            drawingGroup.Children.Add(leftDrawing);
+        }
+
+        var hasTop = Math.Abs(topStart.X - topEnd.X) > 0.01;
+        if (hasTop)
+        {
+            var topDrawing = new GeometryDrawing(
+                null,
+                pens.Top,
+                new LineGeometry(topStart, topEnd));
+            drawingGroup.Children.Add(topDrawing);
+        }
+
+        var hasRight = Math.Abs(rightStart.Y - rightEnd.Y) > 0.01;
+        if (hasRight)
+        {
+            var rightDrawing = new GeometryDrawing(
+                null,
+                pens.Right,
+                new LineGeometry(rightStart, rightEnd));
+            drawingGroup.Children.Add(rightDrawing);
+        }
+
+        var hasBottom = Math.Abs(bottomStart.X - bottomEnd.X) > 0.01;
+        if (hasBottom)
+        {
+            var bottomDrawing = new GeometryDrawing(
+                null,
+                pens.Bottom,
+                new LineGeometry(bottomStart, bottomEnd));
+            drawingGroup.Children.Add(bottomDrawing);
+        }
+
+        // Always draw corners
+        var topLeftDrawing = new GeometryDrawing(
+            null,
+            pens.TopLeft,
+            new PathGeometry([new PathFigure(topLeftStart, [new QuadraticBezierSegment(topLeftAnchor, topLeftEnd, true)], false)]));
+        drawingGroup.Children.Add(topLeftDrawing);
+
+        var topRightDrawing = new GeometryDrawing(
+            null,
+            pens.TopRight,
+            new PathGeometry([new PathFigure(topRightStart, [new QuadraticBezierSegment(topRightAnchor, topRightEnd, true)], false)]));
+        drawingGroup.Children.Add(topRightDrawing);
+
+        var bottomRightDrawing = new GeometryDrawing(
+            null,
+            pens.BottomRight,
+            new PathGeometry([new PathFigure(bottomRightStart, [new QuadraticBezierSegment(bottomRightAnchor, bottomRightEnd, true)], false)]));
+        drawingGroup.Children.Add(bottomRightDrawing);
+
+        var bottomLeftDrawing = new GeometryDrawing(
+            null,
+            pens.BottomLeft,
+            new PathGeometry([new PathFigure(bottomLeftStart, [new QuadraticBezierSegment(bottomLeftAnchor, bottomLeftEnd, true)], false)]));
+        drawingGroup.Children.Add(bottomLeftDrawing);
+
+        drawingContext.DrawDrawing(drawingGroup);
     }
 
-    private (Brush TopLeft, Brush TopRight, Brush BottomRight, Brush BottomLeft) GetCornerBrushes(SideBrushes sideBrushes, CornerStops cornerStops)
+    private static void AddUniqueGuideline(DoubleCollection guidelines, double value)
     {
-        var topLeftBrush = this.GetBrush(sideBrushes.Left, sideBrushes.Top, cornerStops.TopLeft, BottomLeft, TopRight, Corner.TopLeft);
-        var topRightBrush = this.GetBrush(sideBrushes.Top, sideBrushes.Right, cornerStops.TopRight, TopLeft, BottomRight, Corner.TopRight);
-        var bottomRightBrush = this.GetBrush(sideBrushes.Right, sideBrushes.Bottom, cornerStops.BottomRight, TopRight, BottomLeft, Corner.BottomRight);
-        var bottomLeftBrush = this.GetBrush(sideBrushes.Bottom, sideBrushes.Left, cornerStops.BottomLeft, BottomRight, TopLeft, Corner.BottomLeft);
-        return (topLeftBrush, topRightBrush, bottomRightBrush, bottomLeftBrush);
+        var rounded = Math.Round(value, 1); // Round to 0.1 precision
+        if (!guidelines.Contains(rounded))
+        {
+            guidelines.Add(rounded);
+        }
     }
 
-    private Brush GetBrush(Brush first, Brush second, Stops stops, Point firstPoint, Point secondPoint, Corner corner)
+    private Pens EnsurePens(Sides sides, DpiScale dpiScale)
+    {
+        var cornerBrushes = this.EnsureCornerBrushes(sides);
+        var dpiScaleFactor = (dpiScale.DpiScaleX + dpiScale.DpiScaleY) / 2;
+        // Cannot support non-uniform border thickness with current implementation.
+        this.pens ??= new Pens(
+            new Pen(sides.Left, RoundToDevicePixel(this.BorderThickness.Left, dpiScale.DpiScaleX))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(cornerBrushes.TopLeft, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(sides.Top, RoundToDevicePixel(this.BorderThickness.Top, dpiScale.DpiScaleY))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(cornerBrushes.TopRight, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(sides.Right, RoundToDevicePixel(this.BorderThickness.Right, dpiScale.DpiScaleX))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(cornerBrushes.BottomRight, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(sides.Bottom, RoundToDevicePixel(this.BorderThickness.Bottom, dpiScale.DpiScaleY))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            },
+            new Pen(cornerBrushes.BottomLeft, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
+            {
+                DashCap = PenLineCap.Flat,
+                StartLineCap = PenLineCap.Flat,
+                EndLineCap = PenLineCap.Flat
+            });
+
+        if (sides.Left?.IsFrozen ?? false)
+        {
+            this.pens.Left.Freeze();
+        }
+
+        this.pens.TopLeft?.Freeze();
+
+        if (sides.Top?.IsFrozen ?? false)
+        {
+            this.pens.Top.Freeze();
+        }
+
+        this.pens.TopRight?.Freeze();
+
+        if (sides.Right?.IsFrozen ?? false)
+        {
+            this.pens.Right.Freeze();
+        }
+
+        this.pens.BottomRight?.Freeze();
+
+        if (sides.Bottom?.IsFrozen ?? false)
+        {
+            this.pens.Bottom.Freeze();
+        }
+
+        this.pens.BottomLeft?.Freeze();
+
+        return this.pens;
+    }
+
+    private static void OnFreshRenderRequired(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is Border border)
+        {
+            border.ClearCache();
+        }
+    }
+
+    private static double RoundToDevicePixel(double value, double dpiScale)
+    {
+        return Math.Round(value * dpiScale) / dpiScale;
+    }
+
+    private void ClearCache()
+    {
+        this.pens = null;
+        this.cornerBrushes = null;
+    }
+
+    private Corners EnsureCornerBrushes(Sides sides)
+    {
+        if (this.cornerBrushes.HasValue)
+        {
+            return this.cornerBrushes.Value;
+        }
+
+        var topLeftBrush = this.GetCornerBrush(sides.Left, sides.Top, this.TopLeftStops, BottomLeft, TopRight, Corner.TopLeft);
+        topLeftBrush?.Freeze();
+        var topRightBrush = this.GetCornerBrush(sides.Top, sides.Right, this.TopRightStops, TopLeft, BottomRight, Corner.TopRight);
+        topRightBrush?.Freeze();
+        var bottomRightBrush = this.GetCornerBrush(sides.Right, sides.Bottom, this.BottomRightStops, TopRight, BottomLeft, Corner.BottomRight);
+        bottomRightBrush?.Freeze();
+        var bottomLeftBrush = this.GetCornerBrush(sides.Bottom, sides.Left, this.BottomLeftStops, BottomRight, TopLeft, Corner.BottomLeft);
+        bottomLeftBrush?.Freeze();
+        this.cornerBrushes = new(topLeftBrush, topRightBrush, bottomRightBrush, bottomLeftBrush);
+        return this.cornerBrushes.Value;
+    }
+
+    private Brush? GetCornerBrush(Brush? first, Brush? second, Stops stops, Point firstPoint, Point secondPoint, Corner corner)
     {
         switch ((first, second))
         {
             case (SolidColorBrush firstBrush1, SolidColorBrush secondBrush1):
-                return new LinearGradientBrush(
+                var startColor1 = firstBrush1.Color;
+                var endColor1 = secondBrush1.Color;
+                return (new LinearGradientBrush(
                     new GradientStopCollection([
-                        new GradientStop(firstBrush1.Color, 0),
-                        new GradientStop(firstBrush1.Color, stops.First),
-                        new GradientStop(secondBrush1.Color, stops.Second),
-                        new GradientStop(secondBrush1.Color, 1)
-                    ]), firstPoint, secondPoint);
+                        new GradientStop(startColor1, 0),
+                        new GradientStop(startColor1, stops.First),
+                        new GradientStop(endColor1, stops.Second),
+                        new GradientStop(endColor1, 1)
+                    ]), firstPoint, secondPoint));
             case (SolidColorBrush firstBrush2, LinearGradientBrush secondBrush2):
                 var reverseSecond2 = corner is Corner.TopLeft or Corner.TopRight;
                 var endColor2 = this.GetSecond(secondBrush2, reverseSecond2);
-                return new LinearGradientBrush(
+                var startColor2 = firstBrush2.Color;
+                return (new LinearGradientBrush(
                     new GradientStopCollection([
-                        new GradientStop(firstBrush2.Color, 0),
-                        new GradientStop(firstBrush2.Color, stops.First),
+                        new GradientStop(startColor2, 0),
+                        new GradientStop(startColor2, stops.First),
                         new GradientStop(endColor2, stops.Second),
                         new GradientStop(endColor2, 1)
-                    ]), firstPoint, secondPoint);
+                    ]), firstPoint, secondPoint));
             case (LinearGradientBrush firstBrush, SolidColorBrush secondBrush):
                 var reverseFirst3 = corner is Corner.TopRight or Corner.BottomRight;
-                var firstColor3 = this.GetFirst(firstBrush, reverseFirst3);
-                return new LinearGradientBrush(
+                var startColor3 = this.GetFirst(firstBrush, reverseFirst3);
+                var endColor3 = secondBrush.Color;
+                return (new LinearGradientBrush(
                     new GradientStopCollection([
-                        new GradientStop(firstColor3, 0),
-                        new GradientStop(firstColor3, stops.First),
-                        new GradientStop(secondBrush.Color, stops.Second),
-                        new GradientStop(secondBrush.Color, 1)
-                    ]), firstPoint, secondPoint);
+                        new GradientStop(startColor3, 0),
+                        new GradientStop(startColor3, stops.First),
+                        new GradientStop(endColor3, stops.Second),
+                        new GradientStop(endColor3, 1)
+                    ]), firstPoint, secondPoint));
             case (LinearGradientBrush firstBrush, LinearGradientBrush secondBrush):
                 var reverseFirst4 = corner is Corner.TopRight or Corner.BottomRight;
                 var reverseSecond4 = corner is Corner.TopLeft or Corner.TopRight;
-                var firstColor4 = this.GetFirst(firstBrush, reverseFirst4);
+                var startColor4 = this.GetFirst(firstBrush, reverseFirst4);
                 var endColor4 = this.GetSecond(secondBrush, reverseSecond4);
-                return new LinearGradientBrush(
+                return (new LinearGradientBrush(
                     new GradientStopCollection([
-                        new GradientStop(firstColor4, 0),
-                        new GradientStop(firstColor4, stops.First),
+                        new GradientStop(startColor4, 0),
+                        new GradientStop(startColor4, stops.First),
                         new GradientStop(endColor4, stops.Second),
                         new GradientStop(endColor4, 1)
-                    ]), firstPoint, secondPoint);
+                    ]), firstPoint, secondPoint));
+
         }
 
         return first;
@@ -242,6 +572,37 @@ public class Border : System.Windows.Controls.Border
         }
 
         return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
+    }
+
+    private readonly record struct Sides(Brush? Left, Brush? Top, Brush? Right, Brush? Bottom);
+
+    private readonly record struct Corners(Brush? TopLeft, Brush? TopRight, Brush? BottomRight, Brush? BottomLeft);
+
+    private sealed class Pens(
+        Pen left,
+        Pen topLeft,
+        Pen top,
+        Pen topRight,
+        Pen right,
+        Pen bottomRight,
+        Pen bottom,
+        Pen bottomLeft)
+    {
+        public Pen Left { get; } = left;
+
+        public Pen TopLeft { get; } = topLeft;
+
+        public Pen Top { get; } = top;
+
+        public Pen TopRight { get; } = topRight;
+
+        public Pen Right { get; } = right;
+
+        public Pen BottomRight { get; } = bottomRight;
+
+        public Pen Bottom { get; } = bottom;
+
+        public Pen BottomLeft { get; } = bottomLeft;
     }
 
     private enum Corner

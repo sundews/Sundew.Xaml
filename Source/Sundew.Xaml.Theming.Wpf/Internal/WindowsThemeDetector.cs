@@ -10,13 +10,13 @@ namespace Sundew.Xaml.Theming.Internal;
 using System;
 using Microsoft.Win32;
 
-internal class WindowsThemeDetector
+internal class WindowsThemeModeDetector
 {
     private const string PersonalizeKey = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
     private const string AppUseLightTheme = "AppsUseLightTheme";
     private const string SystemUsesLightTheme = "SystemUsesLightTheme";
 
-    public static ThemeModeVariant GetCurrentTheme()
+    public static ThemeModeVariant GetCurrentThemeMode()
     {
         try
         {
