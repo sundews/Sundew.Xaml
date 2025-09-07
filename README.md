@@ -1,7 +1,7 @@
 # Sundew.Xaml
 
 ## Controls:
-* Border - A custom four-sided border, allowing some control over corner transitions.
+* Border - A custom four-sided border, allowing more control over corner transitions.
 
 ### Examples:
 ![Examples](Source/Resources/Examples.png)
