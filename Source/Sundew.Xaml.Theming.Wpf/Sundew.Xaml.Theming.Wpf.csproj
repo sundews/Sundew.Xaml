@@ -6,6 +6,11 @@
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
   	<RootNamespace>Sundew.Xaml.Theming</RootNamespace>
+    <Description>Theme related functionality:
+- ThemeManager - control application theme and theme mode at runtime and optionally respond to system theme changes.
+- ResourceDctionaryBase - base class for resource dictionaries that support caching.
+- ThemeResourceDictionary and ThemeModeResourceDictionary cache-based resource dictionaries supporting theme or theme mode changed.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>

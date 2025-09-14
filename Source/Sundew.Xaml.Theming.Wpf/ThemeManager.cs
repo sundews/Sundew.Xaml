@@ -32,6 +32,7 @@ public sealed class ThemeManager : IThemeManager
     /// Initializes a new instance of the <see cref="ThemeManager" /> class.
     /// </summary>
     /// <param name="themes">The theme infos.</param>
+    /// <param name="autoApplySystemThemeMode">A value indicating whether the system theme should be applied.</param>
     public ThemeManager(ObservableCollection<Theme> themes, bool autoApplySystemThemeMode)
     {
         if (currentThemeManager != null)
@@ -60,16 +61,13 @@ public sealed class ThemeManager : IThemeManager
         get => field;
         set
         {
-            if (field == value)
-            {
-                return;
-            }
-
             field = value;
             if (field)
             {
                 SystemEvents.UserPreferenceChanged -= this.OnSystemEventsUserPreferenceChanged;
                 SystemEvents.UserPreferenceChanged += this.OnSystemEventsUserPreferenceChanged;
+
+                UpdateThemeMode(this.AppliedTheme?.Theme.ThemeModes ?? []);
             }
             else
             {
@@ -282,13 +280,13 @@ public sealed class ThemeManager : IThemeManager
 
     private bool UpdateThemeMode(IReadOnlyCollection<ThemeMode> themeModes)
     {
-        var newThemeModeInfo = this.GetThemeModeForSystem(themeModes);
-        if (newThemeModeInfo == null)
+        var newThemeMode = this.GetThemeModeForSystem(themeModes);
+        if (newThemeMode == null)
         {
             return false;
         }
 
-        return this.ChangeThemeMode(newThemeModeInfo);
+        return this.ApplyTheme(this.appliedTheme?.Theme, newThemeMode);
     }
 
     private ThemeMode? GetThemeModeForSystem(IReadOnlyCollection<ThemeMode> themeModes)
@@ -329,10 +327,5 @@ public sealed class ThemeManager : IThemeManager
         }
 
         return themeModes.FirstOrDefault();
-    }
-
-    void IThemeManager.ChangeTheme(Theme theme)
-    {
-        throw new NotImplementedException();
     }
 }
