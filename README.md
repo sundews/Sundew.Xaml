@@ -8,11 +8,11 @@
 
 ### Known issues/Todo:
 * CornerRadius 0 is not properly supported.
-* Only supports uniform Border thickness (How to immitate a variable sized Pen? when drawing borders)
+* Only supports uniform Border thickness (How to immitate a variable sized Pen when drawing borders?)
 * Port to WinUI, Avalonia, Maui?
 * Performance optimizations
 
 ## Theming:
-* ThemeManager - A theme manager with support for themes and theme modes.
+* ThemeManager - A theme manager with support for themes, theme modes and automatic synchronization with system theme.
 * ThemeResourceDictionary - A caching resource dictionary for managing themes.
 * ThemeModeResourceDictionary - A caching resource dictionary for managing theme modes.
