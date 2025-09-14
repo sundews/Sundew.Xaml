@@ -60,12 +60,6 @@ public class Border : System.Windows.Controls.Border
         BackgroundPen.Freeze();
     }
 
-    public Border()
-    {
-        this.UseLayoutRounding = true;
-        this.SnapsToDevicePixels = true;
-    }
-
     public SideBrushes? SideBrushes
     {
         get => new SideBrushes(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
