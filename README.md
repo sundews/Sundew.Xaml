@@ -16,3 +16,7 @@
 * ThemeManager - A theme manager with support for themes, theme modes and automatic synchronization with system theme.
 * ThemeResourceDictionary - A caching resource dictionary for managing themes.
 * ThemeModeResourceDictionary - A caching resource dictionary for managing theme modes.
+
+## Controls.Overlays:
+* OverlayWindow - A Window for overlays.
+* SubtitleOverlay - A Window for displaying subtitles.
