@@ -14,4 +14,11 @@
     <ProjectReference Include="..\Sundew.Xaml.Controls.Wpf\Sundew.Xaml.Controls.Wpf.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+    <PackageReference Include="Sundew.Packaging.Publish" Version="10.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+	</ItemGroup>
+
 </Project>
