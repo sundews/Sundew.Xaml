@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Overlays.Wpf\Sundew.Xaml.Controls.Overlays.Wpf.csproj" />
     <ProjectReference Include="..\Sundew.Xaml.Controls.Wpf\Sundew.Xaml.Controls.Wpf.csproj" />
   </ItemGroup>
 

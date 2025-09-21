@@ -142,11 +142,6 @@ public class Border : System.Windows.Controls.Border
 
     protected override void OnRender(DrawingContext drawingContext)
     {
-        if (this.LeftBrush == null && this.TopBrush == null && this.RightBrush == null && this.BottomBrush == null)
-        {
-            return;
-        }
-
         var sidesBrushes = new Sides(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
         var dpiScale = VisualTreeHelper.GetDpi(this);
         var dpiScaleX = dpiScale.DpiScaleX;
