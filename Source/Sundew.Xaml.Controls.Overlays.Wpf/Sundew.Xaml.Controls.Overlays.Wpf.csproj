@@ -6,6 +6,8 @@
     <UseWPF>true</UseWPF>
 		<RootNamespace>Sundew.Xaml.Controls.Overlays</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Description>Enables creating overlay windows, such as subtitles.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>
