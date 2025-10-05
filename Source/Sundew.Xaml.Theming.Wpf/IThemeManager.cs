@@ -31,7 +31,7 @@ public interface IThemeManager : INotifyPropertyChanged
     Theme? CurrentTheme { get; set; }
 
     /// <summary>
-    /// Get a value indicating whether the theme mode should be automatically updated when the system theme mode changes.
+    /// Gets or sets a value indicating whether the theme mode should be automatically updated when the system theme mode changes.
     /// </summary>
     bool AutoApplySystemThemeMode { get; set; }
 
@@ -44,12 +44,12 @@ public interface IThemeManager : INotifyPropertyChanged
     ObservableCollection<Theme> Themes { get; }
 
     /// <summary>
-    /// The applied theme.
+    /// Gets the applied theme.
     /// </summary>
     AppliedTheme? AppliedTheme { get; }
 
     /// <summary>
-    /// The applied theme mode.
+    /// Gets the applied theme mode.
     /// </summary>
     AppliedThemeMode? AppliedThemeMode { get; }
 

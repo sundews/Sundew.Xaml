@@ -1,14 +1,26 @@
-﻿namespace Sundew.Xaml.Controls.Overlays;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="OverlayWindow.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Sundew.Xaml.Controls.Overlays;
 
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
+/// <summary>
+/// A transparent overlay window.
+/// </summary>
 public class OverlayWindow : Window
 {
+#pragma warning disable SA1310
     private const int WS_EX_TRANSPARENT = 0x00000020;
     private const int GWL_EXSTYLE = -20;
     private const int WS_EX_LAYERED = 0x80000;
+#pragma warning restore SA1310
 
     [DllImport("user32.dll")]
     private static extern int GetWindowLong(nint hwnd, int index);
@@ -18,11 +30,18 @@ public class OverlayWindow : Window
 
     private readonly Window? ownerWindow;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OverlayWindow"/> class.
+    /// </summary>
     public OverlayWindow()
     {
         this.ConfigureWindow();
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OverlayWindow"/> class.
+    /// </summary>
+    /// <param name="ownerWindow">The owner window.</param>
     public OverlayWindow(Window ownerWindow)
     {
         this.ownerWindow = ownerWindow;

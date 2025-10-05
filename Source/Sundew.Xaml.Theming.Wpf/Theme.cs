@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ThemeInfo.cs" company="Sundews">
+// <copyright file="Theme.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
@@ -76,14 +76,6 @@ public sealed class Theme
     public IReadOnlyCollection<ThemeMode> ThemeModes { get; }
 
     /// <summary>
-    /// Gets the theme.
-    /// </summary>
-    /// <value>
-    /// The theme.
-    /// </value>
-    public SystemResourceDictionary CreateTheme() => this.themeFactory();
-
-    /// <summary>
     /// Gets a <see cref="Theme"/> from the specified type.
     /// </summary>
     /// <typeparam name="TTheme">The type of the theme.</typeparam>
@@ -94,6 +86,12 @@ public sealed class Theme
     {
         return new Theme(typeof(TTheme), themeModes);
     }
+
+    /// <summary>
+    /// Gets the theme.
+    /// </summary>
+    /// <returns>The theme.</returns>
+    public SystemResourceDictionary CreateTheme() => this.themeFactory();
 
     /// <summary>
     /// Returns a <see cref="string" /> that represents this instance.

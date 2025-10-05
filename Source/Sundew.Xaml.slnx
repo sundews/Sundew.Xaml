@@ -1,14 +1,19 @@
 <Solution>
-  <Folder Name="/SolutionItems/">
+  <Folder Name="/Build/">
     <File Path="../.github/dependabot.yml" />
     <File Path="../.github/workflows/dotnet.yml" />
     <File Path=".editorconfig" />
+    <File Path="Build/stylecop.json" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/Build/Development/">
+    <File Path="Build/Development/stylecop.json" />
   </Folder>
   <Project Path="Sundew.Xaml.Controls.Overlays.Wpf/Sundew.Xaml.Controls.Overlays.Wpf.csproj" Id="47d1821f-414d-4473-bfa2-328cbd5f3fe6" />
   <Project Path="Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj" />
-  <Project Path="Sundew.Xaml.Tests/Sundew.Xaml.Wpf.Tests.csproj" Id="b5cfddc3-ecfe-4de4-885a-167cf8884102" />
+  <Project Path="Sundew.Xaml.Development.Tests/Sundew.Xaml.Wpf.Development.Tests.csproj" Id="b5cfddc3-ecfe-4de4-885a-167cf8884102" />
   <Project Path="Sundew.Xaml.Theming.Wpf/Sundew.Xaml.Theming.Wpf.csproj" />
-  <Project Path="Sundew.Xaml.Wpf.Tester/Sundew.Xaml.Wpf.Tester.csproj" />
+  <Project Path="Sundew.Xaml.Wpf.Development.Tester/Sundew.Xaml.Wpf.Development.Tester.csproj" />
 </Solution>

@@ -1,8 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
 	  <TargetFrameworks>net9.0-windows;net8.0-windows;net6.0-windows;net48</TargetFrameworks>
-    <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
   	<RootNamespace>Sundew.Xaml.Theming</RootNamespace>
@@ -14,16 +13,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IndexRange" Version="1.1.0" Condition="'$(TargetFramework)' == 'net48'" />
-    <PackageReference Include="PolySharp" Version="1.15.0" Condition="'$(TargetFramework)' == 'net48'">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Sundew.DiscriminatedUnions" Version="5.3.9-u20250427-204829-ci" />
-    <PackageReference Include="Sundew.Packaging.Publish" Version="10.0.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-	</ItemGroup>
+		<PackageReference Include="Sundew.DiscriminatedUnions" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="IndexRange" />
+  </ItemGroup>
 
 </Project>

@@ -1,31 +1,15 @@
-﻿namespace Sundew.Xaml.Wpf.Tester;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SubtitleDemo.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Sundew.Xaml.Wpf.Development.Tester;
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows;
-using System.Windows.Data;
 using System.Windows.Threading;
-using Sundew.Xaml.Controls.Overlays;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window
-{
-    private readonly DispatcherTimer dispatcherTimer;
-
-    public MainWindow()
-    {
-        this.InitializeComponent();
-        var overlayDemo = new SubtitleOverlay(this) { DataContext = new SubtitleDemo(), IsSizeAnimationEnabled = true, CornerRadius = new CornerRadius(64), FontSize = 64 };
-        var binding = new Binding(nameof(SubtitleDemo.CurrentText));
-        overlayDemo.SetBinding(SubtitleOverlay.SubtitleProperty, binding);
-        overlayDemo.Show();
-        this.dispatcherTimer = new DispatcherTimer(TimeSpan.FromSeconds(9), DispatcherPriority.DataBind,
-            (sender, args) => overlayDemo.IsSizeAnimationEnabled = !overlayDemo.IsSizeAnimationEnabled, Dispatcher.CurrentDispatcher);
-        this.Closed += (s, e) => this.dispatcherTimer.Stop();
-    }
-}
 
 public class SubtitleDemo : INotifyPropertyChanged
 {
@@ -55,18 +39,18 @@ This style makes the window transparent to mouse events",
         };
 
         this.timer = new DispatcherTimer(
-        TimeSpan.FromMilliseconds(3000),
-        DispatcherPriority.DataBind,
-        (sender, args) =>
-        {
-            if (this.messageIndex >= messages.Length)
+            TimeSpan.FromMilliseconds(3000),
+            DispatcherPriority.DataBind,
+            (sender, args) =>
             {
-                this.messageIndex = 0;
-            }
+                if (this.messageIndex >= messages.Length)
+                {
+                    this.messageIndex = 0;
+                }
 
-            this.CurrentText = messages[this.messageIndex++];
-        },
-        Dispatcher.CurrentDispatcher);
+                this.CurrentText = messages[this.messageIndex++];
+            },
+            Dispatcher.CurrentDispatcher);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -90,7 +74,7 @@ This style makes the window transparent to mouse events",
         }
 
         field = value;
-        OnPropertyChanged(propertyName);
+        this.OnPropertyChanged(propertyName);
         return true;
     }
 }

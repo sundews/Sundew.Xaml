@@ -5,7 +5,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Sundew.Xaml.Wpf.Tests;
+namespace Sundew.Xaml.Wpf.Development.Tests;
 
 using System;
 using System.Linq;

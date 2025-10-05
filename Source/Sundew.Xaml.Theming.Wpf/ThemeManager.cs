@@ -23,7 +23,11 @@ using Application = System.Windows.Application;
 /// <seealso cref="System.ComponentModel.INotifyPropertyChanged" />
 public sealed class ThemeManager : IThemeManager
 {
+    /// <summary>
+    /// The theme refresh event field.
+    /// </summary>
     public static readonly RoutedEvent ThemeRefreshEvent = EventManager.RegisterRoutedEvent("ThemeRefresh", RoutingStrategy.Direct, typeof(EventHandler), typeof(ThemeManager));
+
     private static ThemeManager? currentThemeManager;
     private AppliedTheme? appliedTheme;
     private AppliedThemeMode? appliedThemeMode;
@@ -42,7 +46,7 @@ public sealed class ThemeManager : IThemeManager
 
         currentThemeManager = this;
         this.Themes = themes;
-        AutoApplySystemThemeMode = autoApplySystemThemeMode;
+        this.AutoApplySystemThemeMode = autoApplySystemThemeMode;
     }
 
     /// <summary>
@@ -56,6 +60,15 @@ public sealed class ThemeManager : IThemeManager
     /// <summary>Occurs when the theme has changed.</summary>
     public event EventHandler<ThemeUpdateEventArgs>? ThemeChanged;
 
+    /// <summary>
+    /// Gets the current theme manager.
+    /// </summary>
+    public static ThemeManager? Current => currentThemeManager;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the system theme mode is automatically applied in response to operating
+    /// system changes.
+    /// </summary>
     public bool AutoApplySystemThemeMode
     {
         get => field;
@@ -67,7 +80,7 @@ public sealed class ThemeManager : IThemeManager
                 SystemEvents.UserPreferenceChanged -= this.OnSystemEventsUserPreferenceChanged;
                 SystemEvents.UserPreferenceChanged += this.OnSystemEventsUserPreferenceChanged;
 
-                UpdateThemeMode(this.AppliedTheme?.Theme.ThemeModes ?? []);
+                this.UpdateThemeMode(this.AppliedTheme?.Theme.ThemeModes ?? []);
             }
             else
             {
@@ -85,12 +98,12 @@ public sealed class ThemeManager : IThemeManager
     public ObservableCollection<Theme> Themes { get; }
 
     /// <summary>
-    /// The applied theme.
+    /// Gets the applied theme.
     /// </summary>
     public AppliedTheme? AppliedTheme => this.appliedTheme;
 
     /// <summary>
-    /// The applied theme mode.
+    /// Gets the applied theme mode.
     /// </summary>
     public AppliedThemeMode? AppliedThemeMode => this.appliedThemeMode;
 
@@ -128,9 +141,24 @@ public sealed class ThemeManager : IThemeManager
     }
 
     /// <summary>
-    /// Gets the current theme manager.
+    /// Adds the theme refresh handler.
     /// </summary>
-    public static ThemeManager? Current => currentThemeManager;
+    /// <param name="element">The element.</param>
+    /// <param name="handler">The handler.</param>
+    public static void AddThemeRefreshHandler(UIElement element, EventHandler handler)
+    {
+        element.AddHandler(ThemeRefreshEvent, handler);
+    }
+
+    /// <summary>
+    /// Removes the theme refresh handler.
+    /// </summary>
+    /// <param name="element">The element.</param>
+    /// <param name="handler">The handler.</param>
+    public static void RemoveThemeRefreshHandler(UIElement element, EventHandler handler)
+    {
+        element.RemoveHandler(ThemeRefreshEvent, handler);
+    }
 
     /// <summary>
     /// Applies the specified theme.
@@ -184,6 +212,7 @@ public sealed class ThemeManager : IThemeManager
     /// Applies the specified theme mode.
     /// </summary>
     /// <param name="themeMode">The theme mode.</param>
+    /// <returns><c>true</c>, if the theme mode was applied, otherwise <c>false</c>.</returns>
     public bool ChangeThemeMode(ThemeMode themeMode)
     {
         this.AutoApplySystemThemeMode = false;
@@ -248,26 +277,6 @@ public sealed class ThemeManager : IThemeManager
         this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    /// <summary>
-    /// Adds the theme refresh handler.
-    /// </summary>
-    /// <param name="element">The element.</param>
-    /// <param name="handler">The handler.</param>
-    public static void AddThemeRefreshHandler(UIElement element, EventHandler handler)
-    {
-        element.AddHandler(ThemeRefreshEvent, handler);
-    }
-
-    /// <summary>
-    /// Removes the theme refresh handler.
-    /// </summary>
-    /// <param name="element">The element.</param>
-    /// <param name="handler">The handler.</param>
-    public static void RemoveThemeRefreshHandler(UIElement element, EventHandler handler)
-    {
-        element.RemoveHandler(ThemeRefreshEvent, handler);
-    }
-
     private void OnSystemEventsUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category == UserPreferenceCategory.General ||
@@ -300,7 +309,7 @@ public sealed class ThemeManager : IThemeManager
     {
         foreach (Window window in Application.Current.Windows)
         {
-            RefreshTheme(window);
+            this.RefreshTheme(window);
         }
     }
 

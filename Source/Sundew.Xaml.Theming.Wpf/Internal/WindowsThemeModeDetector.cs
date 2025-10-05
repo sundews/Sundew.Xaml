@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="WindowsThemeDetector.cs" company="Sundews">
+// <copyright file="WindowsThemeModeDetector.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
@@ -10,6 +10,11 @@ namespace Sundew.Xaml.Theming.Internal;
 using System;
 using Microsoft.Win32;
 
+/// <summary>
+/// Provides functionality to detect the current Windows theme mode preference for applications.
+/// </summary>
+/// <remarks>This class reads the user's theme preference from the Windows registry to determine whether the system is configured to use a light or dark theme for applications.
+/// It is intended for use on Windows platforms that support theme personalization. The class does not support other operating systems.</remarks>
 internal class WindowsThemeModeDetector
 {
     private const string PersonalizeKey = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";

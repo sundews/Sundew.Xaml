@@ -1,8 +1,18 @@
-﻿namespace Sundew.Xaml.Controls;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Border.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Sundew.Xaml.Controls;
 
 using System.Windows;
 using System.Windows.Media;
 
+/// <summary>
+/// Provides a border control that supports independently customizable brushes and gradient stops for each side and corner, enabling advanced border rendering scenarios beyond the standard Border control.
+/// </summary>
 public class Border : System.Windows.Controls.Border
 {
     private static readonly Point TopRight = new Point(1, 0);
@@ -12,44 +22,64 @@ public class Border : System.Windows.Controls.Border
     private static readonly Pen BackgroundPen = new Pen(null, 0);
     private static readonly Stops DefaultStops = new Stops(0.2, 0.8);
 
+    /// <summary>
+    /// Identifies the LeftBrush dependency property.
+    /// </summary>
     public static readonly DependencyProperty LeftBrushProperty = DependencyProperty.Register(
         nameof(LeftBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the TopBrush dependency property.
+    /// </summary>
     public static readonly DependencyProperty TopBrushProperty = DependencyProperty.Register(
         nameof(TopBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the RightBrush dependency property.
+    /// </summary>
     public static readonly DependencyProperty RightBrushProperty = DependencyProperty.Register(
         nameof(RightBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the BottomBrush dependency property.
+    /// </summary>
     public static readonly DependencyProperty BottomBrushProperty = DependencyProperty.Register(
         nameof(BottomBrush), typeof(Brush), typeof(Border), new FrameworkPropertyMetadata(default(Brush), FrameworkPropertyMetadataOptions.AffectsRender, OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the TopLeftStops dependency property.
+    /// </summary>
     public static readonly DependencyProperty TopLeftStopsProperty = DependencyProperty.Register(
         nameof(TopLeftStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
             DefaultStops,
-            FrameworkPropertyMetadataOptions.AffectsMeasure |
-            FrameworkPropertyMetadataOptions.AffectsRender,
+            FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
             OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the TopRightStops dependency property.
+    /// </summary>
     public static readonly DependencyProperty TopRightStopsProperty = DependencyProperty.Register(
         nameof(TopRightStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
             DefaultStops,
-            FrameworkPropertyMetadataOptions.AffectsMeasure |
-            FrameworkPropertyMetadataOptions.AffectsRender,
+            FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
             OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the BottomRightStops dependency property.
+    /// </summary>
     public static readonly DependencyProperty BottomRightStopsProperty = DependencyProperty.Register(
         nameof(BottomRightStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
             DefaultStops,
-            FrameworkPropertyMetadataOptions.AffectsMeasure |
-            FrameworkPropertyMetadataOptions.AffectsRender,
+            FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
             OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the BottomLeftStops dependency property.
+    /// </summary>
     public static readonly DependencyProperty BottomLeftStopsProperty = DependencyProperty.Register(
         nameof(BottomLeftStops), typeof(Stops), typeof(Border), new FrameworkPropertyMetadata(
             DefaultStops,
-            FrameworkPropertyMetadataOptions.AffectsMeasure |
-            FrameworkPropertyMetadataOptions.AffectsRender,
+            FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
             OnFreshRenderRequired));
 
     private Pens? pens = null;
@@ -60,6 +90,9 @@ public class Border : System.Windows.Controls.Border
         BackgroundPen.Freeze();
     }
 
+    /// <summary>
+    /// Gets or sets the side brushes.
+    /// </summary>
     public SideBrushes? SideBrushes
     {
         get => new SideBrushes(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
@@ -81,6 +114,9 @@ public class Border : System.Windows.Controls.Border
         }
     }
 
+    /// <summary>
+    /// Gets or sets the corner stops.
+    /// </summary>
     public CornerStops CornerStops
     {
         get => new(this.TopLeftStops, this.TopRightStops, this.BottomRightStops, this.BottomLeftStops);
@@ -93,53 +129,82 @@ public class Border : System.Windows.Controls.Border
         }
     }
 
+    /// <summary>
+    /// Gets or sets the brush for the left side of the border.
+    /// </summary>
     public Brush? LeftBrush
     {
         get => (Brush?)this.GetValue(LeftBrushProperty);
         set => this.SetValue(LeftBrushProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the brush for the top of the border.
+    /// </summary>
     public Brush? TopBrush
     {
         get => (Brush?)this.GetValue(TopBrushProperty);
         set => this.SetValue(TopBrushProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the brush for the right side of the border.
+    /// </summary>
     public Brush? RightBrush
     {
         get => (Brush?)this.GetValue(RightBrushProperty);
         set => this.SetValue(RightBrushProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the brush for the bottom of the border.
+    /// </summary>
     public Brush? BottomBrush
     {
         get => (Brush?)this.GetValue(BottomBrushProperty);
         set => this.SetValue(BottomBrushProperty, value);
     }
+
+    /// <summary>
+    /// Gets or sets the gradient stops for the top-left corner.
+    /// </summary>
     public Stops TopLeftStops
     {
         get => (Stops)this.GetValue(TopLeftStopsProperty);
         set => this.SetValue(TopLeftStopsProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the gradient stops for the top-right corner.
+    /// </summary>
     public Stops TopRightStops
     {
         get => (Stops)this.GetValue(TopRightStopsProperty);
         set => this.SetValue(TopRightStopsProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the gradient stops for the bottom-right corner.
+    /// </summary>
     public Stops BottomRightStops
     {
         get => (Stops)this.GetValue(BottomRightStopsProperty);
         set => this.SetValue(BottomRightStopsProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the gradient stops for the bottom-left corner.
+    /// </summary>
     public Stops BottomLeftStops
     {
         get => (Stops)this.GetValue(BottomLeftStopsProperty);
         set => this.SetValue(BottomLeftStopsProperty, value);
     }
 
+    /// <summary>
+    /// Renders the border.
+    /// </summary>
+    /// <param name="drawingContext">The drawing context.</param>
     protected override void OnRender(DrawingContext drawingContext)
     {
         var sidesBrushes = new Sides(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
@@ -167,7 +232,6 @@ public class Border : System.Windows.Controls.Border
         var topRightRadius = RoundToDevicePixel(this.CornerRadius.TopRight, Math.Min(dpiScaleX, dpiScaleY));
         var bottomRightRadius = RoundToDevicePixel(this.CornerRadius.BottomRight, Math.Min(dpiScaleX, dpiScaleY));
         var bottomLeftRadius = RoundToDevicePixel(this.CornerRadius.BottomLeft, Math.Min(dpiScaleX, dpiScaleY));
-
 
         var maxWidthOrHeight = Math.Min(actualWidth, actualHeight) / 2;
         var maxTopLeft = RoundToDevicePixel(Math.Min(Math.Max(topLeftRadius, Math.Max(topThickness, leftThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
@@ -248,7 +312,7 @@ public class Border : System.Windows.Controls.Border
         AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeLeft);
         AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeRight);
 
-        // Add Y guidelines for all horizontal edges  
+        // Add Y guidelines for all horizontal edges
         AddUniqueGuideline(guidelines.GuidelinesY, topOffset);
         AddUniqueGuideline(guidelines.GuidelinesY, bottom);
         AddUniqueGuideline(guidelines.GuidelinesY, leftEdgeTop);
@@ -263,25 +327,21 @@ public class Border : System.Windows.Controls.Border
         var background = new GeometryDrawing(this.Background, BackgroundPen, new PathGeometry(
         [
             new PathFigure(
-                leftStart with {X = leftStart.X + leftOffset},
+                leftStart with { X = leftStart.X + leftOffset },
                 [
-                    new LineSegment(leftEnd with {X = leftEnd.X + leftOffset}, true),
+                    new LineSegment(leftEnd with { X = leftEnd.X + leftOffset }, true),
                     new QuadraticBezierSegment(
-                        new Point(topLeftAnchor.X + leftOffset - backgroundOverdraw, topLeftAnchor.Y + topOffset - backgroundOverdraw),
-                        topStart with {Y = topStart.Y + topOffset}, true),
-                    new LineSegment(topEnd with {Y = topEnd.Y + topOffset}, true),
+                        new Point(topLeftAnchor.X + leftOffset - backgroundOverdraw, topLeftAnchor.Y + topOffset - backgroundOverdraw),                        topStart with { Y = topStart.Y + topOffset }, true),
+                    new LineSegment(topEnd with { Y = topEnd.Y + topOffset }, true),
                     new QuadraticBezierSegment(
-                        new Point(topRightAnchor.X - rightOffset + backgroundOverdraw, topRightAnchor.Y + topOffset - backgroundOverdraw),
-                        rightStart with {X = rightStart.X - rightOffset}, true),
-                    new LineSegment(rightEnd with {X = rightEnd.X - rightOffset}, true),
+                        new Point(topRightAnchor.X - rightOffset + backgroundOverdraw, topRightAnchor.Y + topOffset - backgroundOverdraw), rightStart with { X = rightStart.X - rightOffset }, true),
+                    new LineSegment(rightEnd with { X = rightEnd.X - rightOffset }, true),
                     new QuadraticBezierSegment(
-                        new Point(bottomRightAnchor.X - rightOffset + backgroundOverdraw, bottomRightAnchor.Y - bottomOffset + backgroundOverdraw),
-                        bottomStart with {Y = bottomStart.Y - bottomOffset}, true),
-                    new LineSegment(bottomEnd with {Y = bottomEnd.Y - bottomOffset}, true),
+                        new Point(bottomRightAnchor.X - rightOffset + backgroundOverdraw, bottomRightAnchor.Y - bottomOffset + backgroundOverdraw), bottomStart with { Y = bottomStart.Y - bottomOffset }, true),
+                    new LineSegment(bottomEnd with { Y = bottomEnd.Y - bottomOffset }, true),
                     new QuadraticBezierSegment(
-                        new Point(bottomLeftAnchor.X + leftOffset - backgroundOverdraw, bottomLeftAnchor.Y - bottomOffset + backgroundOverdraw),
-                        leftStart with {X = leftStart.X + leftOffset}, true),
-                ], true)
+                        new Point(bottomLeftAnchor.X + leftOffset - backgroundOverdraw, bottomLeftAnchor.Y - bottomOffset + backgroundOverdraw), leftStart with { X = leftStart.X + leftOffset }, true),],
+                true)
         ]));
 
         drawingGroup.Children.Add(background);
@@ -364,59 +424,73 @@ public class Border : System.Windows.Controls.Border
         }
     }
 
+    private static void OnFreshRenderRequired(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is Border border)
+        {
+            border.ClearCache();
+        }
+    }
+
+    private static double RoundToDevicePixel(double value, double dpiScale)
+    {
+        return Math.Round(value * dpiScale) / dpiScale;
+    }
+
     private Pens EnsurePens(Sides sides, DpiScale dpiScale)
     {
         var cornerBrushes = this.EnsureCornerBrushes(sides);
         var dpiScaleFactor = (dpiScale.DpiScaleX + dpiScale.DpiScaleY) / 2;
+
         // Cannot support non-uniform border thickness with current implementation.
         this.pens ??= new Pens(
             new Pen(sides.Left, RoundToDevicePixel(this.BorderThickness.Left, dpiScale.DpiScaleX))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(cornerBrushes.TopLeft, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(sides.Top, RoundToDevicePixel(this.BorderThickness.Top, dpiScale.DpiScaleY))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(cornerBrushes.TopRight, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(sides.Right, RoundToDevicePixel(this.BorderThickness.Right, dpiScale.DpiScaleX))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(cornerBrushes.BottomRight, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(sides.Bottom, RoundToDevicePixel(this.BorderThickness.Bottom, dpiScale.DpiScaleY))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             },
             new Pen(cornerBrushes.BottomLeft, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
             {
                 DashCap = PenLineCap.Flat,
                 StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat
+                EndLineCap = PenLineCap.Flat,
             });
 
         if (sides.Left?.IsFrozen ?? false)
@@ -448,19 +522,6 @@ public class Border : System.Windows.Controls.Border
         this.pens.BottomLeft?.Freeze();
 
         return this.pens;
-    }
-
-    private static void OnFreshRenderRequired(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is Border border)
-        {
-            border.ClearCache();
-        }
-    }
-
-    private static double RoundToDevicePixel(double value, double dpiScale)
-    {
-        return Math.Round(value * dpiScale) / dpiScale;
     }
 
     private void ClearCache()
@@ -495,48 +556,54 @@ public class Border : System.Windows.Controls.Border
             case (SolidColorBrush firstBrush1, SolidColorBrush secondBrush1):
                 var startColor1 = firstBrush1.Color;
                 var endColor1 = secondBrush1.Color;
-                return (new LinearGradientBrush(
+                return new LinearGradientBrush(
                     new GradientStopCollection([
                         new GradientStop(startColor1, 0),
                         new GradientStop(startColor1, stops.First),
                         new GradientStop(endColor1, stops.Second),
                         new GradientStop(endColor1, 1)
-                    ]), firstPoint, secondPoint));
+                    ]),
+                    firstPoint,
+                    secondPoint);
             case (SolidColorBrush firstBrush2, LinearGradientBrush secondBrush2):
                 var reverseSecond2 = corner is Corner.TopLeft or Corner.TopRight;
                 var endColor2 = this.GetSecond(secondBrush2, reverseSecond2);
                 var startColor2 = firstBrush2.Color;
-                return (new LinearGradientBrush(
+                return new LinearGradientBrush(
                     new GradientStopCollection([
                         new GradientStop(startColor2, 0),
                         new GradientStop(startColor2, stops.First),
                         new GradientStop(endColor2, stops.Second),
-                        new GradientStop(endColor2, 1)
-                    ]), firstPoint, secondPoint));
+                        new GradientStop(endColor2, 1)]),
+                    firstPoint,
+                    secondPoint);
             case (LinearGradientBrush firstBrush, SolidColorBrush secondBrush):
                 var reverseFirst3 = corner is Corner.TopRight or Corner.BottomRight;
                 var startColor3 = this.GetFirst(firstBrush, reverseFirst3);
                 var endColor3 = secondBrush.Color;
-                return (new LinearGradientBrush(
+                return new LinearGradientBrush(
                     new GradientStopCollection([
                         new GradientStop(startColor3, 0),
                         new GradientStop(startColor3, stops.First),
                         new GradientStop(endColor3, stops.Second),
                         new GradientStop(endColor3, 1)
-                    ]), firstPoint, secondPoint));
+                    ]),
+                    firstPoint,
+                    secondPoint);
             case (LinearGradientBrush firstBrush, LinearGradientBrush secondBrush):
                 var reverseFirst4 = corner is Corner.TopRight or Corner.BottomRight;
                 var reverseSecond4 = corner is Corner.TopLeft or Corner.TopRight;
                 var startColor4 = this.GetFirst(firstBrush, reverseFirst4);
                 var endColor4 = this.GetSecond(secondBrush, reverseSecond4);
-                return (new LinearGradientBrush(
+                return new LinearGradientBrush(
                     new GradientStopCollection([
                         new GradientStop(startColor4, 0),
                         new GradientStop(startColor4, stops.First),
                         new GradientStop(endColor4, stops.Second),
                         new GradientStop(endColor4, 1)
-                    ]), firstPoint, secondPoint));
-
+                    ]),
+                    firstPoint,
+                    secondPoint);
         }
 
         return first;
@@ -550,7 +617,6 @@ public class Border : System.Windows.Controls.Border
         }
 
         return brush.GradientStops.Count > 0 ? brush.GradientStops[0].Color : Colors.Transparent;
-
     }
 
     private Color GetSecond(LinearGradientBrush brush, bool reverse)
@@ -561,6 +627,14 @@ public class Border : System.Windows.Controls.Border
         }
 
         return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
+    }
+
+    private enum Corner
+    {
+        TopLeft,
+        TopRight,
+        BottomRight,
+        BottomLeft,
     }
 
     private readonly record struct Sides(Brush? Left, Brush? Top, Brush? Right, Brush? Bottom);
@@ -592,13 +666,5 @@ public class Border : System.Windows.Controls.Border
         public Pen Bottom { get; } = bottom;
 
         public Pen BottomLeft { get; } = bottomLeft;
-    }
-
-    private enum Corner
-    {
-        TopLeft,
-        TopRight,
-        BottomRight,
-        BottomLeft,
     }
 }

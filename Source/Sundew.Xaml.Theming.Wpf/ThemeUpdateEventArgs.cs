@@ -30,24 +30,27 @@ public sealed class ThemeUpdateEventArgs : EventArgs
     }
 
     /// <summary>
-    /// The old theme.
+    /// Gets the old theme.
     /// </summary>
     public Theme? OldTheme { get; }
 
     /// <summary>
-    /// The new theme.
+    /// Gets the new theme.
     /// </summary>
     public Theme NewTheme { get; }
 
     /// <summary>
-    /// The old theme mode.
+    /// Gets the old theme mode.
     /// </summary>
     public ThemeMode? OldThemeMode { get; }
 
     /// <summary>
-    /// The new theme mode.s
+    /// Gets the new theme mode.
     /// </summary>
     public ThemeMode NewThemeMode { get; }
 
+    /// <summary>
+    /// Gets the type of theme change that occurred.
+    /// </summary>
     public ThemeChangeType ChangeType { get; }
 }

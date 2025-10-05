@@ -1,17 +1,41 @@
-﻿namespace Sundew.Xaml.Controls.Overlays;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SubtitleOverlay.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Sundew.Xaml.Controls.Overlays;
+
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 
+/// <summary>
+/// A subtitle overlay window.
+/// </summary>
 [TemplatePart(Name = PART_Border, Type = typeof(Border))]
 public class SubtitleOverlay : OverlayWindow
 {
-    private const string PART_Border = "PART_Border";
-    private const string AnimateSizeStoryboard = nameof(AnimateSizeStoryboard);
-
+    /// <summary>
+    /// Identifies the <see cref="CornerRadius"/> dependency property.
+    /// </summary>
     public static readonly DependencyProperty CornerRadiusProperty;
+
+    /// <summary>
+    /// Identifies the <see cref="Subtitle"/> dependency property.
+    /// </summary>
     public static readonly DependencyProperty SubtitleProperty = DependencyProperty.Register(nameof(Subtitle), typeof(string), typeof(SubtitleOverlay));
+
+    /// <summary>
+    /// Identifies the <see cref="IsSizeAnimationEnabled"/> dependency property.
+    /// </summary>
     public static readonly DependencyProperty IsSizeAnimationEnabledProperty = DependencyProperty.Register(nameof(IsSizeAnimationEnabled), typeof(bool), typeof(SubtitleOverlay), new FrameworkPropertyMetadata(false, IsAnimationEnabledChanged));
+
+#pragma warning disable SA1310
+    private const string PART_Border = "PART_Border";
+#pragma warning restore SA1310
+    private const string AnimateSizeStoryboard = nameof(AnimateSizeStoryboard);
 
     private EventTrigger? sizeAnimationEventTrigger;
 
@@ -21,33 +45,52 @@ public class SubtitleOverlay : OverlayWindow
         CornerRadiusProperty = Border.CornerRadiusProperty.AddOwner(typeof(SubtitleOverlay));
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitleOverlay"/> class.
+    /// </summary>
     public SubtitleOverlay()
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitleOverlay"/> class.
+    /// </summary>
+    /// <param name="ownerWindow">The owner window.</param>
     public SubtitleOverlay(Window ownerWindow)
         : base(ownerWindow)
     {
     }
 
+    /// <summary>
+    /// Gets or sets the corner radius.
+    /// </summary>
     public CornerRadius CornerRadius
     {
         get => (CornerRadius)this.GetValue(CornerRadiusProperty);
         set => this.SetValue(CornerRadiusProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the subtitle.
+    /// </summary>
     public string? Subtitle
     {
         get => (string?)this.GetValue(SubtitleProperty);
         set => this.SetValue(SubtitleProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether size animation is enabled.
+    /// </summary>
     public bool IsSizeAnimationEnabled
     {
-        get => (bool)GetValue(IsSizeAnimationEnabledProperty);
+        get => (bool)this.GetValue(IsSizeAnimationEnabledProperty);
         set => this.SetValue(IsSizeAnimationEnabledProperty, value);
     }
 
+    /// <summary>
+    /// When overridden in a derived class, is invoked whenever application code or internal processes call <see cref="M:System.Windows.FrameworkElement.ApplyTemplate" />.
+    /// </summary>
     public override void OnApplyTemplate()
     {
         this.SetAnimation(this.IsSizeAnimationEnabled);
@@ -64,7 +107,7 @@ public class SubtitleOverlay : OverlayWindow
 
     private void SetAnimation(bool isAnimationEnabled)
     {
-        var border = GetTemplateChild(PART_Border);
+        var border = this.GetTemplateChild(PART_Border);
         if (border is not Border animatedBorder)
         {
             return;
@@ -80,14 +123,14 @@ public class SubtitleOverlay : OverlayWindow
 
             this.sizeAnimationEventTrigger = new EventTrigger(FrameworkElement.SizeChangedEvent)
             {
-                Actions = { new BeginStoryboard { Storyboard = animateSizeStoryboard } }
+                Actions = { new BeginStoryboard { Storyboard = animateSizeStoryboard } },
             };
             animatedBorder.Triggers.Add(this.sizeAnimationEventTrigger);
         }
         else if (this.sizeAnimationEventTrigger != null)
         {
             animatedBorder.Triggers.Remove(this.sizeAnimationEventTrigger);
-            Dispatcher.BeginInvoke(new Action(() =>
+            this.Dispatcher.BeginInvoke(new Action(() =>
             {
                 animatedBorder.BeginAnimation(FrameworkElement.WidthProperty, null);
                 animatedBorder.BeginAnimation(FrameworkElement.HeightProperty, null);

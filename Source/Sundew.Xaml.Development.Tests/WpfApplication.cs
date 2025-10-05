@@ -1,19 +1,19 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Constants.cs" company="Sundews">
+// <copyright file="WpfApplication.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Sundew.Xaml.Controls.Overlays;
+namespace Sundew.Xaml.Wpf.Development.Tests;
 
-/// <summary>
-/// Contains constants.
-/// </summary>
-internal static class Constants
+using System.Windows;
+
+public static class WpfApplication
 {
-    /// <summary>
-    /// The sundew xaml XML namespace.
-    /// </summary>
-    public const string SundewXamlXmlNamespace = "http://sundew.dev/xaml";
+    public static readonly Application Current = new Application();
+
+    public static void Initialize()
+    {
+    }
 }
