@@ -13,7 +13,7 @@ using System.Windows.Data;
 /// <summary>
 /// A converter that converts NaN and Infinity to 0.
 /// </summary>
-public sealed class AvoidNaNConverter : IValueConverter
+public sealed class AvoidNaNConverter2 : IValueConverter
 {
     /// <summary>
     /// Converts the specified value.
