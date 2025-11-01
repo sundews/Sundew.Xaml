@@ -97,6 +97,16 @@ public class SubtitleOverlay : OverlayWindow
         base.OnApplyTemplate();
     }
 
+    /// <summary>
+    /// Gets the target for the reveal effect.
+    /// </summary>
+    /// <returns>The target.</returns>
+    protected override FrameworkElement? GetRevealTarget()
+    {
+        var border = this.GetTemplateChild(PART_Border);
+        return border as FrameworkElement;
+    }
+
     private static void IsAnimationEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is SubtitleOverlay subtitleOverlay)
@@ -108,7 +118,7 @@ public class SubtitleOverlay : OverlayWindow
     private void SetAnimation(bool isAnimationEnabled)
     {
         var border = this.GetTemplateChild(PART_Border);
-        if (border is not Border animatedBorder)
+        if (border is not FrameworkElement targetFrameworkElement)
         {
             return;
         }
@@ -125,17 +135,17 @@ public class SubtitleOverlay : OverlayWindow
             {
                 Actions = { new BeginStoryboard { Storyboard = animateSizeStoryboard } },
             };
-            animatedBorder.Triggers.Add(this.sizeAnimationEventTrigger);
+            targetFrameworkElement.Triggers.Add(this.sizeAnimationEventTrigger);
         }
         else if (this.sizeAnimationEventTrigger != null)
         {
-            animatedBorder.Triggers.Remove(this.sizeAnimationEventTrigger);
+            targetFrameworkElement.Triggers.Remove(this.sizeAnimationEventTrigger);
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
-                animatedBorder.BeginAnimation(FrameworkElement.WidthProperty, null);
-                animatedBorder.BeginAnimation(FrameworkElement.HeightProperty, null);
-                animatedBorder.ClearValue(WidthProperty);
-                animatedBorder.ClearValue(HeightProperty);
+                targetFrameworkElement.BeginAnimation(FrameworkElement.WidthProperty, null);
+                targetFrameworkElement.BeginAnimation(FrameworkElement.HeightProperty, null);
+                targetFrameworkElement.ClearValue(WidthProperty);
+                targetFrameworkElement.ClearValue(HeightProperty);
             }));
         }
     }

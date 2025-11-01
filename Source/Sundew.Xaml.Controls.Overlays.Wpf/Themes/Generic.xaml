@@ -7,6 +7,12 @@
     <local:AvoidNaNConverter x:Key="AvoidNaNConverter"/>
     <local:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
 
+    <RadialGradientBrush x:Key="RevealBrush" RadiusX="50" RadiusY="50" >
+        <GradientStop Color="Transparent" Offset="0"/>
+        <GradientStop Color="Transparent" Offset="0.96"/>
+        <GradientStop Color="Black" Offset="1"/>
+    </RadialGradientBrush>
+
     <Style TargetType="{x:Type local:SubtitleOverlay}">
         <Setter Property="Background" Value="#990C0A0A"/>
         <Setter Property="Foreground" Value="White"/>
@@ -14,6 +20,9 @@
         <Setter Property="FontSize" Value="32"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="MaxWidth" Value="{Binding RelativeSource={RelativeSource Mode=Self}, Path=MonitorWidth}"/>
+        <Setter Property="MaxHeight" Value="{Binding RelativeSource={RelativeSource Mode=Self}, Path=MonitorHeight}"/>
+        <Setter Property="RevealBrush" Value="{StaticResource RevealBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:SubtitleOverlay}">
@@ -39,28 +48,34 @@
                     </ControlTemplate.Resources>
                     <Grid Visibility="{TemplateBinding Subtitle, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
                         <sx:Border x:Name="MeasureBorder"
-                               HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="1"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"
                                CornerRadius="{TemplateBinding CornerRadius}"
                                Padding="{TemplateBinding Padding}"
-                               Visibility="Hidden">
+                               Visibility="Hidden"
+                               MaxWidth="{TemplateBinding MaxWidth}"
+                               MaxHeight="{TemplateBinding MaxHeight}">
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                       Text="{TemplateBinding Subtitle}"
                                       Foreground="{TemplateBinding Foreground}" 
                                       FontSize="{TemplateBinding FontSize}"
                                       FontWeight="{TemplateBinding FontWeight}"
+                                      TextWrapping="NoWrap"
                                       TextAlignment="Center">
                             </TextBlock>
                         </sx:Border>
                         <sx:Border x:Name="PART_Border"
                                    Background="{TemplateBinding Background}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="1"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"
                                    CornerRadius="{TemplateBinding CornerRadius}"
-                                   Padding="{TemplateBinding Padding}">
+                                   Padding="{TemplateBinding Padding}"
+                                   MaxWidth="{TemplateBinding MaxWidth}"
+                                   MaxHeight="{TemplateBinding MaxHeight}">
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Text="{TemplateBinding Subtitle}"
                                        Foreground="{TemplateBinding Foreground}" 
                                        FontSize="{TemplateBinding FontSize}"
                                        FontWeight="{TemplateBinding FontWeight}"
+                                       TextWrapping="NoWrap"
                                        TextAlignment="Center">
                                 <TextBlock.Effect>
                                     <DropShadowEffect BlurRadius="3" ShadowDepth="1" Color="Black" Opacity="0.8"/>
@@ -71,9 +86,8 @@
                             </sx:Border.Effect>
                         </sx:Border>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="30*"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="2*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="0.04*"/>
                         </Grid.RowDefinitions>
                     </Grid>
                 </ControlTemplate>
