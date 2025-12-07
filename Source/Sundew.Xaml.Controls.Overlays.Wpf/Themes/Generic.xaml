@@ -59,7 +59,7 @@
                                       Foreground="{TemplateBinding Foreground}" 
                                       FontSize="{TemplateBinding FontSize}"
                                       FontWeight="{TemplateBinding FontWeight}"
-                                      TextWrapping="NoWrap"
+                                      TextWrapping="Wrap"
                                       TextAlignment="Center">
                             </TextBlock>
                         </sx:Border>
@@ -75,7 +75,7 @@
                                        Foreground="{TemplateBinding Foreground}" 
                                        FontSize="{TemplateBinding FontSize}"
                                        FontWeight="{TemplateBinding FontWeight}"
-                                       TextWrapping="NoWrap"
+                                       TextWrapping="Wrap"
                                        TextAlignment="Center">
                                 <TextBlock.Effect>
                                     <DropShadowEffect BlurRadius="3" ShadowDepth="1" Color="Black" Opacity="0.8"/>
