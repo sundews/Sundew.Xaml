@@ -10,17 +10,19 @@ namespace Sundew.Xaml.Wpf.Development.Tests;
 using System;
 using System.Linq;
 using AwesomeAssertions;
-using Xunit;
+using TUnit.Core;
 
-public class ResourceDictionaryTests : IDisposable
+[NotInParallel]
+public class ResourceDictionaryTests
 {
-    static ResourceDictionaryTests()
+    [Before(Class)]
+    public static void Initialize()
     {
         WpfApplication.Initialize();
         WpfApplication.Current.ToString();
     }
 
-    [Fact]
+    [Test]
     public void Source_Then_SourceShouldBeSetAndItemsLoaded()
     {
         var testee = new Tests.ResourceDictionary();
@@ -31,7 +33,7 @@ public class ResourceDictionaryTests : IDisposable
         testee.MergedDictionaries.Should().NotBeEmpty().And.Subject.First().Count.Should().NotBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Source_When_UriAlreadyLoaded_Then_MergedDictionariesShouldContainExpectedResourceDictionary()
     {
         var expectedResourceDictionary = new Tests.ResourceDictionary { Source = GetTesteeUri() };
@@ -43,7 +45,7 @@ public class ResourceDictionaryTests : IDisposable
         ResourceDictionary.CachedDictionaries.Count.Should().Be(1);
     }
 
-    [Fact]
+    [Test]
     public void Source_When_AlreadySet_Then_MergedDictionariesShouldBeChangedToNewSource()
     {
         var expectedResourceDictionary = new Tests.ResourceDictionary { Source = GetTesteeUri() };
@@ -59,7 +61,7 @@ public class ResourceDictionaryTests : IDisposable
         ResourceDictionary.CachedDictionaries.Count.Should().Be(2);
     }
 
-    [Fact]
+    [Test]
     public void Source_When_AlreadySetAndIsFirstReference_Then_MergedDictionariesShouldBeChangedToNewSource()
     {
         var testee = new Tests.ResourceDictionary { Source = GetTesteeUri() };
@@ -75,7 +77,7 @@ public class ResourceDictionaryTests : IDisposable
         ResourceDictionary.CachedDictionaries.Count.Should().Be(2);
     }
 
-    [Fact]
+    [Test]
     public void Source_When_AlreadySet_Then_MergedDictionariesShouldNotContainOldDictionary()
     {
         var testee = new Tests.ResourceDictionary { Source = GetTesteeUri() };
@@ -88,7 +90,7 @@ public class ResourceDictionaryTests : IDisposable
         ResourceDictionary.CachedDictionaries.Count.Should().Be(1);
     }
 
-    [Fact]
+    [Test]
     public void TryRemoveFromCache_Then_CachedResourceDictionaryShouldNotLongerExistInCache()
     {
         var testee = new Tests.ResourceDictionary { Source = GetTesteeUri() };
@@ -102,7 +104,7 @@ public class ResourceDictionaryTests : IDisposable
         ResourceDictionary.CachedDictionaries.Count.Should().Be(0);
     }
 
-    [Fact]
+    [Test]
     public void Indexer_Then_ResultShouldNotBeNull()
     {
         var testee = new System.Windows.ResourceDictionary { Source = GetTesteeUri() };
@@ -112,6 +114,7 @@ public class ResourceDictionaryTests : IDisposable
         result.Should().NotBeNull();
     }
 
+    [After(Test)]
     public void Dispose()
     {
         ResourceDictionary.CachedDictionaries.Clear();
