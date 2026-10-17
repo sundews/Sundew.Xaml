@@ -29,16 +29,16 @@
                     <ControlTemplate.Resources>
                         <Storyboard x:Key="AnimateSizeStoryboard" TargetName="PART_Border">
                             <DoubleAnimation Storyboard.TargetProperty="Width"
-                                             From="{Binding ElementName=PART_Border, Path=Width, Converter={StaticResource AvoidNaNConverter}}"
-                                             To="{Binding ElementName=MeasureBorder, Path=ActualWidth, Converter={StaticResource AvoidNaNConverter}}"
+                                             From="{Binding ElementName=PART_Border, Path=ActualWidth, Converter={StaticResource AvoidNaNConverter}}"
+                                             To="{Binding ElementName=PART_MeasureBorder, Path=ActualWidth, Converter={StaticResource AvoidNaNConverter}}"
                                              Duration="0:0:0.200">
                                 <DoubleAnimation.EasingFunction>
                                     <QuadraticEase EasingMode="EaseOut"/>
                                 </DoubleAnimation.EasingFunction>
                             </DoubleAnimation>
                             <DoubleAnimation Storyboard.TargetProperty="Height"
-                                             From="{Binding ElementName=PART_Border, Path=Height, Converter={StaticResource AvoidNaNConverter}}"
-                                             To="{Binding ElementName=MeasureBorder, Path=ActualHeight, Converter={StaticResource AvoidNaNConverter}}"
+                                             From="{Binding ElementName=PART_Border, Path=ActualHeight, Converter={StaticResource AvoidNaNConverter}}"
+                                             To="{Binding ElementName=PART_MeasureBorder, Path=ActualHeight, Converter={StaticResource AvoidNaNConverter}}"
                                              Duration="0:0:0.200">
                                 <DoubleAnimation.EasingFunction>
                                     <QuadraticEase EasingMode="EaseOut"/>
@@ -47,14 +47,15 @@
                         </Storyboard>
                     </ControlTemplate.Resources>
                     <Grid Visibility="{TemplateBinding Subtitle, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
-                        <sx:Border x:Name="MeasureBorder"
+                        <sx:Border x:Name="PART_MeasureBorder"
                                HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"
                                CornerRadius="{TemplateBinding CornerRadius}"
                                Padding="{TemplateBinding Padding}"
                                Visibility="Hidden"
                                MaxWidth="{TemplateBinding MaxWidth}"
                                MaxHeight="{TemplateBinding MaxHeight}">
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                            <TextBlock x:Name="MeasureTextBlock"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                       Text="{TemplateBinding Subtitle}"
                                       Foreground="{TemplateBinding Foreground}" 
                                       FontSize="{TemplateBinding FontSize}"
@@ -68,9 +69,11 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"
                                    CornerRadius="{TemplateBinding CornerRadius}"
                                    Padding="{TemplateBinding Padding}"
+                                   ClipContentToCornerRadius="True"
                                    MaxWidth="{TemplateBinding MaxWidth}"
                                    MaxHeight="{TemplateBinding MaxHeight}">
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Width="{Binding ElementName=MeasureTextBlock, Path=ActualWidth}"
                                        Text="{TemplateBinding Subtitle}"
                                        Foreground="{TemplateBinding Foreground}" 
                                        FontSize="{TemplateBinding FontSize}"

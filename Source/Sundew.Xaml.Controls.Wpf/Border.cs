@@ -82,6 +82,20 @@ public class Border : System.Windows.Controls.Border
             FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
             OnFreshRenderRequired));
 
+    /// <summary>
+    /// Identifies the ClipContentToCornerRadius dependency property.
+    /// </summary>
+    /// <remarks>
+    /// The clip is applied to the <see cref="System.Windows.Controls.Decorator.Child"/> rather than to the border itself,
+    /// so that an <see cref="System.Windows.UIElement.Effect"/> on the border, such as a drop shadow or a glow,
+    /// still renders outside the border's bounds.
+    /// </remarks>
+    public static readonly DependencyProperty ClipContentToCornerRadiusProperty = DependencyProperty.Register(
+        nameof(ClipContentToCornerRadius),
+        typeof(bool),
+        typeof(Border),
+        new FrameworkPropertyMetadata(false, OnClipContentToCornerRadiusChanged));
+
     private Pens? pens = null;
     private Corners? cornerBrushes = null;
 
@@ -199,6 +213,19 @@ public class Border : System.Windows.Controls.Border
     {
         get => (Stops)this.GetValue(BottomLeftStopsProperty);
         set => this.SetValue(BottomLeftStopsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the content is clipped to the <see cref="System.Windows.Controls.Border.CornerRadius"/>.
+    /// </summary>
+    /// <remarks>
+    /// While this is enabled, the border owns the <see cref="System.Windows.UIElement.Clip"/> of its
+    /// <see cref="System.Windows.Controls.Decorator.Child"/>.
+    /// </remarks>
+    public bool ClipContentToCornerRadius
+    {
+        get => (bool)this.GetValue(ClipContentToCornerRadiusProperty);
+        set => this.SetValue(ClipContentToCornerRadiusProperty, value);
     }
 
     /// <summary>
@@ -413,6 +440,7 @@ public class Border : System.Windows.Controls.Border
         drawingGroup.Children.Add(bottomLeftDrawing);
 
         drawingContext.DrawDrawing(drawingGroup);
+        this.UpdateContentClip();
     }
 
     private static void AddUniqueGuideline(DoubleCollection guidelines, double value)
@@ -421,6 +449,23 @@ public class Border : System.Windows.Controls.Border
         if (!guidelines.Contains(rounded))
         {
             guidelines.Add(rounded);
+        }
+    }
+
+    private static void OnClipContentToCornerRadiusChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        if (dependencyObject is not Border border)
+        {
+            return;
+        }
+
+        if (e.NewValue is true)
+        {
+            border.UpdateContentClip();
+        }
+        else
+        {
+            border.Child?.ClearValue(ClipProperty);
         }
     }
 
@@ -435,6 +480,97 @@ public class Border : System.Windows.Controls.Border
     private static double RoundToDevicePixel(double value, double dpiScale)
     {
         return Math.Round(value * dpiScale) / dpiScale;
+    }
+
+    private void UpdateContentClip()
+    {
+        if (!this.ClipContentToCornerRadius)
+        {
+            return;
+        }
+
+        var child = this.Child;
+        if (child == null)
+        {
+            return;
+        }
+
+        child.Clip = this.CreateContentClipGeometry();
+    }
+
+    /// <summary>
+    /// Creates the geometry of the area inside the border's stroke, expressed in the child's coordinate space.
+    /// </summary>
+    /// <returns>The geometry, or <see cref="Geometry.Empty"/> when there is no room for content.</returns>
+    private Geometry CreateContentClipGeometry()
+    {
+        var dpiScale = VisualTreeHelper.GetDpi(this);
+        var dpiScaleX = dpiScale.DpiScaleX;
+        var dpiScaleY = dpiScale.DpiScaleY;
+        var minDpiScale = Math.Min(dpiScaleX, dpiScaleY);
+
+        var actualWidth = RoundToDevicePixel(this.ActualWidth, dpiScaleX);
+        var actualHeight = RoundToDevicePixel(this.ActualHeight, dpiScaleY);
+
+        var leftThickness = RoundToDevicePixel(this.BorderThickness.Left, dpiScaleX);
+        var topThickness = RoundToDevicePixel(this.BorderThickness.Top, dpiScaleY);
+        var rightThickness = RoundToDevicePixel(this.BorderThickness.Right, dpiScaleX);
+        var bottomThickness = RoundToDevicePixel(this.BorderThickness.Bottom, dpiScaleY);
+
+        var right = actualWidth - rightThickness;
+        var bottom = actualHeight - bottomThickness;
+        if (right <= leftThickness || bottom <= topThickness)
+        {
+            return Geometry.Empty;
+        }
+
+        // The straight edges may not overlap, so no corner may exceed half of the inner box.
+        var maxRadius = Math.Min(right - leftThickness, bottom - topThickness) / 2;
+        var topLeft = InnerRadius(this.CornerRadius.TopLeft, leftThickness, topThickness);
+        var topRight = InnerRadius(this.CornerRadius.TopRight, rightThickness, topThickness);
+        var bottomRight = InnerRadius(this.CornerRadius.BottomRight, rightThickness, bottomThickness);
+        var bottomLeft = InnerRadius(this.CornerRadius.BottomLeft, leftThickness, bottomThickness);
+
+        var leftEdgeTop = topThickness + topLeft;
+        var leftEdgeBottom = bottom - bottomLeft;
+        var topEdgeLeft = leftThickness + topLeft;
+        var topEdgeRight = right - topRight;
+        var rightEdgeTop = topThickness + topRight;
+        var rightEdgeBottom = bottom - bottomRight;
+        var bottomEdgeLeft = leftThickness + bottomLeft;
+        var bottomEdgeRight = right - bottomRight;
+
+        // The child sits inside both the stroke and the padding, and Clip is in the child's own space.
+        var offsetX = leftThickness + this.Padding.Left;
+        var offsetY = topThickness + this.Padding.Top;
+
+        Point At(double x, double y) => new Point(x - offsetX, y - offsetY);
+
+        var geometry = new PathGeometry(
+        [
+            new PathFigure(
+                At(leftThickness, leftEdgeBottom),
+                [
+                    new LineSegment(At(leftThickness, leftEdgeTop), true),
+                    new QuadraticBezierSegment(At(leftThickness, topThickness), At(topEdgeLeft, topThickness), true),
+                    new LineSegment(At(topEdgeRight, topThickness), true),
+                    new QuadraticBezierSegment(At(right, topThickness), At(right, rightEdgeTop), true),
+                    new LineSegment(At(right, rightEdgeBottom), true),
+                    new QuadraticBezierSegment(At(right, bottom), At(bottomEdgeRight, bottom), true),
+                    new LineSegment(At(bottomEdgeLeft, bottom), true),
+                    new QuadraticBezierSegment(At(leftThickness, bottom), At(leftThickness, leftEdgeBottom), true),
+                ],
+                true),
+        ]);
+
+        geometry.Freeze();
+        return geometry;
+
+        double InnerRadius(double radius, double horizontalThickness, double verticalThickness)
+        {
+            var inner = RoundToDevicePixel(radius, minDpiScale) - Math.Max(horizontalThickness, verticalThickness);
+            return Math.Max(0, Math.Min(inner, maxRadius));
+        }
     }
 
     private Pens EnsurePens(Sides sides, DpiScale dpiScale)

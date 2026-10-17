@@ -15,6 +15,7 @@ using System.Windows.Media.Animation;
 /// A subtitle overlay window.
 /// </summary>
 [TemplatePart(Name = PART_Border, Type = typeof(Border))]
+[TemplatePart(Name = PART_MeasureBorder, Type = typeof(Border))]
 public class SubtitleOverlay : OverlayWindow
 {
     /// <summary>
@@ -34,6 +35,7 @@ public class SubtitleOverlay : OverlayWindow
 
 #pragma warning disable SA1310
     private const string PART_Border = "PART_Border";
+    private const string PART_MeasureBorder = "PART_MeasureBorder";
 #pragma warning restore SA1310
     private const string AnimateSizeStoryboard = nameof(AnimateSizeStoryboard);
 
@@ -117,10 +119,16 @@ public class SubtitleOverlay : OverlayWindow
 
     private void SetAnimation(bool isAnimationEnabled)
     {
-        var border = this.GetTemplateChild(PART_Border);
-        if (border is not FrameworkElement targetFrameworkElement)
+        if (this.GetTemplateChild(PART_Border) is not FrameworkElement animationTarget ||
+            this.GetTemplateChild(PART_MeasureBorder) is not FrameworkElement sizeSource)
         {
             return;
+        }
+
+        if (this.sizeAnimationEventTrigger != null)
+        {
+            sizeSource.Triggers.Remove(this.sizeAnimationEventTrigger);
+            this.sizeAnimationEventTrigger = null;
         }
 
         if (isAnimationEnabled)
@@ -135,17 +143,16 @@ public class SubtitleOverlay : OverlayWindow
             {
                 Actions = { new BeginStoryboard { Storyboard = animateSizeStoryboard } },
             };
-            targetFrameworkElement.Triggers.Add(this.sizeAnimationEventTrigger);
+            sizeSource.Triggers.Add(this.sizeAnimationEventTrigger);
         }
-        else if (this.sizeAnimationEventTrigger != null)
+        else
         {
-            targetFrameworkElement.Triggers.Remove(this.sizeAnimationEventTrigger);
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
-                targetFrameworkElement.BeginAnimation(FrameworkElement.WidthProperty, null);
-                targetFrameworkElement.BeginAnimation(FrameworkElement.HeightProperty, null);
-                targetFrameworkElement.ClearValue(WidthProperty);
-                targetFrameworkElement.ClearValue(HeightProperty);
+                animationTarget.BeginAnimation(FrameworkElement.WidthProperty, null);
+                animationTarget.BeginAnimation(FrameworkElement.HeightProperty, null);
+                animationTarget.ClearValue(WidthProperty);
+                animationTarget.ClearValue(HeightProperty);
             }));
         }
     }

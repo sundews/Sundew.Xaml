@@ -38,10 +38,10 @@ public class OverlayWindow : Window
     private readonly Window? ownerWindow;
 
     private static readonly DependencyPropertyKey MonitorWidthPropertyKey = DependencyProperty.RegisterReadOnly(
-        nameof(MonitorWidth), typeof(double), typeof(OverlayWindow), new PropertyMetadata(default(double)));
+        nameof(MonitorWidth), typeof(double), typeof(OverlayWindow), new PropertyMetadata(double.PositiveInfinity));
 
     private static readonly DependencyPropertyKey MonitorHeightPropertyKey = DependencyProperty.RegisterReadOnly(
-        nameof(MonitorHeight), typeof(double), typeof(OverlayWindow), new PropertyMetadata(default(double)));
+        nameof(MonitorHeight), typeof(double), typeof(OverlayWindow), new PropertyMetadata(double.PositiveInfinity));
 
     /// <summary>The monitor width property.</summary>
     public static readonly DependencyProperty MonitorWidthProperty = MonitorWidthPropertyKey.DependencyProperty;
