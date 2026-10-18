@@ -15,10 +15,6 @@ using System.Windows.Media;
 /// </summary>
 public class Border : System.Windows.Controls.Border
 {
-    private static readonly Point TopRight = new Point(1, 0);
-    private static readonly Point BottomLeft = new Point(0, 1);
-    private static readonly Point TopLeft = new Point(0, 0);
-    private static readonly Point BottomRight = new Point(1, 1);
     private static readonly Pen BackgroundPen = new Pen(null, 0);
     private static readonly Stops DefaultStops = new Stops(0.2, 0.8);
 
@@ -96,8 +92,7 @@ public class Border : System.Windows.Controls.Border
         typeof(Border),
         new FrameworkPropertyMetadata(false, OnClipContentToCornerRadiusChanged));
 
-    private Pens? pens = null;
-    private Corners? cornerBrushes = null;
+    private Corners<CornerBlend>? cornerBlends = null;
 
     static Border()
     {
@@ -234,222 +229,142 @@ public class Border : System.Windows.Controls.Border
     /// <param name="drawingContext">The drawing context.</param>
     protected override void OnRender(DrawingContext drawingContext)
     {
-        var sidesBrushes = new Sides(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
-        var dpiScale = VisualTreeHelper.GetDpi(this);
-        var dpiScaleX = dpiScale.DpiScaleX;
-        var dpiScaleY = dpiScale.DpiScaleY;
-        var pens = this.EnsurePens(sidesBrushes, dpiScale);
+        var metrics = this.GetMetrics();
+        var layout = BorderLayoutCalculator.CalculateBorder(metrics);
+        var sideBrushes = new Sides<Brush?>(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
+        var cornerBlends = this.EnsureCornerBlends(sideBrushes);
 
-        // Round all base measurements to device pixels
-        var actualWidth = RoundToDevicePixel(this.ActualWidth, dpiScaleX);
-        var actualHeight = RoundToDevicePixel(this.ActualHeight, dpiScaleY);
+        var drawingGroup = new DrawingGroup { GuidelineSet = layout.Guidelines.ToGuidelineSet() };
 
-        var leftThickness = RoundToDevicePixel(this.BorderThickness.Left, dpiScaleX);
-        var topThickness = RoundToDevicePixel(this.BorderThickness.Top, dpiScaleY);
-        var rightThickness = RoundToDevicePixel(this.BorderThickness.Right, dpiScaleX);
-        var bottomThickness = RoundToDevicePixel(this.BorderThickness.Bottom, dpiScaleY);
+        drawingGroup.Children.Add(new GeometryDrawing(this.Background, BackgroundPen, layout.Background.ToGeometry()));
 
-        var leftOffset = leftThickness / 2.0;
-        var topOffset = topThickness / 2.0;
-        var rightOffset = rightThickness / 2.0;
-        var bottomOffset = bottomThickness / 2.0;
+        // A see through corner is composited as a whole, so a side running under it would show through as a darker
+        // band along the overlap. Those corners keep the plain shared cut instead.
+        var sides = AreCornersOpaque(cornerBlends)
+            ? new Sides<SideQuad>(
+                layout.Sides.Left.ExtendIntoCorners(metrics.Scale),
+                layout.Sides.Top.ExtendIntoCorners(metrics.Scale),
+                layout.Sides.Right.ExtendIntoCorners(metrics.Scale),
+                layout.Sides.Bottom.ExtendIntoCorners(metrics.Scale))
+            : layout.Sides;
 
-        // Round corner radius values
-        var topLeftRadius = RoundToDevicePixel(this.CornerRadius.TopLeft, Math.Min(dpiScaleX, dpiScaleY));
-        var topRightRadius = RoundToDevicePixel(this.CornerRadius.TopRight, Math.Min(dpiScaleX, dpiScaleY));
-        var bottomRightRadius = RoundToDevicePixel(this.CornerRadius.BottomRight, Math.Min(dpiScaleX, dpiScaleY));
-        var bottomLeftRadius = RoundToDevicePixel(this.CornerRadius.BottomLeft, Math.Min(dpiScaleX, dpiScaleY));
+        AddSide(drawingGroup, sides.Left, sideBrushes.Left);
+        AddSide(drawingGroup, sides.Top, sideBrushes.Top);
+        AddSide(drawingGroup, sides.Right, sideBrushes.Right);
+        AddSide(drawingGroup, sides.Bottom, sideBrushes.Bottom);
 
-        var maxWidthOrHeight = Math.Min(actualWidth, actualHeight) / 2;
-        var maxTopLeft = RoundToDevicePixel(Math.Min(Math.Max(topLeftRadius, Math.Max(topThickness, leftThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
-        var maxTopRight = RoundToDevicePixel(Math.Min(Math.Max(topRightRadius, Math.Max(topThickness, rightThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
-        var maxBottomRight = RoundToDevicePixel(Math.Min(Math.Max(bottomRightRadius, Math.Max(bottomThickness, rightThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
-        var maxBottomLeft = RoundToDevicePixel(Math.Min(Math.Max(bottomLeftRadius, Math.Max(bottomThickness, leftThickness)), maxWidthOrHeight), Math.Min(dpiScaleX, dpiScaleY));
-
-        var right = actualWidth - rightOffset;
-        var bottom = actualHeight - bottomOffset;
-
-        // Calculate exact endpoints for perfect alignment
-        var leftEdgeTop = RoundToDevicePixel(maxTopLeft, dpiScaleY);
-        var leftEdgeBottom = RoundToDevicePixel(actualHeight - maxBottomLeft, dpiScaleY);
-        var topEdgeLeft = RoundToDevicePixel(maxTopLeft, dpiScaleX);
-        var topEdgeRight = RoundToDevicePixel(actualWidth - maxTopRight, dpiScaleX);
-        var rightEdgeTop = RoundToDevicePixel(maxTopRight, dpiScaleY);
-        var rightEdgeBottom = RoundToDevicePixel(actualHeight - maxBottomRight, dpiScaleY);
-        var bottomEdgeLeft = RoundToDevicePixel(maxBottomLeft, dpiScaleX);
-        var bottomEdgeRight = RoundToDevicePixel(actualWidth - maxBottomRight, dpiScaleX);
-
-        if (leftEdgeTop > leftEdgeBottom)
-        {
-            leftEdgeTop = leftEdgeBottom;
-        }
-
-        if (rightEdgeTop > rightEdgeBottom)
-        {
-            rightEdgeTop = rightEdgeBottom;
-        }
-
-        if (topEdgeLeft > topEdgeRight)
-        {
-            topEdgeLeft = topEdgeRight;
-        }
-
-        if (bottomEdgeLeft > bottomEdgeRight)
-        {
-            bottomEdgeLeft = bottomEdgeRight;
-        }
-
-        // Edge coordinates - ensure exact alignment at corner boundaries
-        var leftStart = new Point(leftOffset, leftEdgeBottom);
-        var leftEnd = new Point(leftOffset, leftEdgeTop);
-
-        var topLeftStart = new Point(leftOffset, leftEdgeTop);
-        var topLeftAnchor = new Point(leftOffset, topOffset);
-        var topLeftEnd = new Point(topEdgeLeft, topOffset);
-
-        var topStart = new Point(topEdgeLeft, topOffset);
-        var topEnd = new Point(topEdgeRight, topOffset);
-
-        var topRightStart = new Point(topEdgeRight, topOffset);
-        var topRightAnchor = new Point(right, topOffset);
-        var topRightEnd = new Point(right, rightEdgeTop);
-
-        var rightStart = new Point(right, rightEdgeTop);
-        var rightEnd = new Point(right, rightEdgeBottom);
-
-        var bottomRightStart = new Point(right, rightEdgeBottom);
-        var bottomRightAnchor = new Point(right, bottom);
-        var bottomRightEnd = new Point(bottomEdgeRight, bottom);
-
-        var bottomStart = new Point(bottomEdgeRight, bottom);
-        var bottomEnd = new Point(bottomEdgeLeft, bottom);
-
-        var bottomLeftStart = new Point(leftOffset, leftEdgeBottom);
-        var bottomLeftAnchor = new Point(leftOffset, bottom);
-        var bottomLeftEnd = new Point(bottomEdgeLeft, bottom);
-
-        // Create guidelines based on actual coordinates used
-        var guidelines = new GuidelineSet();
-
-        // Add X guidelines for all vertical edges
-        AddUniqueGuideline(guidelines.GuidelinesX, leftOffset);
-        AddUniqueGuideline(guidelines.GuidelinesX, right);
-        AddUniqueGuideline(guidelines.GuidelinesX, topEdgeLeft);
-        AddUniqueGuideline(guidelines.GuidelinesX, topEdgeRight);
-        AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeLeft);
-        AddUniqueGuideline(guidelines.GuidelinesX, bottomEdgeRight);
-
-        // Add Y guidelines for all horizontal edges
-        AddUniqueGuideline(guidelines.GuidelinesY, topOffset);
-        AddUniqueGuideline(guidelines.GuidelinesY, bottom);
-        AddUniqueGuideline(guidelines.GuidelinesY, leftEdgeTop);
-        AddUniqueGuideline(guidelines.GuidelinesY, leftEdgeBottom);
-        AddUniqueGuideline(guidelines.GuidelinesY, rightEdgeTop);
-        AddUniqueGuideline(guidelines.GuidelinesY, rightEdgeBottom);
-
-        var drawingGroup = new DrawingGroup() { GuidelineSet = guidelines };
-
-        // Background geometry - ensure proper closure
-        const double backgroundOverdraw = 0.5;
-        var background = new GeometryDrawing(this.Background, BackgroundPen, new PathGeometry(
-        [
-            new PathFigure(
-                leftStart with { X = leftStart.X + leftOffset },
-                [
-                    new LineSegment(leftEnd with { X = leftEnd.X + leftOffset }, true),
-                    new QuadraticBezierSegment(
-                        new Point(topLeftAnchor.X + leftOffset - backgroundOverdraw, topLeftAnchor.Y + topOffset - backgroundOverdraw),                        topStart with { Y = topStart.Y + topOffset }, true),
-                    new LineSegment(topEnd with { Y = topEnd.Y + topOffset }, true),
-                    new QuadraticBezierSegment(
-                        new Point(topRightAnchor.X - rightOffset + backgroundOverdraw, topRightAnchor.Y + topOffset - backgroundOverdraw), rightStart with { X = rightStart.X - rightOffset }, true),
-                    new LineSegment(rightEnd with { X = rightEnd.X - rightOffset }, true),
-                    new QuadraticBezierSegment(
-                        new Point(bottomRightAnchor.X - rightOffset + backgroundOverdraw, bottomRightAnchor.Y - bottomOffset + backgroundOverdraw), bottomStart with { Y = bottomStart.Y - bottomOffset }, true),
-                    new LineSegment(bottomEnd with { Y = bottomEnd.Y - bottomOffset }, true),
-                    new QuadraticBezierSegment(
-                        new Point(bottomLeftAnchor.X + leftOffset - backgroundOverdraw, bottomLeftAnchor.Y - bottomOffset + backgroundOverdraw), leftStart with { X = leftStart.X + leftOffset }, true),],
-                true)
-        ]));
-
-        drawingGroup.Children.Add(background);
-
-        // Only draw edges if they have non-zero length
-        var hasLeft = Math.Abs(leftStart.Y - leftEnd.Y) > 0.01;
-        if (hasLeft)
-        {
-            var leftDrawing = new GeometryDrawing(
-                null,
-                pens.Left,
-                new LineGeometry(leftStart, leftEnd));
-            drawingGroup.Children.Add(leftDrawing);
-        }
-
-        var hasTop = Math.Abs(topStart.X - topEnd.X) > 0.01;
-        if (hasTop)
-        {
-            var topDrawing = new GeometryDrawing(
-                null,
-                pens.Top,
-                new LineGeometry(topStart, topEnd));
-            drawingGroup.Children.Add(topDrawing);
-        }
-
-        var hasRight = Math.Abs(rightStart.Y - rightEnd.Y) > 0.01;
-        if (hasRight)
-        {
-            var rightDrawing = new GeometryDrawing(
-                null,
-                pens.Right,
-                new LineGeometry(rightStart, rightEnd));
-            drawingGroup.Children.Add(rightDrawing);
-        }
-
-        var hasBottom = Math.Abs(bottomStart.X - bottomEnd.X) > 0.01;
-        if (hasBottom)
-        {
-            var bottomDrawing = new GeometryDrawing(
-                null,
-                pens.Bottom,
-                new LineGeometry(bottomStart, bottomEnd));
-            drawingGroup.Children.Add(bottomDrawing);
-        }
-
-        // Always draw corners
-        var topLeftDrawing = new GeometryDrawing(
-            null,
-            pens.TopLeft,
-            new PathGeometry([new PathFigure(topLeftStart, [new QuadraticBezierSegment(topLeftAnchor, topLeftEnd, true)], false)]));
-        drawingGroup.Children.Add(topLeftDrawing);
-
-        var topRightDrawing = new GeometryDrawing(
-            null,
-            pens.TopRight,
-            new PathGeometry([new PathFigure(topRightStart, [new QuadraticBezierSegment(topRightAnchor, topRightEnd, true)], false)]));
-        drawingGroup.Children.Add(topRightDrawing);
-
-        var bottomRightDrawing = new GeometryDrawing(
-            null,
-            pens.BottomRight,
-            new PathGeometry([new PathFigure(bottomRightStart, [new QuadraticBezierSegment(bottomRightAnchor, bottomRightEnd, true)], false)]));
-        drawingGroup.Children.Add(bottomRightDrawing);
-
-        var bottomLeftDrawing = new GeometryDrawing(
-            null,
-            pens.BottomLeft,
-            new PathGeometry([new PathFigure(bottomLeftStart, [new QuadraticBezierSegment(bottomLeftAnchor, bottomLeftEnd, true)], false)]));
-        drawingGroup.Children.Add(bottomLeftDrawing);
+        AddCorner(drawingGroup, layout.Corners.TopLeft, cornerBlends.TopLeft, this.TopLeftStops, metrics.Scale);
+        AddCorner(drawingGroup, layout.Corners.TopRight, cornerBlends.TopRight, this.TopRightStops, metrics.Scale);
+        AddCorner(drawingGroup, layout.Corners.BottomRight, cornerBlends.BottomRight, this.BottomRightStops, metrics.Scale);
+        AddCorner(drawingGroup, layout.Corners.BottomLeft, cornerBlends.BottomLeft, this.BottomLeftStops, metrics.Scale);
 
         drawingContext.DrawDrawing(drawingGroup);
         this.UpdateContentClip();
     }
 
-    private static void AddUniqueGuideline(DoubleCollection guidelines, double value)
+    private static bool AreCornersOpaque(Corners<CornerBlend> blends)
     {
-        var rounded = Math.Round(value, 1); // Round to 0.1 precision
-        if (!guidelines.Contains(rounded))
+        return blends.TopLeft.IsOpaque && blends.TopRight.IsOpaque && blends.BottomRight.IsOpaque && blends.BottomLeft.IsOpaque;
+    }
+
+    private static void AddSide(DrawingGroup drawingGroup, SideQuad sideQuad, Brush? brush)
+    {
+        if (brush == null || !sideQuad.HasArea)
         {
-            guidelines.Add(rounded);
+            return;
         }
+
+        drawingGroup.Children.Add(new GeometryDrawing(brush, BackgroundPen, sideQuad.ToGeometry()));
+    }
+
+    /// <summary>
+    /// Sweeps the blend between the two sides meeting at a corner around that corner, a slice at a time.
+    /// </summary>
+    /// <remarks>
+    /// One linear gradient across the whole corner cannot do this without a seam: its bands of constant colour would
+    /// have to run along the cut it shares with each of the two sides, and those two cuts are at right angles. Each
+    /// slice is narrow enough that one gradient across it is indistinguishable from a sweep, and the slices at either
+    /// end come out as the side's own colour along the whole of the cut.
+    /// </remarks>
+    /// <param name="drawingGroup">The drawing group.</param>
+    /// <param name="cornerWedge">The corner.</param>
+    /// <param name="blend">The blend between the two sides meeting at the corner.</param>
+    /// <param name="stops">The stops controlling how abrupt the transition is.</param>
+    /// <param name="scale">The device pixel scale, which decides how fine the sweep has to be.</param>
+    private static void AddCorner(DrawingGroup drawingGroup, CornerWedge cornerWedge, CornerBlend blend, Stops stops, Scale scale)
+    {
+        if (!blend.IsBlended)
+        {
+            if (blend.Brush != null)
+            {
+                drawingGroup.Children.Add(new GeometryDrawing(blend.Brush, BackgroundPen, cornerWedge.ToGeometry()));
+            }
+
+            return;
+        }
+
+        // Where the slices overlap they would blend with each other, which a see through border would show as a band
+        // at every seam. Taking the alpha off the slices and giving it to a group of their own composites the whole
+        // corner once, at which point the overlaps are opaque and leave nothing behind.
+        var target = drawingGroup;
+        if (blend.Opacity < 1)
+        {
+            target = new DrawingGroup { Opacity = blend.Opacity };
+            drawingGroup.Children.Add(target);
+        }
+
+        var count = cornerWedge.GetSliceCount(scale);
+        for (var index = 0; index < count; index++)
+        {
+            var from = (double)index / count;
+            var to = (double)(index + 1) / count;
+            var slice = cornerWedge.GetSlice(from, to);
+
+            // The slice is filled a little past its own end, and the next one then paints over that overrun.
+            var filled = cornerWedge.GetSlice(from, System.Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
+            target.Children.Add(new GeometryDrawing(
+                CreateSliceBrush(slice, blend, stops, from, to),
+                BackgroundPen,
+                filled.ToGeometry()));
+        }
+    }
+
+    private static Brush CreateSliceBrush(CornerWedge slice, CornerBlend blend, Stops stops, double from, double to)
+    {
+        var startColor = blend.ColorAt(stops, from);
+        var endColor = blend.ColorAt(stops, to);
+        Brush brush = startColor == endColor
+            ? new SolidColorBrush(startColor)
+            : new LinearGradientBrush(
+                startColor,
+                endColor,
+                slice.StartCutCentre.ToPoint(),
+                slice.EndCutCentre.ToPoint())
+            {
+                MappingMode = BrushMappingMode.Absolute,
+            };
+        brush.Freeze();
+        return brush;
+    }
+
+    private static Color GetStartColor(LinearGradientBrush brush, bool reverse)
+    {
+        if (brush.GradientStops.Count == 0)
+        {
+            return Colors.Transparent;
+        }
+
+        return reverse ? brush.GradientStops[brush.GradientStops.Count - 1].Color : brush.GradientStops[0].Color;
+    }
+
+    private static Color GetEndColor(LinearGradientBrush brush, bool reverse)
+    {
+        if (brush.GradientStops.Count == 0)
+        {
+            return Colors.Transparent;
+        }
+
+        return reverse ? brush.GradientStops[0].Color : brush.GradientStops[brush.GradientStops.Count - 1].Color;
     }
 
     private static void OnClipContentToCornerRadiusChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
@@ -477,9 +392,14 @@ public class Border : System.Windows.Controls.Border
         }
     }
 
-    private static double RoundToDevicePixel(double value, double dpiScale)
+    private BorderMetrics GetMetrics()
     {
-        return Math.Round(value * dpiScale) / dpiScale;
+        return new BorderMetrics(
+            this.ActualWidth,
+            this.ActualHeight,
+            this.BorderThickness.ToSides(),
+            this.CornerRadius.ToCorners(),
+            VisualTreeHelper.GetDpi(this).ToScale());
     }
 
     private void UpdateContentClip()
@@ -504,303 +424,119 @@ public class Border : System.Windows.Controls.Border
     /// <returns>The geometry, or <see cref="Geometry.Empty"/> when there is no room for content.</returns>
     private Geometry CreateContentClipGeometry()
     {
-        var dpiScale = VisualTreeHelper.GetDpi(this);
-        var dpiScaleX = dpiScale.DpiScaleX;
-        var dpiScaleY = dpiScale.DpiScaleY;
-        var minDpiScale = Math.Min(dpiScaleX, dpiScaleY);
-
-        var actualWidth = RoundToDevicePixel(this.ActualWidth, dpiScaleX);
-        var actualHeight = RoundToDevicePixel(this.ActualHeight, dpiScaleY);
-
-        var leftThickness = RoundToDevicePixel(this.BorderThickness.Left, dpiScaleX);
-        var topThickness = RoundToDevicePixel(this.BorderThickness.Top, dpiScaleY);
-        var rightThickness = RoundToDevicePixel(this.BorderThickness.Right, dpiScaleX);
-        var bottomThickness = RoundToDevicePixel(this.BorderThickness.Bottom, dpiScaleY);
-
-        var right = actualWidth - rightThickness;
-        var bottom = actualHeight - bottomThickness;
-        if (right <= leftThickness || bottom <= topThickness)
+        var metrics = this.GetMetrics();
+        if (!BorderLayoutCalculator.TryCalculateContentClip(metrics, this.Padding.ToSides(), out var figure))
         {
             return Geometry.Empty;
         }
 
-        // The straight edges may not overlap, so no corner may exceed half of the inner box.
-        var maxRadius = Math.Min(right - leftThickness, bottom - topThickness) / 2;
-        var topLeft = InnerRadius(this.CornerRadius.TopLeft, leftThickness, topThickness);
-        var topRight = InnerRadius(this.CornerRadius.TopRight, rightThickness, topThickness);
-        var bottomRight = InnerRadius(this.CornerRadius.BottomRight, rightThickness, bottomThickness);
-        var bottomLeft = InnerRadius(this.CornerRadius.BottomLeft, leftThickness, bottomThickness);
-
-        var leftEdgeTop = topThickness + topLeft;
-        var leftEdgeBottom = bottom - bottomLeft;
-        var topEdgeLeft = leftThickness + topLeft;
-        var topEdgeRight = right - topRight;
-        var rightEdgeTop = topThickness + topRight;
-        var rightEdgeBottom = bottom - bottomRight;
-        var bottomEdgeLeft = leftThickness + bottomLeft;
-        var bottomEdgeRight = right - bottomRight;
-
-        // The child sits inside both the stroke and the padding, and Clip is in the child's own space.
-        var offsetX = leftThickness + this.Padding.Left;
-        var offsetY = topThickness + this.Padding.Top;
-
-        Point At(double x, double y) => new Point(x - offsetX, y - offsetY);
-
-        var geometry = new PathGeometry(
-        [
-            new PathFigure(
-                At(leftThickness, leftEdgeBottom),
-                [
-                    new LineSegment(At(leftThickness, leftEdgeTop), true),
-                    new QuadraticBezierSegment(At(leftThickness, topThickness), At(topEdgeLeft, topThickness), true),
-                    new LineSegment(At(topEdgeRight, topThickness), true),
-                    new QuadraticBezierSegment(At(right, topThickness), At(right, rightEdgeTop), true),
-                    new LineSegment(At(right, rightEdgeBottom), true),
-                    new QuadraticBezierSegment(At(right, bottom), At(bottomEdgeRight, bottom), true),
-                    new LineSegment(At(bottomEdgeLeft, bottom), true),
-                    new QuadraticBezierSegment(At(leftThickness, bottom), At(leftThickness, leftEdgeBottom), true),
-                ],
-                true),
-        ]);
-
+        var geometry = figure.ToGeometry();
         geometry.Freeze();
         return geometry;
-
-        double InnerRadius(double radius, double horizontalThickness, double verticalThickness)
-        {
-            var inner = RoundToDevicePixel(radius, minDpiScale) - Math.Max(horizontalThickness, verticalThickness);
-            return Math.Max(0, Math.Min(inner, maxRadius));
-        }
-    }
-
-    private Pens EnsurePens(Sides sides, DpiScale dpiScale)
-    {
-        var cornerBrushes = this.EnsureCornerBrushes(sides);
-        var dpiScaleFactor = (dpiScale.DpiScaleX + dpiScale.DpiScaleY) / 2;
-
-        // Cannot support non-uniform border thickness with current implementation.
-        this.pens ??= new Pens(
-            new Pen(sides.Left, RoundToDevicePixel(this.BorderThickness.Left, dpiScale.DpiScaleX))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(cornerBrushes.TopLeft, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(sides.Top, RoundToDevicePixel(this.BorderThickness.Top, dpiScale.DpiScaleY))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(cornerBrushes.TopRight, RoundToDevicePixel((this.BorderThickness.Top + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(sides.Right, RoundToDevicePixel(this.BorderThickness.Right, dpiScale.DpiScaleX))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(cornerBrushes.BottomRight, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Right) / 2.0, dpiScaleFactor))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(sides.Bottom, RoundToDevicePixel(this.BorderThickness.Bottom, dpiScale.DpiScaleY))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            },
-            new Pen(cornerBrushes.BottomLeft, RoundToDevicePixel((this.BorderThickness.Bottom + this.BorderThickness.Left) / 2.0, dpiScaleFactor))
-            {
-                DashCap = PenLineCap.Flat,
-                StartLineCap = PenLineCap.Flat,
-                EndLineCap = PenLineCap.Flat,
-            });
-
-        if (sides.Left?.IsFrozen ?? false)
-        {
-            this.pens.Left.Freeze();
-        }
-
-        this.pens.TopLeft?.Freeze();
-
-        if (sides.Top?.IsFrozen ?? false)
-        {
-            this.pens.Top.Freeze();
-        }
-
-        this.pens.TopRight?.Freeze();
-
-        if (sides.Right?.IsFrozen ?? false)
-        {
-            this.pens.Right.Freeze();
-        }
-
-        this.pens.BottomRight?.Freeze();
-
-        if (sides.Bottom?.IsFrozen ?? false)
-        {
-            this.pens.Bottom.Freeze();
-        }
-
-        this.pens.BottomLeft?.Freeze();
-
-        return this.pens;
     }
 
     private void ClearCache()
     {
-        this.pens = null;
-        this.cornerBrushes = null;
+        this.cornerBlends = null;
     }
 
-    private Corners EnsureCornerBrushes(Sides sides)
+    private Corners<CornerBlend> EnsureCornerBlends(Sides<Brush?> sides)
     {
-        if (this.cornerBrushes.HasValue)
+        if (this.cornerBlends.HasValue)
         {
-            return this.cornerBrushes.Value;
+            return this.cornerBlends.Value;
         }
 
-        var topLeftBrush = this.GetCornerBrush(sides.Left, sides.Top, this.TopLeftStops, BottomLeft, TopRight, Corner.TopLeft);
-        topLeftBrush?.Freeze();
-        var topRightBrush = this.GetCornerBrush(sides.Top, sides.Right, this.TopRightStops, TopLeft, BottomRight, Corner.TopRight);
-        topRightBrush?.Freeze();
-        var bottomRightBrush = this.GetCornerBrush(sides.Right, sides.Bottom, this.BottomRightStops, TopRight, BottomLeft, Corner.BottomRight);
-        bottomRightBrush?.Freeze();
-        var bottomLeftBrush = this.GetCornerBrush(sides.Bottom, sides.Left, this.BottomLeftStops, BottomRight, TopLeft, Corner.BottomLeft);
-        bottomLeftBrush?.Freeze();
-        this.cornerBrushes = new(topLeftBrush, topRightBrush, bottomRightBrush, bottomLeftBrush);
-        return this.cornerBrushes.Value;
+        this.cornerBlends = new Corners<CornerBlend>(
+            GetCornerBlend(sides.Left, sides.Top, Corner.TopLeft),
+            GetCornerBlend(sides.Top, sides.Right, Corner.TopRight),
+            GetCornerBlend(sides.Right, sides.Bottom, Corner.BottomRight),
+            GetCornerBlend(sides.Bottom, sides.Left, Corner.BottomLeft));
+        return this.cornerBlends.Value;
     }
 
-    private Brush? GetCornerBrush(Brush? first, Brush? second, Stops stops, Point firstPoint, Point secondPoint, Corner corner)
+    /// <summary>
+    /// Works out the two colours the side entering a corner is blended from and the side leaving it is blended to.
+    /// </summary>
+    /// <param name="first">The brush of the side entering the corner.</param>
+    /// <param name="second">The brush of the side leaving the corner.</param>
+    /// <param name="corner">The corner.</param>
+    /// <returns>The blend, or <paramref name="first"/> on its own when the two brushes cannot be blended.</returns>
+    private static CornerBlend GetCornerBlend(Brush? first, Brush? second, Corner corner)
     {
-        switch ((first, second))
+        var gradient = CornerGradient.For(corner);
+        switch (first, second)
         {
-            case (SolidColorBrush firstBrush1, SolidColorBrush secondBrush1):
-                var startColor1 = firstBrush1.Color;
-                var endColor1 = secondBrush1.Color;
-                return new LinearGradientBrush(
-                    new GradientStopCollection([
-                        new GradientStop(startColor1, 0),
-                        new GradientStop(startColor1, stops.First),
-                        new GradientStop(endColor1, stops.Second),
-                        new GradientStop(endColor1, 1)
-                    ]),
-                    firstPoint,
-                    secondPoint);
-            case (SolidColorBrush firstBrush2, LinearGradientBrush secondBrush2):
-                var reverseSecond2 = corner is Corner.TopLeft or Corner.TopRight;
-                var endColor2 = this.GetSecond(secondBrush2, reverseSecond2);
-                var startColor2 = firstBrush2.Color;
-                return new LinearGradientBrush(
-                    new GradientStopCollection([
-                        new GradientStop(startColor2, 0),
-                        new GradientStop(startColor2, stops.First),
-                        new GradientStop(endColor2, stops.Second),
-                        new GradientStop(endColor2, 1)]),
-                    firstPoint,
-                    secondPoint);
+            case (SolidColorBrush firstBrush, SolidColorBrush secondBrush):
+                return new CornerBlend(firstBrush.Color, secondBrush.Color);
+            case (SolidColorBrush firstBrush, LinearGradientBrush secondBrush):
+                return new CornerBlend(firstBrush.Color, GetEndColor(secondBrush, gradient.ReverseSecond));
             case (LinearGradientBrush firstBrush, SolidColorBrush secondBrush):
-                var reverseFirst3 = corner is Corner.TopRight or Corner.BottomRight;
-                var startColor3 = this.GetFirst(firstBrush, reverseFirst3);
-                var endColor3 = secondBrush.Color;
-                return new LinearGradientBrush(
-                    new GradientStopCollection([
-                        new GradientStop(startColor3, 0),
-                        new GradientStop(startColor3, stops.First),
-                        new GradientStop(endColor3, stops.Second),
-                        new GradientStop(endColor3, 1)
-                    ]),
-                    firstPoint,
-                    secondPoint);
+                return new CornerBlend(GetStartColor(firstBrush, gradient.ReverseFirst), secondBrush.Color);
             case (LinearGradientBrush firstBrush, LinearGradientBrush secondBrush):
-                var reverseFirst4 = corner is Corner.TopRight or Corner.BottomRight;
-                var reverseSecond4 = corner is Corner.TopLeft or Corner.TopRight;
-                var startColor4 = this.GetFirst(firstBrush, reverseFirst4);
-                var endColor4 = this.GetSecond(secondBrush, reverseSecond4);
-                return new LinearGradientBrush(
-                    new GradientStopCollection([
-                        new GradientStop(startColor4, 0),
-                        new GradientStop(startColor4, stops.First),
-                        new GradientStop(endColor4, stops.Second),
-                        new GradientStop(endColor4, 1)
-                    ]),
-                    firstPoint,
-                    secondPoint);
+                return new CornerBlend(
+                    GetStartColor(firstBrush, gradient.ReverseFirst),
+                    GetEndColor(secondBrush, gradient.ReverseSecond));
+            default:
+                return new CornerBlend(first);
         }
-
-        return first;
     }
 
-    private Color GetFirst(LinearGradientBrush brush, bool reverse)
+    /// <summary>
+    /// The two colours a corner is blended between, or the brush to fall back to when the two sides meeting there
+    /// cannot be blended.
+    /// </summary>
+    private readonly record struct CornerBlend
     {
-        if (reverse)
+        private readonly Color start;
+        private readonly Color end;
+
+        public CornerBlend(Color start, Color end)
         {
-            return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
+            this.start = start;
+            this.end = end;
+            this.Brush = null;
+            this.IsBlended = true;
         }
 
-        return brush.GradientStops.Count > 0 ? brush.GradientStops[0].Color : Colors.Transparent;
-    }
-
-    private Color GetSecond(LinearGradientBrush brush, bool reverse)
-    {
-        if (reverse)
+        public CornerBlend(Brush? brush)
         {
-            return brush.GradientStops.Count > 0 ? brush.GradientStops[0].Color : Colors.Transparent;
+            this.start = default;
+            this.end = default;
+            this.Brush = brush;
+            this.IsBlended = false;
         }
 
-        return brush.GradientStops.Count > 0 ? brush.GradientStops[^1].Color : Colors.Transparent;
-    }
+        public Brush? Brush { get; }
 
-    private enum Corner
-    {
-        TopLeft,
-        TopRight,
-        BottomRight,
-        BottomLeft,
-    }
+        public bool IsBlended { get; }
 
-    private readonly record struct Sides(Brush? Left, Brush? Top, Brush? Right, Brush? Bottom);
+        /// <summary>
+        /// Gets a value indicating whether the corner is drawn with no transparency, in which case a side may run
+        /// underneath it without the overlap showing.
+        /// </summary>
+        public bool IsOpaque => this.IsBlended && this.start.A == byte.MaxValue && this.end.A == byte.MaxValue;
 
-    private readonly record struct Corners(Brush? TopLeft, Brush? TopRight, Brush? BottomRight, Brush? BottomLeft);
+        /// <summary>
+        /// Gets the alpha the corner as a whole is drawn at, which is that of whichever of the two colours is the
+        /// more opaque, so that <see cref="ColorAt"/> never has to raise one of them.
+        /// </summary>
+        public double Opacity => System.Math.Max(this.start.A, this.end.A) / 255.0;
 
-    private sealed class Pens(
-        Pen left,
-        Pen topLeft,
-        Pen top,
-        Pen topRight,
-        Pen right,
-        Pen bottomRight,
-        Pen bottom,
-        Pen bottomLeft)
-    {
-        public Pen Left { get; } = left;
+        public Color ColorAt(Stops stops, double position)
+        {
+            var amount = stops.GetBlendAmount(position);
+            var peak = System.Math.Max(this.start.A, this.end.A);
+            return Color.FromArgb(
+                peak == 0 ? (byte)0 : (byte)System.Math.Round(Channel(this.start.A, this.end.A, amount) * 255.0 / peak),
+                Channel(this.start.R, this.end.R, amount),
+                Channel(this.start.G, this.end.G, amount),
+                Channel(this.start.B, this.end.B, amount));
+        }
 
-        public Pen TopLeft { get; } = topLeft;
-
-        public Pen Top { get; } = top;
-
-        public Pen TopRight { get; } = topRight;
-
-        public Pen Right { get; } = right;
-
-        public Pen BottomRight { get; } = bottomRight;
-
-        public Pen Bottom { get; } = bottom;
-
-        public Pen BottomLeft { get; } = bottomLeft;
+        private static byte Channel(byte start, byte end, double amount)
+        {
+            return (byte)System.Math.Round(start + ((end - start) * amount));
+        }
     }
 }

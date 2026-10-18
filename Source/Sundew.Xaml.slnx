@@ -2,6 +2,7 @@
   <Folder Name="/Build/">
     <File Path="../.github/dependabot.yml" />
     <File Path="../.github/workflows/dotnet.yml" />
+    <File Path="../README.md" />
     <File Path=".editorconfig" />
     <File Path="Build/stylecop.json" />
     <File Path="Directory.Build.props" />
@@ -12,7 +13,11 @@
   <Folder Name="/Build/Development/">
     <File Path="Build/Development/stylecop.json" />
   </Folder>
+  <Project Path="Sundew.Xaml.Avalonia.Development.Tester/Sundew.Xaml.Avalonia.Development.Tester.csproj" />
+  <Project Path="Sundew.Xaml.Controls.Avalonia/Sundew.Xaml.Controls.Avalonia.csproj" />
   <Project Path="Sundew.Xaml.Controls.Overlays.Wpf/Sundew.Xaml.Controls.Overlays.Wpf.csproj" Id="47d1821f-414d-4473-bfa2-328cbd5f3fe6" />
+  <Project Path="Sundew.Xaml.Controls.Primitives/Sundew.Xaml.Controls.Primitives.csproj" />
+  <Project Path="Sundew.Xaml.Controls.Primitives.Tests/Sundew.Xaml.Controls.Primitives.Tests.csproj" />
   <Project Path="Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj" />
   <Project Path="Sundew.Xaml.Development.Tests/Sundew.Xaml.Wpf.Development.Tests.csproj" Id="b5cfddc3-ecfe-4de4-885a-167cf8884102" />
   <Project Path="Sundew.Xaml.Theming.Wpf/Sundew.Xaml.Theming.Wpf.csproj" />

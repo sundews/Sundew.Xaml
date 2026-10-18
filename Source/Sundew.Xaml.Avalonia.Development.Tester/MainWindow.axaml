@@ -1,0 +1,7 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:tester="clr-namespace:Sundew.Xaml.Avalonia.Development.Tester"
+        x:Class="Sundew.Xaml.Avalonia.Development.Tester.MainWindow"
+        Title="Sundew.Xaml Avalonia Tester" Width="960" Height="820">
+  <tester:MainView/>
+</Window>

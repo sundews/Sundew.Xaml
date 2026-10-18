@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CornerStops.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -55,6 +55,19 @@ public class CornerStops
         this.TopRight = topRight;
         this.BottomRight = bottomRight;
         this.BottomLeft = bottomLeft;
+    }
+
+    /// <summary>
+    /// Parses the specified text into <see cref="CornerStops"/>.
+    /// </summary>
+    /// <remarks>
+    /// XAML is culture invariant, so the values are separated by a comma and use a period as the decimal separator.
+    /// </remarks>
+    /// <param name="text">The text, holding one, two, four or eight comma separated values.</param>
+    /// <returns>The parsed corner stops.</returns>
+    public static CornerStops Parse(string text)
+    {
+        return CornerStopsConverter.FromString(text, null);
     }
 
     /// <summary>

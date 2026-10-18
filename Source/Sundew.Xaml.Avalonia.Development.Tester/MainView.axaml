@@ -1,0 +1,221 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="using:System"
+             xmlns:sx="http://sundew.dev/xaml"
+             x:Class="Sundew.Xaml.Avalonia.Development.Tester.MainView">
+  <UserControl.Resources>
+    <sys:String x:Key="Lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua..</sys:String>
+    <LinearGradientBrush x:Key="LeftGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+      <GradientStop Color="#FFFF0000" Offset="0"/>
+      <GradientStop Color="#FF00FF00" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="TopGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+      <GradientStop Color="#FF0000FF" Offset="0"/>
+      <GradientStop Color="#FFFF00FF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RightGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+      <GradientStop Color="#FFFFFF00" Offset="0"/>
+      <GradientStop Color="SandyBrown" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BottomGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+      <GradientStop Color="#FF00FF00" Offset="0.01"/>
+      <GradientStop Color="#FFFF0000" Offset="0.2"/>
+      <GradientStop Color="#FF0000FF" Offset="0.5"/>
+      <GradientStop Color="#FFFF00FF" Offset="0.8"/>
+      <GradientStop Color="SandyBrown" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Left">#669B50F9</SolidColorBrush>
+    <SolidColorBrush x:Key="Top">#669B50F9</SolidColorBrush>
+    <SolidColorBrush x:Key="Right">#664F07A7</SolidColorBrush>
+    <SolidColorBrush x:Key="Bottom">#664F07A7</SolidColorBrush>
+  </UserControl.Resources>
+  <Grid>
+    <Grid.Background>
+      <LinearGradientBrush StartPoint="50%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#FFBC93F7" Offset="0"/>
+        <GradientStop Color="#FFEBE2F9" Offset="1"/>
+      </LinearGradientBrush>
+    </Grid.Background>
+    <Grid Background="#339B50F9" RowDefinitions="Auto,*">
+        <Grid>
+            <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" HorizontalAlignment="Stretch"/>
+            <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="1"/>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
+      <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <LayoutTransformControl x:Name="ScaledExamples">
+          <Grid Width="900" ColumnDefinitions="*,*,*" RowDefinitions="100,100,100,100,100,150,100">
+
+            <!-- Solid brush per side, moderate radius. -->
+            <sx:Border Grid.Row="0" Grid.Column="0" Margin="4" Background="Bisque" CornerRadius="8" BorderThickness="4"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <StackPanel>
+                <TextBlock Text="solid sides" FontWeight="Bold"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- SideBrushes shorthand with explicit corner stops. -->
+            <sx:Border Grid.Row="0" Grid.Column="1" Margin="4" SideBrushes="LightGreen,DarkGreen" Background="Green"
+                       CornerRadius="4" BorderThickness="8" CornerStops="0.4,0.6">
+              <StackPanel>
+                <TextBlock Text="shorthand" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Asymmetric corner radius, two corners square. -->
+            <sx:Border Grid.Row="0" Grid.Column="2" Margin="4" CornerRadius="0,0,64,64" BorderThickness="8"
+                       CornerStops="0.4,0.6" SideBrushes="Red,Purple">
+              <StackPanel>
+                <TextBlock Text="asymmetric" FontWeight="Bold"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Zero radius. -->
+            <sx:Border Grid.Row="1" Grid.Column="0" Margin="4" Background="Teal" CornerRadius="0" BorderThickness="6"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <StackPanel>
+                <TextBlock Text="zero radius" FontWeight="Bold"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Non uniform thickness. -->
+            <sx:Border Grid.Row="1" Grid.Column="1" Margin="4" Background="#FF202040" CornerRadius="12"
+                       BorderThickness="2,6,10,14"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <StackPanel>
+                <TextBlock Text="non uniform" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Content clipped to the corner radius. -->
+            <sx:Border Grid.Row="1" Grid.Column="2" Margin="4" CornerRadius="24" BorderThickness="10" Padding="4"
+                       ClipContentToCornerRadius="True" SideBrushes="Orange,Maroon">
+              <Grid Background="Aqua">
+                <StackPanel>
+                  <TextBlock Text="clipped child" FontWeight="Bold"/>
+                  <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Grid>
+            </sx:Border>
+
+            <!-- Solid into gradient and gradient into solid, which take the mixed corner paths. -->
+            <sx:Border Grid.Row="2" Grid.Column="0" Margin="4" Padding="8" CornerRadius="20" BorderThickness="12"
+                       CornerStops="0.3,0.7" Background="#FF101010"
+                       LeftBrush="{StaticResource LeftGradient}" TopBrush="Cyan"
+                       RightBrush="{StaticResource RightGradient}" BottomBrush="Magenta">
+              <StackPanel>
+                <TextBlock Text="mixed brushes" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Per corner stops, each corner different. -->
+            <sx:Border Grid.Row="2" Grid.Column="1" Margin="4" Background="#FF403020" CornerRadius="28" BorderThickness="10"
+                       CornerStops="0.1,0.9,0.45,0.55,0.2,0.8,0.5,0.5" SideBrushes="Yellow,Green,Purple,Blue">
+              <StackPanel>
+                <TextBlock Text="per corner stops" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Nested in a plain border that rounds its own layout, to check the two agree on where the edge is. -->
+            <Border Grid.Row="2" Grid.Column="2" Margin="4" BorderBrush="Black" BorderThickness="1" UseLayoutRounding="True">
+              <sx:Border SideBrushes="LightGreen,DarkGreen" Background="Green" CornerRadius="4" BorderThickness="8"
+                         CornerStops="0.4,0.6">
+                <StackPanel>
+                  <TextBlock Text="nested" FontWeight="Bold" Foreground="White"/>
+                  <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+                </StackPanel>
+              </sx:Border>
+            </Border>
+
+            <!-- Very small, so the straight sections collapse entirely. -->
+            <sx:Border Grid.Row="3" Grid.Column="0" Width="24" Height="24" Background="Pink" CornerRadius="6"
+                       BorderThickness="4" SideBrushes="Red,Blue"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- Thick enough that the corner radius asked for is raised to the thickness of the sides. A box smaller
+                 than the border is not worth showing here: the layout system gives the control its unclipped minimum
+                 and clips that to the slot, so what is drawn is a corner of a larger border rather than anything this
+                 control decides. -->
+            <sx:Border Grid.Row="3" Grid.Column="1" Width="60" Height="60" Background="Khaki" CornerRadius="4"
+                       BorderThickness="20" SideBrushes="Red,Blue"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- See through sides, so the background shows through the border. -->
+            <sx:Border Grid.Row="3" Grid.Column="2" Margin="4" Background="BlueViolet" Padding="8" CornerRadius="16"
+                       BorderThickness="8" CornerStops="0.4,0.6"
+                       LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}"
+                       RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
+              <StackPanel>
+                <TextBlock Text="see through" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Radius far beyond the available space, so every corner clamps. -->
+            <sx:Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" Background="BlueViolet" Padding="16"
+                       CornerRadius="900" BorderThickness="8" CornerStops="0.4,0.6"
+                       LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}"
+                       RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
+              <StackPanel>
+                <TextBlock Text="clamped" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- Gradient brush on every side, widest corner stops. -->
+            <sx:Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" Padding="16" CornerRadius="32"
+                       BorderThickness="16" CornerStops="0.2,0.8"
+                       LeftBrush="{StaticResource LeftGradient}" TopBrush="{StaticResource TopGradient}"
+                       RightBrush="{StaticResource RightGradient}" BottomBrush="{StaticResource BottomGradient}">
+              <sx:Border.Background>
+                <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%" TransformOrigin="50%,50%">
+                  <LinearGradientBrush.Transform>
+                    <RotateTransform Angle="-8"/>
+                  </LinearGradientBrush.Transform>
+                  <GradientStop Color="#FF4FD41E" Offset="0"/>
+                  <GradientStop Color="#FFEF0413" Offset="0.069"/>
+                  <GradientStop Color="#FF0208FF" Offset="0.353"/>
+                  <GradientStop Color="#FFDC17FF" Offset="0.808"/>
+                  <GradientStop Color="#FFFFF000" Offset="1"/>
+                </LinearGradientBrush>
+              </sx:Border.Background>
+              <StackPanel>
+                <TextBlock Text="gradient sides" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{StaticResource Lorem}" TextWrapping="Wrap" Foreground="White"/>
+              </StackPanel>
+            </sx:Border>
+
+            <!-- The same non uniform thickness at three radii, because where the inside of a corner rounds is not
+                 obvious. A corner is drawn no tighter than the thicker of its two sides, and the inside of it only
+                 rounds once the radius clears that thickness, here the 14 of the bottom side. -->
+            <sx:Border Grid.Row="6" Grid.Column="0" Margin="4" Background="#FF202040" CornerRadius="12"
+                       BorderThickness="2,6,10,14"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <TextBlock Text="radius 12, under the 14" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+            </sx:Border>
+            <sx:Border Grid.Row="6" Grid.Column="1" Margin="4" Background="#FF202040" CornerRadius="14"
+                       BorderThickness="2,6,10,14"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <TextBlock Text="radius 14, exactly the 14" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+            </sx:Border>
+            <sx:Border Grid.Row="6" Grid.Column="2" Margin="4" Background="#FF202040" CornerRadius="20"
+                       BorderThickness="2,6,10,14"
+                       LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+              <TextBlock Text="radius 20, over the 14" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+            </sx:Border>
+          </Grid>
+        </LayoutTransformControl>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

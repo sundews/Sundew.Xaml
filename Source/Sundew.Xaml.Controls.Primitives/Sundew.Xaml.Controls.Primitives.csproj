@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sundew.Xaml.Controls</RootNamespace>
+    <Description>Platform neutral primitives shared by the Sundew.Xaml border controls:
+- BorderLayoutCalculator - Computes the edge, corner and background geometry of a four sided border.
+    </Description>
+  </PropertyGroup>
+
+</Project>
