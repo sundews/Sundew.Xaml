@@ -39,17 +39,23 @@
   no AnyCPU platform, so the solution maps its own Any CPU onto that project's x64.
 * The Uno tester is one Uno single project with four heads: `net10.0-desktop`, `net10.0-android`, `net10.0-ios` and
   `net10.0-browserwasm`. The last three need the android, ios and wasm-tools workloads, which a plain build agent
-  does not have, so CI passes `-p:SundewUnoAllHeads=false` and builds the desktop head alone. Build one head with
-  `dotnet build Source/Sundew.Xaml.Uno.Development.Tester -f net10.0-android`.
+  does not have, so the main CI job passes `-p:SundewUnoAllHeads=false` and builds the desktop head alone. Build
+  one head with `dotnet build Source/Sundew.Xaml.Uno.Development.Tester -f net10.0-android`.
 * Running the Android head needs one Android SDK that has both the platform the build compiles against and a system
   image for the emulator to boot. Where Visual Studio and Android Studio have each installed their own, neither has
   both, and the AVD only resolves its image under the SDK it was created in. Point `ANDROID_HOME` and
   `ANDROID_SDK_ROOT` at that one and add the missing platform to it:
   `sdkmanager --sdk_root=<that sdk> "platforms;android-36" "build-tools;36.0.0"`.
 * The Avalonia tester has a desktop head (`net10.0`) and an Android head (`net10.0-android`) in one project. Android
-  needs the android workload, so CI passes `-p:SundewAvaloniaAllHeads=false` there too. The control library itself
-  needed no change for Android: it uses only core Avalonia drawing, so the Skia renderer Avalonia uses on Android
-  draws it the same way it does on the desktop.
+  needs the android workload, so the main CI job passes `-p:SundewAvaloniaAllHeads=false` there too. The control
+  library itself needed no change for Android: it uses only core Avalonia drawing, so the Skia renderer Avalonia
+  uses on Android draws it the same way it does on the desktop.
+* A second CI job, `heads`, installs the android and wasm-tools workloads and builds the Uno Android and
+  WebAssembly heads and the Avalonia Android head. It runs on main and release only, because installing those
+  workloads costs a few minutes, and it packs and publishes nothing: `-p:SppDisable=true` keeps
+  Sundew.Packaging.Publish out of it, so the job only answers whether the heads still compile. The iOS head is left
+  out. It does compile on Windows, but only as far as its managed assemblies, with no app bundle; that needs Xcode,
+  so a runnable iOS build would take a macOS job of its own.
 * Each tester shows the same sheet of examples. `ComparisonView` is that sheet with the content left out, which is
   what the platforms are compared on: text rasterises differently everywhere and would drown out the border.
 * The WinUI and Uno testers take `--render <file>` and write that sheet to a PNG. They have to, because a border

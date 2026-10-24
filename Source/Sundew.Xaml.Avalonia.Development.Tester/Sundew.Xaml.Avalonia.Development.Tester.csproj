@@ -11,6 +11,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Avalonia.Development.Tester</RootNamespace>
     <IsPackable>false</IsPackable>
+    <!--
+      The Android head makes ApplicationDisplayVersion the $(Version), and so the $(PackageVersion), of that
+      head alone. NuGet requires one PackageVersion across every head of a project and fails restore with
+      NU1105 otherwise, so it is pinned to the repository version that both heads start from.
+    -->
+    <PackageVersion>$(Version)</PackageVersion>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 

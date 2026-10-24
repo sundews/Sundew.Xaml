@@ -17,8 +17,9 @@ jobs:
     runs-on: windows-latest
     env:
       solutionDir: ./Source
-      solutionFileName: Sundew.Xaml.slnx
       solutionPath: ./Source/Sundew.Xaml.slnx
+      primitivesTestsPath: ./Sundew.Xaml.Controls.Primitives.Tests/Sundew.Xaml.Controls.Primitives.Tests.csproj
+      wpfTestsPath: ./Sundew.Xaml.Development.Tests/Sundew.Xaml.Wpf.Development.Tests.csproj
       versioningProjectPath: ./Source/Sundew.Xaml.Controls.Wpf/Sundew.Xaml.Controls.Wpf.csproj
       repository: 'https://sundew-dev:${{ secrets.SUNDEW_DEV_TOKEN }}@github.com/sundews/Sundew.Xaml.git'
       source: 'https://api.nuget.org/v3/index.json'
@@ -88,9 +89,22 @@ jobs:
         '-p:"SppAppendPublishFileLogFormats={PackageId}={DQ}{PackagePath}{DQ}={Version}{NL} > ${{ env.packages-to-push }}"'
         -p:GeneratePackageOnBuild=true
         -p:"PackageOutputPath=${{ steps.stage-build.outputs.nuGetPackagesPath }}"
-    - name: Test
+    # The test projects are named rather than discovered with --solution, because that makes dotnet test
+    # evaluate every project in the solution, the Uno tester included, whose Uno.Sdk it fails to resolve on a
+    # build agent. Run from the solution directory so that global.json, and so the Microsoft.Testing.Platform
+    # runner it selects, is still found.
+    - name: Test controls primitives
       working-directory: ${{ env.solutionDir }}
-      run: dotnet test --solution ${{ env.solutionFileName }} --verbosity normal --configuration ${{ steps.stage-build.outputs.buildConfiguration }} --no-build -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false
+      run: >
+        dotnet test ${{ env.primitivesTestsPath }}
+        --verbosity normal --configuration ${{ steps.stage-build.outputs.buildConfiguration }} --no-build
+        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false
+    - name: Test WPF development
+      working-directory: ${{ env.solutionDir }}
+      run: >
+        dotnet test ${{ env.wpfTestsPath }}
+        --verbosity normal --configuration ${{ steps.stage-build.outputs.buildConfiguration }} --no-build
+        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false
     - name: 'Publish package(s)'
       if: ${{ steps.stage-build.outputs.stage != 'none' }}
       run: cb -c "spt|push -s ${{ steps.stage-build.outputs.pushSource }} -k ${{ steps.stage-build.outputs.apiKey }} -ss ${{ steps.stage-build.outputs.symbolsPushSource }} -sk ${{ steps.stage-build.outputs.symbolsApiKey }} --retries 10 {1}" -bs NewLine -bvs '=' -bf ${{ env.source-packages-to-push }}
@@ -107,3 +121,32 @@ jobs:
     - name: 'Summary'
       run: |
         echo '### Pushed version: ${{ steps.stage-build.outputs.fullVersion }}' >> $GITHUB_STEP_SUMMARY
+
+  heads:
+    name: .NET Android and WebAssembly heads
+    runs-on: windows-latest
+    # The heads the main job leaves out. They need the android and wasm-tools workloads, which a plain build
+    # agent does not have and which cost a few minutes to install, so they are built on main and release
+    # rather than on every push. Nothing is packed or published here: SppDisable keeps Sundew.Packaging.Publish
+    # out of it, so this job only answers whether the heads still compile.
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/tags/release') }}
+    env:
+      unoTesterPath: ./Source/Sundew.Xaml.Uno.Development.Tester
+      avaloniaTesterPath: ./Source/Sundew.Xaml.Avalonia.Development.Tester
+      headsBuild: --configuration Debug --verbosity normal -p:SppDisable=true
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup .NET preview
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.x.x
+        dotnet-quality: preview
+    - name: Install workloads
+      run: dotnet workload install android wasm-tools
+    - name: Build Uno Android head
+      run: dotnet build ${{ env.unoTesterPath }} ${{ env.headsBuild }} -f net10.0-android -p:SundewUnoAllHeads=true
+    - name: Build Uno WebAssembly head
+      run: dotnet build ${{ env.unoTesterPath }} ${{ env.headsBuild }} -f net10.0-browserwasm -p:SundewUnoAllHeads=true
+    - name: Build Avalonia Android head
+      run: dotnet build ${{ env.avaloniaTesterPath }} ${{ env.headsBuild }} -f net10.0-android -p:SundewAvaloniaAllHeads=true
