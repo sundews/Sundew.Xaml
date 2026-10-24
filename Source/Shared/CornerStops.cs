@@ -13,6 +13,9 @@ using System.ComponentModel;
 /// Represents a set of four corner-specific stop values, typically used to define gradient or transition points for each corner of a rectangular region.
 /// </summary>
 [TypeConverter(typeof(CornerStopsConverter))]
+#if SUNDEW_CREATE_FROM_STRING
+[Windows.Foundation.Metadata.CreateFromString(MethodName = "Sundew.Xaml.Controls.CornerStops.Parse")]
+#endif
 public class CornerStops
 {
     /// <summary>

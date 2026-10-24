@@ -13,6 +13,9 @@ using System.ComponentModel;
 /// Represents a pair of numeric stop values, typically used to define a range or interval.
 /// </summary>
 [TypeConverter(typeof(StopsConverter))]
+#if SUNDEW_CREATE_FROM_STRING
+[Windows.Foundation.Metadata.CreateFromString(MethodName = "Sundew.Xaml.Controls.Stops.Parse")]
+#endif
 public class Stops
 {
     /// <summary>

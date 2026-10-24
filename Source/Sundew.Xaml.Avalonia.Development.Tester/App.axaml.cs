@@ -20,9 +20,15 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // The desktop head hands out a window; Android and the browser hand out a single view. Both show the very
+        // same MainView, so the sheet of examples is identical on every head.
         if (this.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow();
+        }
+        else if (this.ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            singleView.MainView = new MainView();
         }
 
         base.OnFrameworkInitializationCompleted();

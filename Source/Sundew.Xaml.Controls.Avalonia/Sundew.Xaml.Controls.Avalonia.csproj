@@ -17,4 +17,13 @@
     <PackageReference Include="Avalonia" />
   </ItemGroup>
 
+  <!--
+    Stops and CornerStops are the XAML surface rather than geometry, so each platform library compiles its own copy
+    from one source. Sharing them as an assembly instead would put the same type name in two assemblies of the same
+    reference graph, which the WinUI and Uno XAML compilers cannot resolve.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
 </Project>

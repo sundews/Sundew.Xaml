@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0;net9.0-windows10.0.19041.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sundew.Xaml.Controls</RootNamespace>
+    <Description>Various WinUI and Uno Platform controls:
+- Border - A border supporting individual brushes for each side.
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    The Windows target is WinUI 3 proper, which draws with Win2D and also serves the Windows head of an Uno app.
+    Every other Uno target draws with Skia. Both run the very same Border, over the IBorderSurface abstraction.
+  -->
+  <PropertyGroup>
+    <IsWin2DTarget>false</IsWin2DTarget>
+    <IsWin2DTarget Condition="$(TargetFramework.Contains('-windows'))">true</IsWin2DTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWin2DTarget)' == 'true'">
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <!-- A library is built AnyCPU on purpose; the consuming app picks the platform Win2D needs. -->
+    <Win2DWarnNoPlatform>false</Win2DWarnNoPlatform>
+    <DefineConstants>$(DefineConstants);SUNDEW_WIN2D;SUNDEW_CREATE_FROM_STRING</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsWin2DTarget)' != 'true'">
+    <DefineConstants>$(DefineConstants);SUNDEW_SKIA;SUNDEW_CREATE_FROM_STRING</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Primitives\Sundew.Xaml.Controls.Primitives.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Backends\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWin2DTarget)' == 'true'">
+    <Compile Include="Backends\Win2D\**\*.cs" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Graphics.Win2D" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWin2DTarget)' != 'true'">
+    <Compile Include="Backends\Skia\**\*.cs" />
+    <PackageReference Include="Uno.WinUI" />
+    <PackageReference Include="Uno.WinUI.Graphics2DSK" />
+  </ItemGroup>
+
+  <!--
+    Stops and CornerStops are the XAML surface rather than geometry, so each platform library compiles its own copy
+    from one source. Sharing them as an assembly instead would put the same type name in two assemblies of the same
+    reference graph, which the WinUI and Uno XAML compilers cannot resolve.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+</Project>

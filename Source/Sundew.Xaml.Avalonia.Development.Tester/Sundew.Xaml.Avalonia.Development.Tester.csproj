@@ -1,14 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <!--
+      The desktop head and the Android head of one tester. Android needs the android workload, which a plain build
+      agent does not have, so CI sets SundewAvaloniaAllHeads=false and builds the desktop head alone.
+    -->
+    <SundewAvaloniaAllHeads Condition="'$(SundewAvaloniaAllHeads)' == ''">true</SundewAvaloniaAllHeads>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewAvaloniaAllHeads)' == 'true'">net10.0;net10.0-android</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Avalonia.Development.Tester</RootNamespace>
     <IsPackable>false</IsPackable>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <OutputType>WinExe</OutputType>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains('-android'))">
+    <OutputType>Exe</OutputType>
+    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
+    <ApplicationId>dev.sundew.xaml.avaloniatester</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
+    <!-- The Android build runs an intermediate compile without a PDB, which source embedding forbids. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,8 +39,26 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <!-- Each head brings its own windowing and its own entry point. -->
+  <ItemGroup>
+    <Compile Remove="Platforms\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Avalonia.Desktop" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+    <Compile Remove="Program.cs" />
+    <Compile Include="Platforms\Android\**\*.cs" />
+    <!-- Linked so that the folder they are kept in does not become part of the resource path. -->
+    <AndroidResource Include="Platforms\Android\Resources\**\*" Link="Resources\%(RecursiveDir)%(Filename)%(Extension)" />
+    <AndroidResource Include="Platforms\Android\Icon.png" Link="Resources\drawable\Icon.png" />
+    <EmbeddedFiles Remove="@(EmbeddedFiles)" />
+    <PackageReference Include="Avalonia.Android" />
   </ItemGroup>
 
 </Project>

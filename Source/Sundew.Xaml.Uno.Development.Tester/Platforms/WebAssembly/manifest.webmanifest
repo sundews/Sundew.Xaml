@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "UnoTpl",
+  "display": "standalone",
+  "name": "UnoTpl",
+  "short_name": "UnoTpl",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}

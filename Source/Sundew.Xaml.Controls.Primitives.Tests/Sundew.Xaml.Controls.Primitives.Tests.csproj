@@ -1,13 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Controls.Primitives.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.Primitives\Sundew.Xaml.Controls.Primitives.csproj" />
+  </ItemGroup>
+
+  <!--
+    Stops and CornerStops are the XAML surface rather than geometry, so each platform library compiles its own copy
+    from one source. Sharing them as an assembly instead would put the same type name in two assemblies of the same
+    reference graph, which the WinUI and Uno XAML compilers cannot resolve.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
   </ItemGroup>
 
 </Project>

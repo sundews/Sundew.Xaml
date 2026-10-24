@@ -1,0 +1,49 @@
+<Project Sdk="Uno.Sdk">
+
+  <PropertyGroup>
+    <!--
+      All four heads by default. The mobile and WebAssembly ones need the android, ios and wasm-tools workloads,
+      which a plain build agent does not have, so CI sets SundewUnoAllHeads=false and builds the desktop head alone.
+    -->
+    <SundewUnoAllHeads Condition="'$(SundewUnoAllHeads)' == ''">true</SundewUnoAllHeads>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewUnoAllHeads)' == 'true'">net10.0-desktop;net10.0-android;net10.0-ios;net10.0-browserwasm</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Sundew.Xaml.Uno.Development.Tester</RootNamespace>
+    <UnoSingleProject>true</UnoSingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+
+    <ApplicationTitle>Sundew.Xaml Uno Tester</ApplicationTitle>
+    <ApplicationId>dev.sundew.xaml.unotester</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationPublisher>Sundews</ApplicationPublisher>
+    <Description>Development tester for the Sundew.Xaml border on Uno Platform.</Description>
+
+    <!-- The Skia renderer is what SKCanvasElement, and so the Skia border surface, draws into. -->
+    <UnoFeatures>
+      SkiaRenderer;
+    </UnoFeatures>
+
+    <!-- The repository embeds untracked sources, which the heads here build without a PDB for. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedFiles Remove="@(EmbeddedFiles)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Security.Cryptography.Xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.WinUI\Sundew.Xaml.Controls.WinUI.csproj" />
+  </ItemGroup>
+
+</Project>

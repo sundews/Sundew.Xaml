@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFrameworks>net9.0-windows;net8.0-windows;net6.0-windows;net48</TargetFrameworks>
+	  <TargetFrameworks>net10.0-windows;net9.0-windows;net8.0-windows;net6.0-windows;net48</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
   	<RootNamespace>Sundew.Xaml.Theming</RootNamespace>
