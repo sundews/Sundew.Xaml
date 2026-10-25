@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>Sundew.Xaml.WinUI.Development.Tester</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -16,6 +16,15 @@
     <!-- The WinUI markup compiler runs an intermediate compile without a PDB, which the source
          embedding the repository turns on globally is not allowed alongside. -->
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <!--
+      NativeAOT is off for this head, and the switch is here rather than removed so that it can be tried again.
+      It builds and runs, but zooming deadlocks it: changing the scale makes Win2D recreate its device resources,
+      and compiled ahead of time that recreation never returns, the UI thread sitting in a COM wait for good. The
+      same build under the JIT zooms perfectly, and the Uno and Avalonia heads, which draw with Skia rather than
+      Win2D, are compiled ahead of time and zoom without trouble. It is Win2D under NativeAOT, not NativeAOT.
+      Set SundewWinUIAot=true to put it back.
+    -->
+    <PublishAot Condition="'$(SundewWinUIAot)' == 'true'">true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +38,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Graphics.Win2D" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The startup clock, shared so that every tester measures the same span the same way. -->
+    <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
   </ItemGroup>
 
 </Project>

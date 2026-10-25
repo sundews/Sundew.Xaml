@@ -1,7 +1,8 @@
 <UserControl x:Class="Sundew.Xaml.Uno.Development.Tester.MainView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:sx="using:Sundew.Xaml.Controls">
+             xmlns:sx="using:Sundew.Xaml.Controls"
+             xmlns:toolkit="using:Uno.UI.Toolkit">
   <UserControl.Resources>
     <x:String x:Key="Lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</x:String>
     <LinearGradientBrush x:Key="LeftGradient" StartPoint="0,0" EndPoint="1,1">
@@ -35,18 +36,27 @@
         <GradientStop Color="#FFEBE2F9" Offset="1"/>
       </LinearGradientBrush>
     </Grid.Background>
-    <Grid Background="#339B50F9">
+    <!-- Android 15 draws the app edge to edge, so without this the zoom slider sits under the status bar.
+         The gradient behind stays full bleed; only what is read and touched is inset. -->
+    <Grid Background="#339B50F9" toolkit:VisibleBoundsPadding.PaddingMask="All">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition/>
       </Grid.RowDefinitions>
       <Grid>
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
           <ColumnDefinition/>
           <ColumnDefinition Width="50"/>
         </Grid.ColumnDefinitions>
-        <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
-        <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="1" VerticalAlignment="Center"/>
+        <!-- Which tester this is, because on a phone or a tablet there is no window title to say so. -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,12,0">
+          <TextBlock Text="Uno" FontWeight="Bold"/>
+          <!-- Whether this head is running compiled ahead of time, which only some of them can be. -->
+          <TextBlock x:Name="RuntimeLabel" Margin="6,0,0,0" Opacity="0.7"/>
+        </StackPanel>
+        <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
+        <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="2" VerticalAlignment="Center"/>
       </Grid>
       <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Disabled">

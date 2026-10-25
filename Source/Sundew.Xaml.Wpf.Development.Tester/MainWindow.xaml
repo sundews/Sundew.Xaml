@@ -6,5 +6,5 @@
         xmlns:tester="clr-namespace:Sundew.Xaml.Wpf.Development.Tester"
         mc:Ignorable="d"
         Title="Sundew.Xaml WPF Tester" Height="820" Width="960">
-    <tester:MainView/>
+    <tester:MainView x:Name="View"/>
 </Window>

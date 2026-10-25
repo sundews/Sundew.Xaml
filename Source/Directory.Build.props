@@ -3,6 +3,11 @@
     <Deterministic>true</Deterministic>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <Version>0.1</Version>
+    <!-- Defaulted here because OutputPath below reads it. This file is imported before the SDK defaults
+         Configuration to Debug, so a solution build, where the solution passes Configuration as a global property,
+         wrote bin/Debug while building or running a project on its own wrote bin/ with no configuration at all.
+         Two output trees meant a run that does not build served whichever of them was the staler. -->
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <OutputPath>bin/$(Configuration)</OutputPath>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>

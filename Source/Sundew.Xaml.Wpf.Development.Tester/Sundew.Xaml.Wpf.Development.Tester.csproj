@@ -18,4 +18,9 @@
     <ProjectReference Include="..\Sundew.Xaml.Controls.Wpf\Sundew.Xaml.Controls.Wpf.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The startup clock, shared so that every tester measures the same span the same way. -->
+    <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
+  </ItemGroup>
+
 </Project>

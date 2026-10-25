@@ -42,11 +42,18 @@
       </Grid.RowDefinitions>
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition/>
           <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition/>
+          <ColumnDefinition Width="50"/>
         </Grid.ColumnDefinitions>
-        <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
-        <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="1" VerticalAlignment="Center"/>
+        <!-- Which tester this is, so that the sheet says so itself rather than only the window title. -->
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,12,0">
+          <TextBlock Text="WinUI" FontWeight="Bold"/>
+          <!-- Whether this head is running compiled ahead of time, which only some of them can be. -->
+          <TextBlock x:Name="RuntimeLabel" Margin="6,0,0,0" Opacity="0.7"/>
+        </StackPanel>
+        <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
+        <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="2" VerticalAlignment="Center"/>
       </Grid>
       <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Disabled">

@@ -91,4 +91,9 @@
 		<ProjectReference Include="..\Sundew.Xaml.Controls.Maui\Sundew.Xaml.Controls.Maui.csproj" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <!-- The startup clock, shared so that every tester measures the same span the same way. -->
+    <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
+  </ItemGroup>
+
 </Project>

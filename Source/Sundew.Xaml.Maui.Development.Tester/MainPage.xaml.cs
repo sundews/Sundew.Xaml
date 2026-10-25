@@ -1,149 +1,172 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="MainPage.xaml.cs" company="Sundews">
+// Copyright (c) Sundews. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace Sundew.Xaml.Maui.Development.Tester;
 
+using Sundew.Xaml.Development;
 using SundewBorder = Sundew.Xaml.Controls.Border;
 
 public partial class MainPage : ContentPage
 {
-	/// <summary>
-	/// The width the sheet is designed at, which every tester shares so that the sheets lay out alike. It is a
-	/// floor here rather than a fixed size, because leaving the rest of a wider screen empty helps nobody.
-	/// </summary>
-	private const double SheetWidth = 900;
+    /// <summary>
+    /// The width the sheet is designed at, which every tester shares so that the sheets lay out alike. It is a
+    /// floor here rather than a fixed size, because leaving the rest of a wider screen empty helps nobody.
+    /// </summary>
+    private const double SheetWidth = 900;
 
-	/// <summary>
-	/// What each element of the sheet does when the zoom changes, closed over the size it was designed at.
-	/// </summary>
-	private readonly List<Action<double>> zoomAppliers = new();
+    /// <summary>
+    /// What each element of the sheet does when the zoom changes, closed over the size it was designed at.
+    /// </summary>
+    private readonly List<Action<double>> zoomAppliers = new();
 
-	private readonly List<double> rowHeights = new();
-	private double zoom = 1;
+    private readonly List<double> rowHeights = new();
+    private double zoom = 1;
 
-	public MainPage()
-	{
-		InitializeComponent();
+    public MainPage()
+    {
+        this.InitializeComponent();
+        this.RuntimeLabel.Text = RuntimeName;
+        this.Loaded += (_, _) =>
+        {
+            StartupClock.Loaded();
+            this.RuntimeLabel.Text = RuntimeName + " · " + StartupClock.Describe();
+        };
 
-		// MAUI has no layout transform, and its Scale is no substitute here: a border draws into a canvas sized to
-		// its layout, so scaling only magnifies that bitmap and the corners come out blocky. The zoom therefore
-		// scales the sheet itself, multiplying every size, thickness, radius and font it was designed with, which
-		// lays each border out larger and has it draw itself again at that size. Avalonia gets this from
-		// LayoutTransformControl because it composites vectors rather than a bitmap per border.
-		this.Capture(this.Examples);
-		foreach (var rowDefinition in this.Examples.RowDefinitions)
-		{
-			this.rowHeights.Add(rowDefinition.Height.Value);
-		}
+        // MAUI has no layout transform, and its Scale is no substitute here: a border draws into a canvas sized to
+        // its layout, so scaling only magnifies that bitmap and the corners come out blocky. The zoom therefore
+        // scales the sheet itself, multiplying every size, thickness, radius and font it was designed with, which
+        // lays each border out larger and has it draw itself again at that size. Avalonia gets this from
+        // LayoutTransformControl because it composites vectors rather than a bitmap per border.
+        this.Capture(this.Examples);
+        foreach (var rowDefinition in this.Examples.RowDefinitions)
+        {
+            this.rowHeights.Add(rowDefinition.Height.Value);
+        }
 
-		// The slider is wired here rather than bound in XAML, because an x:Reference binding leaves the page
-		// blank under the source generated XAML inflator this project uses.
-		this.ZoomSlider.ValueChanged += this.OnZoomChanged;
-		this.SheetScroll.SizeChanged += this.OnViewportChanged;
-		this.ApplyZoom(this.ZoomSlider.Value);
-	}
+        // The slider is wired here rather than bound in XAML, because an x:Reference binding leaves the page
+        // blank under the source generated XAML inflator this project uses.
+        this.ZoomSlider.ValueChanged += this.OnZoomChanged;
+        this.SheetScroll.SizeChanged += this.OnViewportChanged;
+        this.ApplyZoom(this.ZoomSlider.Value);
+    }
 
-	private static IEnumerable<Element> ChildrenOf(Element element)
-	{
-		switch (element)
-		{
-			case Layout layout:
-				return layout.Children.OfType<Element>();
-			case ContentView contentView when contentView.Content != null:
-				return new Element[] { contentView.Content };
-			default:
-				return Enumerable.Empty<Element>();
-		}
-	}
+    /// <summary>
+    /// Gets how this head is running. NativeAOT is the one case where the runtime cannot compile code as it goes,
+    /// which is what tells it apart from a JIT run of the very same build. A browser head is neither: it is
+    /// called out by name rather than reported as ahead of time, which it is not.
+    /// </summary>
+    private static string RuntimeName => OperatingSystem.IsBrowser()
+        ? "wasm"
+        : System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported ? "JIT" : "Native AOT";
 
-	private static Thickness Scaled(Thickness thickness, double zoom)
-	{
-		return new Thickness(thickness.Left * zoom, thickness.Top * zoom, thickness.Right * zoom, thickness.Bottom * zoom);
-	}
+    private static IEnumerable<Element> ChildrenOf(Element element)
+    {
+        switch (element)
+        {
+            case Layout layout:
+                return layout.Children.OfType<Element>();
+            case ContentView contentView when contentView.Content != null:
+                return new Element[] { contentView.Content };
+            default:
+                return Enumerable.Empty<Element>();
+        }
+    }
 
-	private static CornerRadius Scaled(CornerRadius cornerRadius, double zoom)
-	{
-		return new CornerRadius(
-			cornerRadius.TopLeft * zoom,
-			cornerRadius.TopRight * zoom,
-			cornerRadius.BottomLeft * zoom,
-			cornerRadius.BottomRight * zoom);
-	}
+    private static Thickness Scaled(Thickness thickness, double zoom)
+    {
+        return new Thickness(thickness.Left * zoom, thickness.Top * zoom, thickness.Right * zoom, thickness.Bottom * zoom);
+    }
 
-	private void Capture(Element element)
-	{
-		switch (element)
-		{
-			case SundewBorder border:
-				var borderThickness = border.BorderThickness;
-				var cornerRadius = border.CornerRadius;
-				var contentPadding = border.ContentPadding;
-				var margin = border.Margin;
-				var width = border.WidthRequest;
-				var height = border.HeightRequest;
-				this.zoomAppliers.Add(zoom =>
-				{
-					border.BorderThickness = Scaled(borderThickness, zoom);
-					border.CornerRadius = Scaled(cornerRadius, zoom);
-					border.ContentPadding = Scaled(contentPadding, zoom);
-					border.Margin = Scaled(margin, zoom);
-					if (width > 0)
-					{
-						border.WidthRequest = width * zoom;
-					}
+    private static CornerRadius Scaled(CornerRadius cornerRadius, double zoom)
+    {
+        return new CornerRadius(
+            cornerRadius.TopLeft * zoom,
+            cornerRadius.TopRight * zoom,
+            cornerRadius.BottomLeft * zoom,
+            cornerRadius.BottomRight * zoom);
+    }
 
-					if (height > 0)
-					{
-						border.HeightRequest = height * zoom;
-					}
-				});
+    private void Capture(Element element)
+    {
+        switch (element)
+        {
+            case SundewBorder border:
+                var borderThickness = border.BorderThickness;
+                var cornerRadius = border.CornerRadius;
+                var contentPadding = border.ContentPadding;
+                var margin = border.Margin;
+                var width = border.WidthRequest;
+                var height = border.HeightRequest;
+                this.zoomAppliers.Add(zoom =>
+                {
+                    border.BorderThickness = Scaled(borderThickness, zoom);
+                    border.CornerRadius = Scaled(cornerRadius, zoom);
+                    border.ContentPadding = Scaled(contentPadding, zoom);
+                    border.Margin = Scaled(margin, zoom);
+                    if (width > 0)
+                    {
+                        border.WidthRequest = width * zoom;
+                    }
 
-				break;
+                    if (height > 0)
+                    {
+                        border.HeightRequest = height * zoom;
+                    }
+                });
 
-			case Label label:
-				var fontSize = label.FontSize;
-				this.zoomAppliers.Add(zoom => label.FontSize = fontSize * zoom);
-				break;
-		}
+                break;
 
-		foreach (var child in ChildrenOf(element))
-		{
-			this.Capture(child);
-		}
-	}
+            case Label label:
+                var fontSize = label.FontSize;
+                this.zoomAppliers.Add(zoom => label.FontSize = fontSize * zoom);
+                break;
+        }
 
-	private void OnZoomChanged(object? sender, ValueChangedEventArgs e)
-	{
-		this.ApplyZoom(e.NewValue);
-	}
+        foreach (var child in ChildrenOf(element))
+        {
+            this.Capture(child);
+        }
+    }
 
-	private void ApplyZoom(double zoom)
-	{
-		this.zoom = zoom;
-		foreach (var applier in this.zoomAppliers)
-		{
-			applier(zoom);
-		}
+    private void OnZoomChanged(object? sender, ValueChangedEventArgs e)
+    {
+        this.ApplyZoom(e.NewValue);
+    }
 
-		for (var index = 0; index < this.rowHeights.Count; index++)
-		{
-			this.Examples.RowDefinitions[index].Height = new GridLength(this.rowHeights[index] * zoom);
-		}
+    private void ApplyZoom(double zoom)
+    {
+        this.zoom = zoom;
+        foreach (var applier in this.zoomAppliers)
+        {
+            applier(zoom);
+        }
 
-		this.ZoomValue.Text = zoom.ToString("0.00");
-		this.UpdateSheetWidth();
-	}
+        for (var index = 0; index < this.rowHeights.Count; index++)
+        {
+            this.Examples.RowDefinitions[index].Height = new GridLength(this.rowHeights[index] * zoom);
+        }
 
-	private void OnViewportChanged(object? sender, EventArgs e)
-	{
-		this.UpdateSheetWidth();
-	}
+        this.ZoomValue.Text = zoom.ToString("0.00");
+        this.UpdateSheetWidth();
+    }
 
-	private void UpdateSheetWidth()
-	{
-		// Grow the sheet to the viewport where there is room, and keep it scrollable where there is not. Zooming
-		// widens it in step, so the scroll area grows with the sheet rather than the sheet spilling out of it.
-		var width = Math.Max(SheetWidth, this.SheetScroll.Width) * this.zoom;
-		if (Math.Abs(this.Examples.WidthRequest - width) > 0.5)
-		{
-			this.Examples.WidthRequest = width;
-		}
-	}
+    private void OnViewportChanged(object? sender, EventArgs e)
+    {
+        this.UpdateSheetWidth();
+    }
+
+    private void UpdateSheetWidth()
+    {
+        // Grow the sheet to the viewport where there is room, and keep it scrollable where there is not. Zooming
+        // widens it in step, so the scroll area grows with the sheet rather than the sheet spilling out of it.
+        var width = Math.Max(SheetWidth, this.SheetScroll.Width) * this.zoom;
+        if (Math.Abs(this.Examples.WidthRequest - width) > 0.5)
+        {
+            this.Examples.WidthRequest = width;
+        }
+    }
 }

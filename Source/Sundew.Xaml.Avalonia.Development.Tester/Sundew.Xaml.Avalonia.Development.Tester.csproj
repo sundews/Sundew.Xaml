@@ -23,6 +23,10 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <OutputType>WinExe</OutputType>
+    <!-- NativeAOT, which this head supports and the Android, iOS and browser heads do not. It is set here rather
+         than passed on the command line: a command line property reaches every referenced project, and the
+         netstandard2.0 primitives library cannot be compiled ahead of time at all. -->
+    <PublishAot>true</PublishAot>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -38,6 +42,18 @@
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <!-- The Android build runs an intermediate compile without a PDB, which source embedding forbids. -->
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <!--
+    NativeAOT for Android, which .NET 10 supports through a runtime pack of its own. It is deliberately not on by
+    default: with PublishAot set, an ordinary build runs the trimmer and the native compiler too, because an
+    Android app carries its code as a native library inside the apk. That turns every solution build into an AOT
+    build. The launcher asks for it when it publishes a head to a device.
+  -->
+  <PropertyGroup Condition="$(TargetFramework.Contains('-android')) And '$(SundewAndroidAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <!-- Mono.Android and Java.Interop report AOT analysis warnings of their own, which are not ours to fix. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(TargetFramework.Contains('-ios'))">
@@ -97,6 +113,11 @@
     <!-- main.js is deployed by WasmMainJSPath; the page that hosts it is not. -->
     <WasmExtraFilesToDeploy Include="wwwroot\index.html" />
     <PackageReference Include="Avalonia.Browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The startup clock, shared so that every tester measures the same span the same way. -->
+    <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
   </ItemGroup>
 
 </Project>

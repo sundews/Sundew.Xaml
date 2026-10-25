@@ -33,6 +33,13 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-desktop'">
+    <!-- NativeAOT, which this head supports and the Android, iOS and browser heads do not. It is set here rather
+         than passed on the command line: a command line property reaches every referenced project, and the
+         netstandard2.0 primitives library cannot be compiled ahead of time at all. -->
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+
   <ItemGroup>
     <EmbeddedFiles Remove="@(EmbeddedFiles)" />
   </ItemGroup>
@@ -44,6 +51,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.WinUI\Sundew.Xaml.Controls.WinUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The startup clock, shared so that every tester measures the same span the same way. -->
+    <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
   </ItemGroup>
 
 </Project>

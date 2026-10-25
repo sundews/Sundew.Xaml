@@ -36,14 +36,20 @@
   <Grid RowDefinitions="Auto,*" BackgroundColor="#FFBC93F7">
     <!-- Android draws edge to edge, and reserves the top of the screen for its own gestures, so the slider is
          pushed clear of both there. -->
-    <Grid ColumnDefinitions="*,50" ColumnSpacing="8">
+    <Grid ColumnDefinitions="Auto,*,50" ColumnSpacing="8">
       <Grid.Padding>
         <OnPlatform x:TypeArguments="Thickness" Default="8,4,8,4">
           <On Platform="Android" Value="8,48,8,4" />
         </OnPlatform>
       </Grid.Padding>
-      <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" />
-      <Label x:Name="ZoomValue" Grid.Column="1" VerticalOptions="Center" Text="1.00" />
+      <!-- Which tester this is, because on a phone or a tablet there is no window title to say so. -->
+      <HorizontalStackLayout VerticalOptions="Center" Margin="4,0,8,0">
+        <Label Text="MAUI" FontAttributes="Bold" />
+        <!-- Whether this head is running compiled ahead of time, which only some of them can be. -->
+        <Label x:Name="RuntimeLabel" Margin="6,0,0,0" Opacity="0.7" />
+      </HorizontalStackLayout>
+      <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" />
+      <Label x:Name="ZoomValue" Grid.Column="2" VerticalOptions="Center" Text="1.00" />
     </Grid>
 
     <!-- The zoom scales the sheet itself in the code behind, so that every border is laid out larger and
@@ -173,9 +179,18 @@
 
         <!-- A gradient on every side, blended at the corners. -->
         <sx:Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" ContentPadding="16" CornerRadius="32"
-                   BorderThickness="16" CornerStops="0.2,0.8" Fill="#FF101010"
+                   BorderThickness="16" CornerStops="0.2,0.8"
                    LeftBrush="{StaticResource LeftGradient}" TopBrush="{StaticResource TopGradient}"
                    RightBrush="{StaticResource RightGradient}" BottomBrush="{StaticResource BottomGradient}">
+          <sx:Border.Fill>
+            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+              <GradientStop Color="#FF4FD41E" Offset="0" />
+              <GradientStop Color="#FFEF0413" Offset="0.069" />
+              <GradientStop Color="#FF0208FF" Offset="0.353" />
+              <GradientStop Color="#FFDC17FF" Offset="0.808" />
+              <GradientStop Color="#FFFFF000" Offset="1" />
+            </LinearGradientBrush>
+          </sx:Border.Fill>
           <VerticalStackLayout>
             <Label Text="gradient sides" FontAttributes="Bold" TextColor="White" />
             <Label Text="{StaticResource Lorem}" TextColor="White" />

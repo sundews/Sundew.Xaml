@@ -42,11 +42,20 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <Grid>
-                <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" SmallChange="0.1" LargeChange="0.5" HorizontalAlignment="Stretch"/>
-                <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="1"/>
+                <!-- Which tester this is, to match the other testers, where there is no window title to say so. -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,12,0">
+                  <TextBlock Text="WPF" FontWeight="Bold"/>
+                  <!-- Whether this head is running compiled ahead of time, which only some of them can be. -->
+                  <TextBlock x:Name="RuntimeLabel" Margin="6,0,0,0" Opacity="0.7"/>
+                </StackPanel>
+                <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" SmallChange="0.1" LargeChange="0.5" HorizontalAlignment="Stretch"/>
+                <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="2" VerticalAlignment="Center"/>
+                <CheckBox x:Name="SubtitleOverlayToggle" Grid.Column="3" Content="Subtitle overlay" VerticalAlignment="Center" Margin="12,0,4,0"/>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition />
                     <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
             </Grid>
             <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">

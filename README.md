@@ -64,6 +64,105 @@ serve `Windows.UI.Color` on WinUI and Uno and the float channels of `Microsoft.M
 * A MAUI corner radius is ordered top left, top right, bottom left, bottom right, where WinUI goes round the
   other way, so the inner radius the content is clipped to is reordered on the way out of the calculator.
 
+### Tester launcher:
+`Sundew.Xaml.Development.Launcher` starts the testers side by side, which is how the border is compared across
+platforms without building and running five things by hand. It is a WinUI app in the Fluent style, so Windows
+only, and it covers the heads that can be seen from Windows: the five desktop testers, the three Android ones,
+and the two browser ones, and it can start all of them in one go.
+
+* It references none of the testers. It starts each through the dotnet CLI instead, so the launcher itself builds
+  and runs on an agent that has none of the android, iOS or wasm workloads the testers need.
+* Closing the launcher closes everything it started. Each tester is put in a Windows job created with
+  `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, which matters because a tester is started through `dotnet run` and so the
+  window that appears is a grandchild: killing the process that was started would leave the tester behind.
+  Windows closes a job when the last handle to it goes, including when the launcher dies for any other reason, so
+  this holds even if the launcher is killed outright.
+* An Android tester is not a child process at all, since it runs on the device, so it is stopped with
+  `adb shell am force-stop` instead. An emulator the launcher started is in the job and goes down with it; one
+  that was already running is left alone.
+* Android heads are deployed with `-t:Run` rather than by installing the APK, because a debug build keeps its
+  assemblies beside the app rather than in the package.
+* Comparing the Android testers means running them at once, which means a device each. The emulator chosen at the
+  top is the default, and more instances of it are started as more are needed. A virtual device only starts
+  once, because the running instance locks it, so they are all started with `-read-only`, which is what makes
+  three testers on one AVD possible without an AVD per tester. All of them, not merely the ones after the
+  first: the emulator refuses a second instance unless every instance of that device was started that way.
+* Each Android tester also has a selector of its own, so it can be put on a particular emulator rather than the
+  default. An attached device already running the wanted one is used before another is started. The virtual
+  devices are listed tablets first, those being what the sheets are meant to be compared on.
+* Each Android tester is given an emulator of its own, started for it, rather than sharing one that happens
+  to be attached, because the three of them are meant to be seen side by side. They ask at the same time, so
+  the choosing, and the reserving of the port the next emulator will take, happens under a lock. Only the
+  waiting, which is however long an emulator takes to boot, is left outside it, so that the three come up
+  together rather than one after another.
+* A tester is only up once its own process exists, so the list watches for that rather than calling it running
+  the moment the build starts: `dotnet run` keeps running for as long as the tester does, and says nothing in
+  between. A browser head says instead which url it is serving on.
+* Neither browser head opens anything of its own. They serve a page and print where, so the launcher watches
+  for that url and opens it, in a window of its own rather than a tab of whatever browser is already running:
+  a tab belongs to a process the launcher does not own, and so could be neither laid out beside the other
+  testers nor closed with them. The window is asked for with app mode and a profile of its own, that profile
+  being what keeps it a process apart.
+* A browser hands over to a process of its own and exits, so the one that was started says nothing about the
+  window that appeared. Job membership is inherited, so the launcher asks the job what is in it, which is both
+  how the window is found to tile it and why closing the launcher closes it.
+* The subtitle overlay the WPF tester used to always show is now a box in the tester itself, unticked, which
+  shows and hides the overlay as it is tried. It is a window of its own, always on top, which is the point of
+  it and a nuisance when the border is what is being looked at.
+* Launching builds nothing. The solution has normally just been built, and `dotnet run` is told `--no-build`,
+  so starting the five desktop testers takes about ten seconds rather than minutes. Build solution first, which
+  is off, builds it once beforehand for when that is not so: started one at a time, each tester would build the
+  libraries they all share again, and several of them would build the same project at once for different heads.
+  The Android heads are the exception, `-t:Run` being deploy and build together with no separating them, though
+  it has nothing to do when nothing has changed.
+* It then waits until everything it started is up before laying the windows out. Tiling as they appeared put
+  the first few across the whole screen and left the rest to open wherever they liked.
+* Everything written is kept in `%TEMP%/sundew-xaml-launcher.log`, through a lock: each tester writes from a
+  thread of its own, and appending from all of them as they came was asking the file to be opened while it
+  was already open.
+* Tile windows lays every tester window out in a grid across the work area and raises each one as it is placed,
+  so that none of them is left behind something else. The windows are found by the process they belong to rather
+  than by anything the launcher holds onto, because a tester started through the dotnet CLI is a grandchild, and
+  an emulator window belongs to a process of the Android SDK itself.
+* The grid is the one whose cells come closest to the shape of a sheet, not the square one. Squaring the count
+  up is wrong on a wide screen: sixteen cells across 5120x2100 are 1280 by 525, so every tester showed a third
+  of its sheet while a quarter of the screen stayed empty. Ten windows on that screen are laid out five by two
+  instead, at 1024 by 1050 each, which is a whole sheet apiece.
+* Only the windows that would show up in Alt-Tab are tiled. The emulator's toolbar is a window of its own that
+  follows the emulator about, and tiling it as though it were a tester is what took up the cells the testers
+  then had to overlap. It is not tiled, but the width it takes alongside the emulator is, so that the two of
+  them together fill one cell.
+* The testers are laid out in the order they are listed, then the emulators, then the browsers, rather than in
+  the z-order Windows hands back, so that the same tester lands in the same cell on every run and two runs can
+  be compared. A window that will not take the size asked of it, as an emulator will not because it keeps the
+  device's aspect, is centred in its cell rather than left hugging a corner of it. That is a pass of its own,
+  after a pause: measured straight away an emulator reports the size it was told to be, not the one it takes,
+  and so was left at the top of its cell with a quarter of the cell empty beneath it.
+* The window queue is held onto rather than read off the window when it is needed, because reading it from a
+  worker thread throws, and a throw inside a task nothing awaits goes nowhere: the tiling simply did not happen
+  and said nothing about why.
+* `--launch-all` starts everything without waiting for the button, which is both a convenience and the only way
+  to exercise that path without a hand on the mouse. An unhandled exception is written to
+  `%TEMP%/sundew-xaml-launcher.log`, a launcher that simply vanishes being no help at all.
+* Beside that name each sheet says how it is running: Native AOT, JIT or wasm. It is read from the runtime
+  rather than set when built, because the same build runs either way: a head started through the CLI runs under
+  the JIT whatever its project says about publishing, and the label would be a lie if it came from a constant.
+* NativeAOT is set on the WinUI, Uno desktop and Avalonia desktop heads, which are the ones that support it. WPF
+  has none, MAUI has it on iOS and Mac Catalyst only, and the Android and browser heads compile ahead of time in
+  quite different senses that are not this one. It is set in each head rather than passed on the command line,
+  where it would reach every referenced project including the netstandard2.0 primitives, which cannot be compiled
+  ahead of time at all.
+* Publishing a head needs its sibling heads switched off, `-p:SundewUnoAllHeads=false` and the Avalonia one
+  likewise: restore applies `-r win-x64` to every target framework in the project, and asking for a win-x64 Mono
+  runtime pack for the Android and browser heads fails, there being no such thing.
+* The link step wants `vswhere.exe` on the PATH, which it is not by default even where Visual Studio is
+  installed. A developer command prompt has it; otherwise add the installer directory.
+* The launcher runs the published native binary for those three heads when one is there, and falls back to the
+  CLI when it is not. Starting them through the CLI would run the same build under the JIT, and the sheet would
+  say so.
+* Each tester names itself in its own sheet, next to the zoom, because on a phone or a tablet there is no window
+  title to say which one is being looked at.
+
 ### Development testers:
 * `Sundew.Xaml.Wpf.Development.Tester`, `Sundew.Xaml.Avalonia.Development.Tester`,
   `Sundew.Xaml.Uno.Development.Tester` and `Sundew.Xaml.Maui.Development.Tester` are all in the solution. WinUI has
