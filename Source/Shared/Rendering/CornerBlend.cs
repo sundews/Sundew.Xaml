@@ -8,7 +8,6 @@
 namespace Sundew.Xaml.Controls;
 
 using System;
-using Windows.UI;
 
 /// <summary>
 /// The two colours a corner is blended between, or the fill to fall back to when the two sides meeting there cannot
@@ -16,10 +15,10 @@ using Windows.UI;
 /// </summary>
 public readonly record struct CornerBlend
 {
-    private readonly Color start;
-    private readonly Color end;
+    private readonly PaintColor start;
+    private readonly PaintColor end;
 
-    private CornerBlend(Color start, Color end)
+    private CornerBlend(PaintColor start, PaintColor end)
     {
         this.start = start;
         this.end = end;
@@ -63,7 +62,7 @@ public readonly record struct CornerBlend
     /// <param name="start">The colour of the side entering the corner.</param>
     /// <param name="end">The colour of the side leaving the corner.</param>
     /// <returns>The blend.</returns>
-    public static CornerBlend Between(Color start, Color end)
+    public static CornerBlend Between(PaintColor start, PaintColor end)
     {
         return new CornerBlend(start, end);
     }
@@ -84,7 +83,7 @@ public readonly record struct CornerBlend
     /// <param name="stops">The stops controlling how abrupt the transition is.</param>
     /// <param name="position">The position, where 0 is the side entering the corner and 1 the side leaving it.</param>
     /// <returns>The colour, with its alpha taken relative to the opacity the corner is composited at.</returns>
-    public Color ColorAt(Stops stops, double position)
+    public PaintColor ColorAt(Stops stops, double position)
     {
         if (stops == null)
         {
@@ -93,7 +92,7 @@ public readonly record struct CornerBlend
 
         var amount = stops.GetBlendAmount(position);
         var peak = Math.Max(this.start.A, this.end.A);
-        return Color.FromArgb(
+        return PaintColor.FromArgb(
             peak == 0 ? (byte)0 : (byte)Math.Round(Channel(this.start.A, this.end.A, amount) * 255.0 / peak),
             Channel(this.start.R, this.end.R, amount),
             Channel(this.start.G, this.end.G, amount),

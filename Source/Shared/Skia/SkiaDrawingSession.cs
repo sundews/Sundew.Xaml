@@ -9,7 +9,6 @@ namespace Sundew.Xaml.Controls.Backends;
 
 using System;
 using SkiaSharp;
-using Windows.UI;
 
 /// <summary>
 /// Draws a border with Skia, which is the path used on every Uno target other than Windows.
@@ -88,7 +87,7 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
         return new SKPoint((float)position.X, (float)position.Y);
     }
 
-    private static SKColor ToColor(Color color)
+    private static SKColor ToColor(PaintColor color)
     {
         return new SKColor(color.R, color.G, color.B, color.A);
     }
@@ -108,7 +107,7 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
 
             var bounds = path.Bounds;
             paint.ResolveEnds(
-                new Windows.Foundation.Rect(bounds.Left, bounds.Top, bounds.Width, bounds.Height),
+                new Bounds(bounds.Left, bounds.Top, bounds.Width, bounds.Height),
                 out var start,
                 out var end);
             skPaint.Shader = SKShader.CreateLinearGradient(

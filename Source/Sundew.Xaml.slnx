@@ -15,10 +15,12 @@
   </Folder>
   <Folder Name="/Testers/">
     <Project Path="Sundew.Xaml.Avalonia.Development.Tester/Sundew.Xaml.Avalonia.Development.Tester.csproj" />
+    <Project Path="Sundew.Xaml.Maui.Development.Tester/Sundew.Xaml.Maui.Development.Tester.csproj" />
     <Project Path="Sundew.Xaml.Uno.Development.Tester/Sundew.Xaml.Uno.Development.Tester.csproj" />
     <Project Path="Sundew.Xaml.Wpf.Development.Tester/Sundew.Xaml.Wpf.Development.Tester.csproj" />
   </Folder>
   <Project Path="Sundew.Xaml.Controls.Avalonia/Sundew.Xaml.Controls.Avalonia.csproj" />
+  <Project Path="Sundew.Xaml.Controls.Maui/Sundew.Xaml.Controls.Maui.csproj" />
   <Project Path="Sundew.Xaml.Controls.Overlays.Wpf/Sundew.Xaml.Controls.Overlays.Wpf.csproj" Id="47d1821f-414d-4473-bfa2-328cbd5f3fe6" />
   <Project Path="Sundew.Xaml.Controls.Primitives.Tests/Sundew.Xaml.Controls.Primitives.Tests.csproj" />
   <Project Path="Sundew.Xaml.Controls.Primitives/Sundew.Xaml.Controls.Primitives.csproj" />

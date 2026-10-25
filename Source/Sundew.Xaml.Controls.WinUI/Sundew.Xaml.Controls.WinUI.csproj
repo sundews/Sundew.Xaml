@@ -46,6 +46,7 @@
 
   <ItemGroup Condition="'$(IsWin2DTarget)' != 'true'">
     <Compile Include="Backends\Skia\**\*.cs" />
+    <Compile Include="..\Shared\Skia\*.cs" LinkBase="Shared\Skia" />
     <PackageReference Include="Uno.WinUI" />
     <PackageReference Include="Uno.WinUI.Graphics2DSK" />
   </ItemGroup>
@@ -57,6 +58,15 @@
   -->
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <!--
+    The renderer and everything it paints with know nothing of XAML or of any one graphics library, so they are
+    shared as source with the MAUI library rather than kept here. Only BrushResolver, which turns the brushes of
+    this framework into them, stays behind.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Rendering\*.cs" LinkBase="Shared\Rendering" />
   </ItemGroup>
 
 </Project>

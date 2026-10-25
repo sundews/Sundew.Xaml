@@ -101,6 +101,11 @@ public sealed class Win2DDrawingSession : IBorderDrawingSession
         return CanvasGeometry.CreatePath(builder);
     }
 
+    private static Windows.UI.Color ToColor(PaintColor color)
+    {
+        return Windows.UI.Color.FromArgb(color.A, color.R, color.G, color.B);
+    }
+
     private static Vector2 ToVector(Position position)
     {
         return new Vector2((float)position.X, (float)position.Y);
@@ -110,7 +115,7 @@ public sealed class Win2DDrawingSession : IBorderDrawingSession
     {
         if (!paint.IsGradient)
         {
-            this.session.FillGeometry(geometry, paint.Color);
+            this.session.FillGeometry(geometry, ToColor(paint.Color));
             return;
         }
 
@@ -118,10 +123,14 @@ public sealed class Win2DDrawingSession : IBorderDrawingSession
         for (var index = 0; index < stops.Length; index++)
         {
             var stop = paint.Stops[index];
-            stops[index] = new CanvasGradientStop { Position = (float)stop.Offset, Color = stop.Color };
+            stops[index] = new CanvasGradientStop { Position = (float)stop.Offset, Color = ToColor(stop.Color) };
         }
 
-        paint.ResolveEnds(geometry.ComputeBounds(), out var start, out var end);
+        var geometryBounds = geometry.ComputeBounds();
+        paint.ResolveEnds(
+            new Bounds(geometryBounds.X, geometryBounds.Y, geometryBounds.Width, geometryBounds.Height),
+            out var start,
+            out var end);
         using var brush = new CanvasLinearGradientBrush(this.session, stops)
         {
             StartPoint = ToVector(start),

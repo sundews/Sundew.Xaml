@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sundew.Xaml.Controls</RootNamespace>
+    <Description>Various .NET MAUI controls:
+- Border - A border supporting individual brushes for each side.
+    </Description>
+  </PropertyGroup>
+
+  <!--
+    One backend serves every MAUI target. MAUI offers a Skia canvas on all of them, including Windows, so unlike
+    the WinUI and Uno library there is nothing to switch on here. A Win2D surface for the Windows target would be
+    an IBorderSurface and a drawing session, and nothing else would change.
+  -->
+  <PropertyGroup Condition="$(TargetFramework.Contains(&apos;-windows&apos;))">
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains(&apos;-android&apos;))">
+    <SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains(&apos;-ios&apos;)) Or $(TargetFramework.Contains(&apos;-maccatalyst&apos;))">
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+    <!-- The Apple builds run an intermediate compile without a PDB, which source embedding forbids. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Primitives\Sundew.Xaml.Controls.Primitives.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.Maui.Controls" />
+  </ItemGroup>
+
+  <!--
+    Stops and CornerStops are the XAML surface rather than geometry, so each platform library compiles its own
+    copy from one source, and the renderer and its backend are shared with the WinUI and Uno library the same way.
+    Only BrushResolver, which turns the brushes of this framework into them, is written per framework.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+    <Compile Include="..\Shared\Rendering\*.cs" LinkBase="Shared\Rendering" />
+    <Compile Include="..\Shared\Skia\*.cs" LinkBase="Shared\Skia" />
+  </ItemGroup>
+
+</Project>

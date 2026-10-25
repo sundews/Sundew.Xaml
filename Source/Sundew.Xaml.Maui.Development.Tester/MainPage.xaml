@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sx="clr-namespace:Sundew.Xaml.Controls;assembly=Sundew.Xaml.Controls.Maui"
+             x:Class="Sundew.Xaml.Maui.Development.Tester.MainPage"
+             Title="Sundew.Xaml MAUI Tester">
+  <!-- The same sheet of examples the WPF, Avalonia, WinUI and Uno testers show, content and all, so that hosting
+       content inside the border is exercised along with the border itself. -->
+  <ContentPage.Resources>
+    <x:String x:Key="Lorem">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.</x:String>
+    <LinearGradientBrush x:Key="LeftGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#FFFF0000" Offset="0" />
+      <GradientStop Color="#FF00FF00" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="TopGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#FF0000FF" Offset="0" />
+      <GradientStop Color="#FFFF00FF" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="RightGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#FFFFFF00" Offset="0" />
+      <GradientStop Color="SandyBrown" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BottomGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#FF00FF00" Offset="0.01" />
+      <GradientStop Color="#FFFF0000" Offset="0.2" />
+      <GradientStop Color="#FF0000FF" Offset="0.5" />
+      <GradientStop Color="#FFFF00FF" Offset="0.8" />
+      <GradientStop Color="SandyBrown" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Left" Color="#669B50F9" />
+    <SolidColorBrush x:Key="Top" Color="#669B50F9" />
+    <SolidColorBrush x:Key="Right" Color="#664F07A7" />
+    <SolidColorBrush x:Key="Bottom" Color="#664F07A7" />
+  </ContentPage.Resources>
+
+  <Grid RowDefinitions="Auto,*" BackgroundColor="#FFBC93F7">
+    <!-- Android draws edge to edge, and reserves the top of the screen for its own gestures, so the slider is
+         pushed clear of both there. -->
+    <Grid ColumnDefinitions="*,50" ColumnSpacing="8">
+      <Grid.Padding>
+        <OnPlatform x:TypeArguments="Thickness" Default="8,4,8,4">
+          <On Platform="Android" Value="8,48,8,4" />
+        </OnPlatform>
+      </Grid.Padding>
+      <Slider x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" />
+      <Label x:Name="ZoomValue" Grid.Column="1" VerticalOptions="Center" Text="1.00" />
+    </Grid>
+
+    <!-- The zoom scales the sheet itself in the code behind, so that every border is laid out larger and
+         draws itself again at that size. A render transform would magnify the bitmap each border has already
+         drawn into, which comes out blocky. See MainPage.xaml.cs. -->
+    <ScrollView x:Name="SheetScroll" Grid.Row="1" Orientation="Both">
+      <Grid x:Name="Examples" MinimumWidthRequest="900" HorizontalOptions="Start" VerticalOptions="Start"
+            ColumnDefinitions="*,*,*"
+            RowDefinitions="100,100,100,100,100,150,100">
+
+        <!-- Solid brush per side, moderate radius. -->
+        <sx:Border Grid.Row="0" Grid.Column="0" Margin="4" Fill="Bisque" CornerRadius="8" BorderThickness="4"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <VerticalStackLayout>
+            <Label Text="solid sides" FontAttributes="Bold" />
+            <Label Text="{StaticResource Lorem}" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- SideBrushes shorthand with explicit corner stops. -->
+        <sx:Border Grid.Row="0" Grid.Column="1" Margin="4" SideBrushes="LightGreen,DarkGreen" Fill="Green"
+                   CornerRadius="4" BorderThickness="8" CornerStops="0.4,0.6">
+          <VerticalStackLayout>
+            <Label Text="shorthand" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- Asymmetric corner radius, two corners square. -->
+        <sx:Border Grid.Row="0" Grid.Column="2" Margin="4" CornerRadius="0,0,64,64" BorderThickness="8"
+                   CornerStops="0.4,0.6" SideBrushes="Red,Purple">
+          <VerticalStackLayout>
+            <Label Text="asymmetric" FontAttributes="Bold" />
+            <Label Text="{StaticResource Lorem}" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- No radius at all. -->
+        <sx:Border Grid.Row="1" Grid.Column="0" Margin="4" Fill="Teal" CornerRadius="0" BorderThickness="6"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <VerticalStackLayout>
+            <Label Text="zero radius" FontAttributes="Bold" />
+            <Label Text="{StaticResource Lorem}" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- A different thickness on every side. -->
+        <sx:Border Grid.Row="1" Grid.Column="1" Margin="4" Fill="#FF202040" CornerRadius="12"
+                   BorderThickness="2,6,10,14"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <VerticalStackLayout>
+            <Label Text="non uniform" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- Content clipped to the inside of the ring. -->
+        <sx:Border Grid.Row="1" Grid.Column="2" Margin="4" CornerRadius="24" BorderThickness="10" ContentPadding="4"
+                   ClipContentToCornerRadius="True" SideBrushes="Orange,Maroon">
+          <VerticalStackLayout BackgroundColor="Cyan">
+            <Label Text="clipped child" FontAttributes="Bold" />
+            <Label Text="{StaticResource Lorem}" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- Gradients and solids meeting at the corners. -->
+        <sx:Border Grid.Row="2" Grid.Column="0" Margin="4" ContentPadding="8" CornerRadius="20" BorderThickness="12"
+                   CornerStops="0.3,0.7" Fill="#FF101010"
+                   LeftBrush="{StaticResource LeftGradient}" TopBrush="Cyan"
+                   RightBrush="{StaticResource RightGradient}" BottomBrush="Magenta">
+          <VerticalStackLayout>
+            <Label Text="mixed brushes" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- Different stops on every corner. -->
+        <sx:Border Grid.Row="2" Grid.Column="1" Margin="4" Fill="#FF403020" CornerRadius="28" BorderThickness="10"
+                   CornerStops="0.1,0.9,0.45,0.55,0.2,0.8,0.5,0.5" SideBrushes="Yellow,Green,Purple,Blue">
+          <VerticalStackLayout>
+            <Label Text="per corner stops" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- A border inside a border. -->
+        <sx:Border Grid.Row="2" Grid.Column="2" Margin="4" SideBrushes="LightGreen,DarkGreen" Fill="Green"
+                   CornerRadius="4" BorderThickness="8" CornerStops="0.4,0.6">
+          <sx:Border SideBrushes="Yellow,Blue" CornerRadius="6" BorderThickness="3" ContentPadding="2">
+            <VerticalStackLayout>
+              <Label Text="nested" FontAttributes="Bold" TextColor="White" />
+              <Label Text="{StaticResource Lorem}" TextColor="White" />
+            </VerticalStackLayout>
+          </sx:Border>
+        </sx:Border>
+
+        <!-- Small, to show a corner tighter than its own thickness. -->
+        <sx:Border Grid.Row="3" Grid.Column="0" WidthRequest="24" HeightRequest="24" Fill="Pink" CornerRadius="6"
+                   BorderThickness="4" SideBrushes="Red,Blue"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+
+        <sx:Border Grid.Row="3" Grid.Column="1" WidthRequest="60" HeightRequest="60" Fill="Khaki" CornerRadius="4"
+                   BorderThickness="20" SideBrushes="Red,Blue"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+
+        <!-- Semi transparent sides, so the corners have to be composited as a whole. -->
+        <sx:Border Grid.Row="3" Grid.Column="2" Margin="4" Fill="BlueViolet" ContentPadding="8" CornerRadius="16"
+                   BorderThickness="8" CornerStops="0.4,0.6"
+                   LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}"
+                   RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
+          <VerticalStackLayout>
+            <Label Text="see through" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- A radius far larger than the border, which has to be clamped. -->
+        <sx:Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" Fill="BlueViolet" ContentPadding="16"
+                   CornerRadius="900" BorderThickness="8" CornerStops="0.4,0.6"
+                   LeftBrush="{StaticResource Left}" TopBrush="{StaticResource Top}"
+                   RightBrush="{StaticResource Right}" BottomBrush="{StaticResource Bottom}">
+          <VerticalStackLayout>
+            <Label Text="clamped" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- A gradient on every side, blended at the corners. -->
+        <sx:Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="4" ContentPadding="16" CornerRadius="32"
+                   BorderThickness="16" CornerStops="0.2,0.8" Fill="#FF101010"
+                   LeftBrush="{StaticResource LeftGradient}" TopBrush="{StaticResource TopGradient}"
+                   RightBrush="{StaticResource RightGradient}" BottomBrush="{StaticResource BottomGradient}">
+          <VerticalStackLayout>
+            <Label Text="gradient sides" FontAttributes="Bold" TextColor="White" />
+            <Label Text="{StaticResource Lorem}" TextColor="White" />
+          </VerticalStackLayout>
+        </sx:Border>
+
+        <!-- The same border at a radius under, at and over the thickest side. -->
+        <sx:Border Grid.Row="6" Grid.Column="0" Margin="4" Fill="#FF202040" CornerRadius="12"
+                   BorderThickness="2,6,10,14"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <Label Text="radius 12, under the 14" FontAttributes="Bold" TextColor="White" />
+        </sx:Border>
+        <sx:Border Grid.Row="6" Grid.Column="1" Margin="4" Fill="#FF202040" CornerRadius="14"
+                   BorderThickness="2,6,10,14"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <Label Text="radius 14, exactly the 14" FontAttributes="Bold" TextColor="White" />
+        </sx:Border>
+        <sx:Border Grid.Row="6" Grid.Column="2" Margin="4" Fill="#FF202040" CornerRadius="20"
+                   BorderThickness="2,6,10,14"
+                   LeftBrush="Yellow" TopBrush="Green" RightBrush="Purple" BottomBrush="Blue">
+          <Label Text="radius 20, over the 14" FontAttributes="Bold" TextColor="White" />
+        </sx:Border>
+      </Grid>
+    </ScrollView>
+  </Grid>
+</ContentPage>

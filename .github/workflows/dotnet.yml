@@ -42,6 +42,10 @@ jobs:
         dotnet-version: |
             9.x.x
             8.x.x
+    # Sundew.Xaml.Controls.Maui targets android, iOS, Mac Catalyst and Windows, so the solution does not build
+    # without the MAUI workloads. This is what a MAUI package costs every run.
+    - name: Install MAUI workloads
+      run: dotnet workload install maui
     - name: Build setup
       id: build-setup
       run: >
@@ -77,7 +81,7 @@ jobs:
       if: ${{ steps.stage-build.outputs.stage == 'production' && steps.stage-build.outputs.buildPromotion != 'promoted' }}
       run: git push --delete ${{ env.repository }} ${{ github.ref }}
     - name: Restore
-      run: dotnet restore ${{ env.solutionPath }} --verbosity normal -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false -s ${{ env.source }}${{ steps.stage-build.outputs.dev-package-source-if-set }}
+      run: dotnet restore ${{ env.solutionPath }} --verbosity normal -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false -p:SundewMauiAllHeads=false -s ${{ env.source }}${{ steps.stage-build.outputs.dev-package-source-if-set }}
     - name: Build
       id: build
       run: >
@@ -85,6 +89,7 @@ jobs:
         -p:"ContinuousIntegrationBuild=true"
         -p:"SundewUnoAllHeads=false"
         -p:"SundewAvaloniaAllHeads=false"
+        -p:"SundewMauiAllHeads=false"
         -p:"SppForceVersion=${{ steps.stage-build.outputs.fullVersion }}"
         '-p:"SppAppendPublishFileLogFormats={PackageId}={DQ}{PackagePath}{DQ}={Version}{NL} > ${{ env.packages-to-push }}"'
         -p:GeneratePackageOnBuild=true
@@ -98,13 +103,13 @@ jobs:
       run: >
         dotnet test ${{ env.primitivesTestsPath }}
         --verbosity normal --configuration ${{ steps.stage-build.outputs.buildConfiguration }} --no-build
-        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false
+        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false -p:SundewMauiAllHeads=false
     - name: Test WPF development
       working-directory: ${{ env.solutionDir }}
       run: >
         dotnet test ${{ env.wpfTestsPath }}
         --verbosity normal --configuration ${{ steps.stage-build.outputs.buildConfiguration }} --no-build
-        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false
+        -p:SundewUnoAllHeads=false -p:SundewAvaloniaAllHeads=false -p:SundewMauiAllHeads=false
     - name: 'Publish package(s)'
       if: ${{ steps.stage-build.outputs.stage != 'none' }}
       run: cb -c "spt|push -s ${{ steps.stage-build.outputs.pushSource }} -k ${{ steps.stage-build.outputs.apiKey }} -ss ${{ steps.stage-build.outputs.symbolsPushSource }} -sk ${{ steps.stage-build.outputs.symbolsApiKey }} --retries 10 {1}" -bs NewLine -bvs '=' -bf ${{ env.source-packages-to-push }}
@@ -133,6 +138,7 @@ jobs:
     env:
       unoTesterPath: ./Source/Sundew.Xaml.Uno.Development.Tester
       avaloniaTesterPath: ./Source/Sundew.Xaml.Avalonia.Development.Tester
+      mauiTesterPath: ./Source/Sundew.Xaml.Maui.Development.Tester
       headsBuild: --configuration Debug --verbosity normal -p:SppDisable=true
     steps:
     - name: Checkout
@@ -143,10 +149,14 @@ jobs:
         dotnet-version: 10.x.x
         dotnet-quality: preview
     - name: Install workloads
-      run: dotnet workload install android wasm-tools
+      run: dotnet workload install android wasm-tools maui
     - name: Build Uno Android head
       run: dotnet build ${{ env.unoTesterPath }} ${{ env.headsBuild }} -f net10.0-android -p:SundewUnoAllHeads=true
     - name: Build Uno WebAssembly head
       run: dotnet build ${{ env.unoTesterPath }} ${{ env.headsBuild }} -f net10.0-browserwasm -p:SundewUnoAllHeads=true
     - name: Build Avalonia Android head
       run: dotnet build ${{ env.avaloniaTesterPath }} ${{ env.headsBuild }} -f net10.0-android -p:SundewAvaloniaAllHeads=true
+    - name: Build Avalonia browser head
+      run: dotnet build ${{ env.avaloniaTesterPath }} ${{ env.headsBuild }} -f net10.0-browser -p:SundewAvaloniaAllHeads=true
+    - name: Build MAUI Android head
+      run: dotnet build ${{ env.mauiTesterPath }} ${{ env.headsBuild }} -f net10.0-android -p:SundewMauiAllHeads=true

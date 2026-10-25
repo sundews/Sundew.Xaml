@@ -1,0 +1,8 @@
+﻿<maui:MauiWinUIApplication
+    x:Class="Sundew.Xaml.Maui.Development.Tester.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:maui="using:Microsoft.Maui"
+    xmlns:local="using:Sundew.Xaml.Maui.Development.Tester.WinUI">
+
+</maui:MauiWinUIApplication>

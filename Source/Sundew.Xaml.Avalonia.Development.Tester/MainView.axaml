@@ -47,6 +47,9 @@
         </Grid>
       <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <LayoutTransformControl x:Name="ScaledExamples">
+          <LayoutTransformControl.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding #ZoomSlider.Value}" ScaleY="{Binding #ZoomSlider.Value}" />
+          </LayoutTransformControl.LayoutTransform>
           <Grid Width="900" ColumnDefinitions="*,*,*" RowDefinitions="100,100,100,100,100,150,100">
 
             <!-- Solid brush per side, moderate radius. -->

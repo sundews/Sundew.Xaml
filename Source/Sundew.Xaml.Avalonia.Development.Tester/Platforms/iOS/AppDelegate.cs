@@ -1,17 +1,16 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PaintStop.cs" company="Sundews">
+// <copyright file="AppDelegate.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Sundew.Xaml.Controls;
+namespace Sundew.Xaml.Avalonia.Development.Tester.Ios;
 
-using Windows.UI;
+using Foundation;
+using global::Avalonia.iOS;
 
-/// <summary>
-/// One stop of a gradient fill.
-/// </summary>
-/// <param name="Color">The colour at this stop.</param>
-/// <param name="Offset">How far along the gradient the stop sits, from 0 to 1.</param>
-public readonly record struct PaintStop(Color Color, double Offset);
+[Register("AppDelegate")]
+public partial class AppDelegate : AvaloniaAppDelegate<App>
+{
+}

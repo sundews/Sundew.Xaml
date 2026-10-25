@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <!--
-      The desktop head and the Android head of one tester. Android needs the android workload, which a plain build
-      agent does not have, so CI sets SundewAvaloniaAllHeads=false and builds the desktop head alone.
+      The desktop, Android, iOS and browser heads of one tester. The last three need the android, ios and
+      wasm-tools workloads, which a plain build agent does not have, so CI sets SundewAvaloniaAllHeads=false
+      and builds the desktop head alone.
     -->
     <SundewAvaloniaAllHeads Condition="'$(SundewAvaloniaAllHeads)' == ''">true</SundewAvaloniaAllHeads>
     <TargetFrameworks>net10.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(SundewAvaloniaAllHeads)' == 'true'">net10.0;net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewAvaloniaAllHeads)' == 'true'">net10.0;net10.0-android;net10.0-ios;net10.0-browser</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Avalonia.Development.Tester</RootNamespace>
     <IsPackable>false</IsPackable>
@@ -39,6 +40,21 @@
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$(TargetFramework.Contains('-ios'))">
+    <OutputType>Exe</OutputType>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    <!-- Platforms\iOS\Info.plist carries the bundle identifier and versions rather than MSBuild properties. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains('-browser'))">
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <WasmMainJSPath>wwwroot\main.js</WasmMainJSPath>
+    <!-- WasmAppHost, which dotnet run and F5 start, refuses to serve without a perHostConfig. -->
+    <UserRuntimeConfig>Platforms\Browser\runtimeconfig.template.json</UserRuntimeConfig>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.Avalonia\Sundew.Xaml.Controls.Avalonia.csproj" />
   </ItemGroup>
@@ -65,6 +81,22 @@
     <AndroidResource Include="Platforms\Android\Icon.png" Link="Resources\drawable\Icon.png" />
     <EmbeddedFiles Remove="@(EmbeddedFiles)" />
     <PackageReference Include="Avalonia.Android" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.Contains('-ios'))">
+    <Compile Remove="Program.cs" />
+    <Compile Include="Platforms\iOS\**\*.cs" />
+    <None Include="Platforms\iOS\Info.plist" LogicalName="Info.plist" />
+    <EmbeddedFiles Remove="@(EmbeddedFiles)" />
+    <PackageReference Include="Avalonia.iOS" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.Contains('-browser'))">
+    <Compile Remove="Program.cs" />
+    <Compile Include="Platforms\Browser\**\*.cs" />
+    <!-- main.js is deployed by WasmMainJSPath; the page that hosts it is not. -->
+    <WasmExtraFilesToDeploy Include="wwwroot\index.html" />
+    <PackageReference Include="Avalonia.Browser" />
   </ItemGroup>
 
 </Project>

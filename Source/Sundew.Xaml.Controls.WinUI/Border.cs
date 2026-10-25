@@ -450,12 +450,12 @@ public partial class Border : Panel
         BorderRenderer.Render(
             session,
             this.GetMetrics(size, rasterizationScale),
-            Paint.From(this.Background),
+            BrushResolver.ResolvePaint(this.Background),
             new Sides<Paint?>(
-                Paint.From(sideBrushes.Left),
-                Paint.From(sideBrushes.Top),
-                Paint.From(sideBrushes.Right),
-                Paint.From(sideBrushes.Bottom)),
+                BrushResolver.ResolvePaint(sideBrushes.Left),
+                BrushResolver.ResolvePaint(sideBrushes.Top),
+                BrushResolver.ResolvePaint(sideBrushes.Right),
+                BrushResolver.ResolvePaint(sideBrushes.Bottom)),
             this.EnsureCornerBlends(sideBrushes),
             new Corners<Stops>(this.TopLeftStops, this.TopRightStops, this.BottomRightStops, this.BottomLeftStops));
     }

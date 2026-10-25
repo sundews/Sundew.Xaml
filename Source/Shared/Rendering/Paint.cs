@@ -7,25 +7,21 @@
 
 namespace Sundew.Xaml.Controls;
 
-using System;
 using System.Collections.Generic;
-using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
-using Windows.UI;
 
 /// <summary>
-/// How a region of the border is filled, reduced to something both drawing backends can carry out.
+/// How a region of the border is filled, reduced to something every drawing backend can carry out.
 /// </summary>
 /// <remarks>
-/// Win2D and Skia describe brushes quite differently, and a XAML <see cref="Brush"/> describes gradients relative to
-/// the bounds of whatever it is painting. Resolving all of that once, here, keeps the two backends down to the two
-/// cases they really have to implement and guarantees they agree on what a brush means.
+/// Win2D, Skia and MAUI describe brushes quite differently, and a XAML gradient brush describes itself relative to
+/// the bounds of whatever it is painting. Each host resolves its own brushes into this once, which keeps the
+/// backends down to the two cases they really have to implement and guarantees they agree on what a brush means.
 /// </remarks>
 public sealed class Paint
 {
     private static readonly PaintStop[] NoStops = [];
 
-    private Paint(Color color, IReadOnlyList<PaintStop> stops, Position start, Position end, bool isRelative)
+    private Paint(PaintColor color, IReadOnlyList<PaintStop> stops, Position start, Position end, bool isRelative)
     {
         this.Color = color;
         this.Stops = stops;
@@ -42,10 +38,10 @@ public sealed class Paint
     /// <summary>
     /// Gets the colour the region is filled with, when it is not a gradient.
     /// </summary>
-    public Color Color { get; }
+    public PaintColor Color { get; }
 
     /// <summary>
-    /// Gets the stops of the gradient, in absolute coordinates, when it is one.
+    /// Gets the stops of the gradient, in order, when it is one.
     /// </summary>
     public IReadOnlyList<PaintStop> Stops { get; }
 
@@ -75,7 +71,7 @@ public sealed class Paint
     /// </summary>
     /// <param name="color">The colour.</param>
     /// <returns>The paint.</returns>
-    public static Paint Solid(Color color)
+    public static Paint Solid(PaintColor color)
     {
         return new Paint(color, NoStops, default, default, false);
     }
@@ -88,7 +84,7 @@ public sealed class Paint
     /// <param name="from">The point the blend starts at.</param>
     /// <param name="to">The point the blend ends at.</param>
     /// <returns>The paint.</returns>
-    public static Paint Linear(Color start, Color end, Position from, Position to)
+    public static Paint Linear(PaintColor start, PaintColor end, Position from, Position to)
     {
         if (start.Equals(end))
         {
@@ -99,21 +95,17 @@ public sealed class Paint
     }
 
     /// <summary>
-    /// Resolves a XAML brush against the area it is painting.
+    /// Creates a paint that runs through the specified stops, which is what a host's brush resolver produces from a
+    /// gradient brush.
     /// </summary>
-    /// <param name="brush">The brush.</param>
-    /// <returns>The paint, or <c>null</c> when the brush paints nothing.</returns>
-    public static Paint? From(Brush? brush)
+    /// <param name="stops">The stops, in order, of which there must be at least two.</param>
+    /// <param name="start">The point the gradient starts at.</param>
+    /// <param name="end">The point the gradient ends at.</param>
+    /// <param name="isRelative">Whether the two points are fractions of the bounds of what is being filled.</param>
+    /// <returns>The paint.</returns>
+    public static Paint Gradient(IReadOnlyList<PaintStop> stops, Position start, Position end, bool isRelative)
     {
-        switch (brush)
-        {
-            case SolidColorBrush solidColorBrush:
-                return Solid(WithOpacity(solidColorBrush.Color, solidColorBrush.Opacity));
-            case LinearGradientBrush linearGradientBrush:
-                return FromLinearGradient(linearGradientBrush);
-            default:
-                return null;
-        }
+        return new Paint(stops.Count > 0 ? stops[0].Color : default, stops, start, end, isRelative);
     }
 
     /// <summary>
@@ -122,7 +114,7 @@ public sealed class Paint
     /// <param name="bounds">The bounds of the geometry being filled.</param>
     /// <param name="start">The resolved start.</param>
     /// <param name="end">The resolved end.</param>
-    public void ResolveEnds(Rect bounds, out Position start, out Position end)
+    public void ResolveEnds(Bounds bounds, out Position start, out Position end)
     {
         if (!this.IsRelative)
         {
@@ -133,43 +125,5 @@ public sealed class Paint
 
         start = new Position(bounds.X + (this.Start.X * bounds.Width), bounds.Y + (this.Start.Y * bounds.Height));
         end = new Position(bounds.X + (this.End.X * bounds.Width), bounds.Y + (this.End.Y * bounds.Height));
-    }
-
-    private static Paint? FromLinearGradient(LinearGradientBrush brush)
-    {
-        var stops = new List<PaintStop>(brush.GradientStops.Count);
-        foreach (var gradientStop in brush.GradientStops)
-        {
-            stops.Add(new PaintStop(WithOpacity(gradientStop.Color, brush.Opacity), gradientStop.Offset));
-        }
-
-        if (stops.Count == 0)
-        {
-            return null;
-        }
-
-        if (stops.Count == 1)
-        {
-            return Solid(stops[0].Color);
-        }
-
-        stops.Sort(static (first, second) => first.Offset.CompareTo(second.Offset));
-        return new Paint(
-            stops[0].Color,
-            stops,
-            new Position(brush.StartPoint.X, brush.StartPoint.Y),
-            new Position(brush.EndPoint.X, brush.EndPoint.Y),
-            brush.MappingMode == BrushMappingMode.RelativeToBoundingBox);
-    }
-
-    private static Color WithOpacity(Color color, double opacity)
-    {
-        if (opacity >= 1)
-        {
-            return color;
-        }
-
-        var alpha = Math.Max(0, Math.Min(255, (int)Math.Round(color.A * opacity)));
-        return Color.FromArgb((byte)alpha, color.R, color.G, color.B);
     }
 }
