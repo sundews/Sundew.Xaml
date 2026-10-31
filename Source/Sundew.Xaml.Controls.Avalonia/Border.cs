@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Border.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -131,6 +131,12 @@ public class Border : Decorator
         AvaloniaProperty.Register<Border, bool>(nameof(ClipContentToCornerRadius));
 
     private Corners<CornerBlend>? cornerBlends;
+    private BorderMetrics drawingMetrics;
+    private Position drawingOffset;
+    private bool hasDrawing;
+    private DrawStep? backgroundStep;
+    private DrawStep?[]? sideSteps;
+    private CornerSteps[]? cornerSteps;
 
     static Border()
     {
@@ -156,6 +162,9 @@ public class Border : Decorator
             BottomRightStopsProperty,
             BottomLeftStopsProperty);
 
+        BackgroundProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
+        BorderThicknessProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
+        CornerRadiusProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
         LeftBrushProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
         TopBrushProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
         RightBrushProperty.Changed.AddClassHandler<Border>(OnFreshRenderRequired);
@@ -319,18 +328,87 @@ public class Border : Decorator
     {
         var alignment = this.GetDeviceAlignment();
         var metrics = this.GetMetrics(this.Bounds.Size, alignment.Scale);
-        var layout = BorderLayoutCalculator.CalculateBorder(metrics);
-        var sideBrushes = new Sides<IBrush?>(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
-        var cornerBlends = this.EnsureCornerBlends(sideBrushes);
+        this.EnsureDrawing(metrics, alignment.Offset);
 
         // Avalonia has no GuidelineSet, so the nudge that puts the geometry onto whole device pixels is applied here.
         using var snap = context.PushTransform(Matrix.CreateTranslation(alignment.Offset.X, alignment.Offset.Y));
 
-        context.DrawGeometry(this.Background, null, layout.Background.ToGeometry());
+        if (this.backgroundStep is { } background)
+        {
+            context.DrawGeometry(background.Brush, null, background.Geometry);
+        }
+
+        var sides = this.sideSteps;
+        if (sides != null)
+        {
+            foreach (var side in sides)
+            {
+                if (side is { } step)
+                {
+                    context.DrawGeometry(step.Brush, null, step.Geometry);
+                }
+            }
+        }
+
+        var corners = this.cornerSteps;
+        if (corners == null)
+        {
+            return;
+        }
+
+        foreach (var corner in corners)
+        {
+            // Where the slices overlap they would blend with each other, which a see through border would show as a
+            // band at every seam. Taking the alpha off the slices and applying it to the corner as a whole
+            // composites it once, at which point the overlaps are opaque and leave nothing behind. It has to be a
+            // mask rather than PushOpacity, because that one multiplies each slice on its own instead of making a
+            // layer of them.
+            var layer = corner.Opacity < 1
+                ? context.PushOpacityMask(new ImmutableSolidColorBrush(Colors.White, corner.Opacity), corner.Extent)
+                : default(DrawingContext.PushedState?);
+            try
+            {
+                foreach (var step in corner.Steps)
+                {
+                    context.DrawGeometry(step.Brush, null, step.Geometry);
+                }
+            }
+            finally
+            {
+                layer?.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Works out what to draw, and keeps it until something changes that would make it different.
+    /// </summary>
+    /// <remarks>
+    /// The geometry and the gradients a border is made of follow entirely from its measurements and its brushes,
+    /// so they are worked out once and drawn again as they are. Building them afresh on every render was hundreds
+    /// of geometries and gradient brushes each time, which is paid whenever anything asks the border to redraw,
+    /// however little of it actually changed.
+    /// </remarks>
+    /// <param name="metrics">The measurements.</param>
+    /// <param name="offset">The nudge onto whole device pixels.</param>
+    private void EnsureDrawing(in BorderMetrics metrics, Position offset)
+    {
+        if (this.hasDrawing && this.drawingMetrics == metrics && this.drawingOffset == offset)
+        {
+            return;
+        }
+
+        var layout = BorderLayoutCalculator.CalculateBorder(metrics);
+        var sideBrushes = new Sides<IBrush?>(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
+        var blends = this.EnsureCornerBlends(sideBrushes);
+
+        this.backgroundStep = this.Background is { } background
+            ? new DrawStep(background, layout.Background.ToGeometry())
+            : null;
 
         // A see through corner is composited as a whole, so a side running under it would show through as a darker
         // band along the overlap. Those corners keep the plain shared cut instead.
-        var sides = AreCornersOpaque(cornerBlends)
+        var quads = AreCornersOpaque(blends)
             ? new Sides<SideQuad>(
                 layout.Sides.Left.ExtendIntoCorners(metrics.Scale),
                 layout.Sides.Top.ExtendIntoCorners(metrics.Scale),
@@ -338,15 +416,70 @@ public class Border : Decorator
                 layout.Sides.Bottom.ExtendIntoCorners(metrics.Scale))
             : layout.Sides;
 
-        DrawSide(context, sides.Left, sideBrushes.Left);
-        DrawSide(context, sides.Top, sideBrushes.Top);
-        DrawSide(context, sides.Right, sideBrushes.Right);
-        DrawSide(context, sides.Bottom, sideBrushes.Bottom);
+        this.sideSteps = new[]
+        {
+            BuildSide(quads.Left, sideBrushes.Left),
+            BuildSide(quads.Top, sideBrushes.Top),
+            BuildSide(quads.Right, sideBrushes.Right),
+            BuildSide(quads.Bottom, sideBrushes.Bottom),
+        };
 
-        DrawCorner(context, layout.Corners.TopLeft, cornerBlends.TopLeft, this.TopLeftStops, metrics.Scale);
-        DrawCorner(context, layout.Corners.TopRight, cornerBlends.TopRight, this.TopRightStops, metrics.Scale);
-        DrawCorner(context, layout.Corners.BottomRight, cornerBlends.BottomRight, this.BottomRightStops, metrics.Scale);
-        DrawCorner(context, layout.Corners.BottomLeft, cornerBlends.BottomLeft, this.BottomLeftStops, metrics.Scale);
+        this.cornerSteps = new[]
+        {
+            BuildCorner(layout.Corners.TopLeft, blends.TopLeft, this.TopLeftStops, metrics.Scale),
+            BuildCorner(layout.Corners.TopRight, blends.TopRight, this.TopRightStops, metrics.Scale),
+            BuildCorner(layout.Corners.BottomRight, blends.BottomRight, this.BottomRightStops, metrics.Scale),
+            BuildCorner(layout.Corners.BottomLeft, blends.BottomLeft, this.BottomLeftStops, metrics.Scale),
+        };
+
+        this.drawingMetrics = metrics;
+        this.drawingOffset = offset;
+        this.hasDrawing = true;
+    }
+
+    private static DrawStep? BuildSide(SideQuad sideQuad, IBrush? brush)
+    {
+        return brush == null || !sideQuad.HasArea ? null : new DrawStep(brush, sideQuad.ToGeometry());
+    }
+
+    /// <summary>
+    /// Sweeps the blend between the two sides meeting at a corner around that corner, a slice at a time.
+    /// </summary>
+    /// <remarks>
+    /// One linear gradient across the whole corner cannot do this without a seam: its bands of constant colour would
+    /// have to run along the cut it shares with each of the two sides, and those two cuts are at right angles. Each
+    /// slice is narrow enough that one gradient across it is indistinguishable from a sweep, and the slices at either
+    /// end come out as the side's own colour along the whole of the cut.
+    /// </remarks>
+    /// <param name="cornerWedge">The corner.</param>
+    /// <param name="blend">The blend between the two sides meeting at the corner.</param>
+    /// <param name="stops">The stops controlling how abrupt the transition is.</param>
+    /// <param name="scale">The device pixel scale, which decides how fine the sweep has to be.</param>
+    /// <returns>What to draw for this corner.</returns>
+    private static CornerSteps BuildCorner(CornerWedge cornerWedge, CornerBlend blend, Stops stops, Scale scale)
+    {
+        if (!blend.IsBlended)
+        {
+            var solid = blend.Brush != null
+                ? new[] { new DrawStep(blend.Brush, cornerWedge.ToGeometry()) }
+                : Array.Empty<DrawStep>();
+            return new CornerSteps(1, default, solid);
+        }
+
+        var count = cornerWedge.GetSliceCount(scale);
+        var steps = new DrawStep[count];
+        for (var index = 0; index < count; index++)
+        {
+            var from = (double)index / count;
+            var to = (double)(index + 1) / count;
+            var slice = cornerWedge.GetSlice(from, to);
+
+            // The slice is filled a little past its own end, and the next one then paints over that overrun.
+            var filled = cornerWedge.GetSlice(from, System.Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
+            steps[index] = new DrawStep(CreateSliceBrush(slice, blend, stops, from, to), filled.ToGeometry());
+        }
+
+        return new CornerSteps(blend.Opacity, GetExtent(cornerWedge), steps);
     }
 
     /// <inheritdoc/>
@@ -370,74 +503,6 @@ public class Border : Decorator
         return blends.TopLeft.IsOpaque && blends.TopRight.IsOpaque && blends.BottomRight.IsOpaque && blends.BottomLeft.IsOpaque;
     }
 
-    private static void DrawSide(DrawingContext context, SideQuad sideQuad, IBrush? brush)
-    {
-        if (brush == null || !sideQuad.HasArea)
-        {
-            return;
-        }
-
-        context.DrawGeometry(brush, null, sideQuad.ToGeometry());
-    }
-
-    /// <summary>
-    /// Sweeps the blend between the two sides meeting at a corner around that corner, a slice at a time.
-    /// </summary>
-    /// <remarks>
-    /// One linear gradient across the whole corner cannot do this without a seam: its bands of constant colour would
-    /// have to run along the cut it shares with each of the two sides, and those two cuts are at right angles. Each
-    /// slice is narrow enough that one gradient across it is indistinguishable from a sweep, and the slices at either
-    /// end come out as the side's own colour along the whole of the cut.
-    /// </remarks>
-    /// <param name="context">The drawing context.</param>
-    /// <param name="cornerWedge">The corner.</param>
-    /// <param name="blend">The blend between the two sides meeting at the corner.</param>
-    /// <param name="stops">The stops controlling how abrupt the transition is.</param>
-    /// <param name="scale">The device pixel scale, which decides how fine the sweep has to be.</param>
-    private static void DrawCorner(DrawingContext context, CornerWedge cornerWedge, CornerBlend blend, Stops stops, Scale scale)
-    {
-        if (!blend.IsBlended)
-        {
-            if (blend.Brush != null)
-            {
-                context.DrawGeometry(blend.Brush, null, cornerWedge.ToGeometry());
-            }
-
-            return;
-        }
-
-        // Where the slices overlap they would blend with each other, which a see through border would show as a band
-        // at every seam. Taking the alpha off the slices and applying it to the corner as a whole composites it once,
-        // at which point the overlaps are opaque and leave nothing behind. It has to be a mask rather than
-        // PushOpacity, because that one multiplies each slice on its own instead of making a layer of them.
-        var layer = blend.Opacity < 1
-            ? context.PushOpacityMask(new ImmutableSolidColorBrush(Colors.White, blend.Opacity), GetExtent(cornerWedge))
-            : default(DrawingContext.PushedState?);
-        try
-        {
-            var count = cornerWedge.GetSliceCount(scale);
-            for (var index = 0; index < count; index++)
-            {
-                var from = (double)index / count;
-                var to = (double)(index + 1) / count;
-                var slice = cornerWedge.GetSlice(from, to);
-
-                // The slice is filled a little past its own end, and the next one then paints over that overrun.
-                var filled = cornerWedge.GetSlice(from, System.Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
-                context.DrawGeometry(CreateSliceBrush(slice, blend, stops, from, to), null, filled.ToGeometry());
-            }
-        }
-        finally
-        {
-            layer?.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Gets the box a corner fits in, which every arc does because a quadratic stays within its three points.
-    /// </summary>
-    /// <param name="cornerWedge">The corner.</param>
-    /// <returns>The box.</returns>
     private static Rect GetExtent(CornerWedge cornerWedge)
     {
         var left = Min(cornerWedge.Outer.Start.X, cornerWedge.Outer.Control.X, cornerWedge.Outer.End.X, cornerWedge.Inner.Control.X);
@@ -606,9 +671,24 @@ public class Border : Decorator
             Math.Max(0, size.Height - inset.Top - inset.Bottom)));
     }
 
+    /// <summary>One fill: a brush and the shape it fills.</summary>
+    /// <param name="Brush">The brush.</param>
+    /// <param name="Geometry">The shape.</param>
+    private sealed record DrawStep(IBrush Brush, Geometry Geometry);
+
+    /// <summary>What a corner is made of.</summary>
+    /// <param name="Opacity">How see through the corner is as a whole, which is applied as one layer.</param>
+    /// <param name="Extent">The area that layer covers.</param>
+    /// <param name="Steps">The fills the sweep is made of.</param>
+    private sealed record CornerSteps(double Opacity, Rect Extent, DrawStep[] Steps);
+
     private void ClearCache()
     {
         this.cornerBlends = null;
+        this.hasDrawing = false;
+        this.backgroundStep = null;
+        this.sideSteps = null;
+        this.cornerSteps = null;
     }
 
     private Corners<CornerBlend> EnsureCornerBlends(Sides<IBrush?> sides)
