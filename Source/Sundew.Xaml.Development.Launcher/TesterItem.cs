@@ -66,7 +66,7 @@ public sealed class TesterItem : INotifyPropertyChanged
     /// <summary>
     /// Gets the virtual devices this tester can be launched on, the first being the one chosen at the top.
     /// </summary>
-    public IReadOnlyList<string> VirtualDevices { get; private set; } = [DefaultVirtualDevice];
+    public IReadOnlyList<string> VirtualDevices { get; private set; } = new[] { DefaultVirtualDevice };
 
     /// <summary>
     /// Gets or sets the virtual device this tester is launched on, or <see cref="DefaultVirtualDevice"/>.

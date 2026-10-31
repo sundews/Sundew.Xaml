@@ -7,8 +7,16 @@
       and builds the desktop head alone.
     -->
     <SundewAvaloniaAllHeads Condition="'$(SundewAvaloniaAllHeads)' == ''">true</SundewAvaloniaAllHeads>
-    <TargetFrameworks>net10.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(SundewAvaloniaAllHeads)' == 'true'">net10.0;net10.0-android;net10.0-ios;net10.0-browser</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewAvaloniaAndroidOnly)' != 'true'">net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewAvaloniaAllHeads)' == 'true' And '$(SundewAvaloniaAndroidOnly)' != 'true'">net10.0;net10.0-android;net10.0-ios;net10.0-browser</TargetFrameworks>
+    <!--
+      Publishing the Android head compiled ahead of time needs this to be a single target framework project.
+      A project with the plural is cross targeting, and publish then dispatches to an inner build; the NativeAOT
+      hooks do not survive that dispatch, so the native link never runs and the apk comes out without the native
+      library in it. The publish is run with no restore, so naming one framework here does not disturb what was
+      restored for the other heads.
+    -->
+    <TargetFramework Condition="'$(SundewAvaloniaAndroidOnly)' == 'true'">net10.0-android</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Avalonia.Development.Tester</RootNamespace>
     <IsPackable>false</IsPackable>

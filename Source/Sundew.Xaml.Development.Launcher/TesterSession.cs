@@ -235,11 +235,19 @@ public sealed class TesterSession : IDisposable
     /// <param name="projectPath">The project directory.</param>
     private void InstallAndStart(string projectPath)
     {
-        var apk = FindApk(projectPath, this.tester.TargetFramework);
+        var apk = this.FindApk(projectPath);
         if (apk == null)
         {
             this.Output?.Invoke(this, "Published, but no apk was found to install");
             return;
+        }
+
+        // An emulator resumed from a snapshot often comes up already running the app from whenever the snapshot
+        // was taken, on every device started from it. Those are not this session and they are running whatever
+        // code was current then, so they are stopped everywhere before this one is put on.
+        foreach (var attached in Android.GetDevices())
+        {
+            Android.ForceStop(attached, this.tester.ApplicationId!);
         }
 
         this.Output?.Invoke(this, "Installing " + Path.GetFileName(apk));
@@ -255,24 +263,62 @@ public sealed class TesterSession : IDisposable
             Android.Start(this.device, this.tester.ApplicationId);
             this.Output?.Invoke(this, "Started " + this.tester.ApplicationId);
         }
+
+        this.RepairRestore(projectPath);
     }
 
     /// <summary>
-    /// Finds the apk a publish produced, which is the newest one under the head's output.
+    /// Puts back what the project had restored before it was published. Publishing a head ahead of time has to
+    /// restore it as a single framework project, both because the native compiler only joins in then and because
+    /// the publish hooks do not survive the cross targeting dispatch. That leaves the shared obj saying the other
+    /// heads do not exist, and the next head started without building finds nothing to run.
     /// </summary>
     /// <param name="projectPath">The project directory.</param>
-    /// <param name="targetFramework">The head.</param>
-    /// <returns>The apk, or null when none was produced.</returns>
-    private static string? FindApk(string projectPath, string targetFramework)
+    private void RepairRestore(string projectPath)
     {
-        var output = Path.Combine(projectPath, "bin", "Debug", targetFramework);
-        if (!Directory.Exists(output))
+        try
+        {
+            using var restore = Process.Start(new ProcessStartInfo("dotnet", "restore \"" + projectPath + "\"")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+
+            restore?.WaitForExit();
+            this.Output?.Invoke(
+                this,
+                restore?.ExitCode == 0 ? "Restored the other heads" : "Could not restore the other heads");
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            this.Output?.Invoke(this, "Could not restore the other heads: " + exception.Message);
+        }
+    }
+
+    /// <summary>
+    /// Finds the apk to install, which is the one the publish just wrote for this device architecture.
+    /// </summary>
+    /// <remarks>
+    /// It has to be that one and no other. An ordinary build of the solution also produces an apk, beside the
+    /// framework folder rather than under the runtime one, and that apk carries no native library: taking
+    /// whichever is newest installed it whenever the solution had been built since the last publish, and the
+    /// head then came up saying it was running under the JIT.
+    /// </remarks>
+    /// <param name="projectPath">The project directory.</param>
+    /// <returns>The apk, or null when the publish produced none.</returns>
+    private string? FindApk(string projectPath)
+    {
+        var runtimeIdentifier = Android.GetRuntimeIdentifier(this.device);
+        var published = Path.Combine(
+            projectPath, "bin", "Debug", this.tester.TargetFramework, runtimeIdentifier, "publish");
+        if (!Directory.Exists(published))
         {
             return null;
         }
 
-        // The signed one is what a device will accept.
-        return Directory.EnumerateFiles(output, "*-Signed.apk", SearchOption.AllDirectories)
+        return Directory.EnumerateFiles(published, "*-Signed.apk", SearchOption.TopDirectoryOnly)
             .OrderByDescending(File.GetLastWriteTimeUtc)
             .FirstOrDefault();
     }
@@ -288,11 +334,18 @@ public sealed class TesterSession : IDisposable
         // assemblies for the runtime to load, and a native head has none, its code being a library inside the apk.
         // Such a head is published, installed and started instead. The rest go the fast way, -t:Run being how a
         // .NET Android app is normally deployed and started; it builds as well, which there is no separating.
+        //
+        // The publish target is invoked directly rather than through the publish verb, naming the framework as a
+        // property. A project with several frameworks is cross targeting, and the publish verb dispatches to an
+        // inner build for the one asked for; the NativeAOT hooks do not survive that dispatch, so the native link
+        // never runs and packaging then looks for a library nothing produced. Naming it as a property builds the
+        // project as the single framework one it has to be, and leaves what was restored for the other heads be.
+        var aotPublish = "publish " + quoted + " -f " + this.tester.TargetFramework
+                         + " -r " + androidRuntimeIdentifier + " -c Debug -p:SundewAndroidAot=true";
         var arguments = this.tester.Kind != TesterKind.Android
             ? "run --no-build --project " + quoted + " -f " + this.tester.TargetFramework
             : this.tester.SupportsNativeAot
-                ? "publish " + quoted + " -f " + this.tester.TargetFramework + " -r " + androidRuntimeIdentifier
-                  + " -c Debug -p:SundewAndroidAot=true"
+                ? aotPublish
                 : "build " + quoted + " -f " + this.tester.TargetFramework + " -t:Run";
 
         if (this.tester.Kind == TesterKind.Android && !this.tester.SupportsNativeAot

@@ -123,6 +123,27 @@ public static class Android
     }
 
     /// <summary>
+    /// Says whether an app is running on any attached device. The launcher stops the app everywhere before it
+    /// installs, so only the one it started can be up, and asking every device avoids depending on the serial
+    /// number having been tracked correctly. Getting that wrong declares a running tester stopped and then stops
+    /// it for real, which is worse than being slow to notice one that has gone.
+    /// </summary>
+    /// <param name="applicationId">The package.</param>
+    /// <returns><c>true</c> while any device is running it.</returns>
+    public static bool IsRunningAnywhere(string applicationId)
+    {
+        foreach (var device in GetDevices())
+        {
+            if (IsRunning(device, applicationId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Waits until a device has finished booting.
     /// </summary>
     /// <param name="device">The serial number, or null for the only attached device.</param>

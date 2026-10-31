@@ -52,7 +52,7 @@ public static class BorderRenderer
 
         if (background != null)
         {
-            session.Fill(layout.Background, background);
+            session.Fill(layout.Background, background.Value);
         }
 
         // A see through corner is composited as a whole, so a side running under it would show through as a darker
@@ -88,7 +88,7 @@ public static class BorderRenderer
             return;
         }
 
-        session.Fill(sideQuad, paint);
+        session.Fill(sideQuad, paint.Value);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public static class BorderRenderer
         {
             if (blend.Fallback != null)
             {
-                session.Fill(cornerWedge, blend.Fallback);
+                session.Fill(cornerWedge, blend.Fallback.Value);
             }
 
             return;

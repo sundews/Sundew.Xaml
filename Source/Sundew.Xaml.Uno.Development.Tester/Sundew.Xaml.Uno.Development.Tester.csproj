@@ -6,8 +6,16 @@
       which a plain build agent does not have, so CI sets SundewUnoAllHeads=false and builds the desktop head alone.
     -->
     <SundewUnoAllHeads Condition="'$(SundewUnoAllHeads)' == ''">true</SundewUnoAllHeads>
-    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
-    <TargetFrameworks Condition="'$(SundewUnoAllHeads)' == 'true'">net10.0-desktop;net10.0-android;net10.0-ios;net10.0-browserwasm</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewUnoAndroidOnly)' != 'true'">net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="'$(SundewUnoAllHeads)' == 'true' And '$(SundewUnoAndroidOnly)' != 'true'">net10.0-desktop;net10.0-android;net10.0-ios;net10.0-browserwasm</TargetFrameworks>
+    <!--
+      Publishing the Android head compiled ahead of time needs this to be a single target framework project.
+      A project with the plural is cross targeting, and publish then dispatches to an inner build; the NativeAOT
+      hooks do not survive that dispatch, so the native link never runs and the apk comes out without the native
+      library in it. The publish is run with no restore, so naming one framework here does not disturb what was
+      restored for the other heads.
+    -->
+    <TargetFramework Condition="'$(SundewUnoAndroidOnly)' == 'true'">net10.0-android</TargetFramework>
     <OutputType>Exe</OutputType>
     <RootNamespace>Sundew.Xaml.Uno.Development.Tester</RootNamespace>
     <UnoSingleProject>true</UnoSingleProject>
@@ -57,5 +65,33 @@
     <!-- The startup clock, shared so that every tester measures the same span the same way. -->
     <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
   </ItemGroup>
+
+
+  <!--
+    NativeAOT for Android, which .NET 10 supports through a runtime pack of its own. It is deliberately not on by
+    default: with PublishAot set, an ordinary build runs the trimmer and the native compiler too, because an
+    Android app carries its code as a native library inside the apk. The launcher asks for it when it publishes.
+  -->
+  <PropertyGroup Condition="$(TargetFramework.Contains('-android')) And '$(SundewAndroidAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <!-- Mono.Android and Java.Interop report AOT analysis warnings of their own, which are not ours to fix. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!--
+      Hot Design is a design time tool and brings tooling assemblies along with it that carry no runtime
+      identifier, which the Android native build refuses: it wants one for every assembly it is given. Nothing
+      in a published head needs it.
+    -->
+    <UnoDisableHotDesign>true</UnoDisableHotDesign>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(TargetFramework.Contains('-android')) And '$(SundewAndroidAot)' == 'true'">
+    <!--
+      Android compiles ahead of time with the trimmer set to full, which strips System.Dynamic out of
+      System.Linq.Expressions. Something below still asks for DynamicMetaObject, and the native compiler then
+      fails to load a type that is no longer there, so the assembly is kept whole.
+    -->
+    <TrimmerRootAssembly Include="System.Linq.Expressions" RootMode="All" />
+  </ItemGroup>
+
 
 </Project>

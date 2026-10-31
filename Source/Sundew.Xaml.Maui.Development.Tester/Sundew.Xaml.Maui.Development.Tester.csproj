@@ -96,4 +96,15 @@
     <Compile Include="..\Shared\Development\StartupClock.cs" LinkBase="Shared\Development" />
   </ItemGroup>
 
+
+  <!--
+    NativeAOT for Android, which .NET 10 supports through a runtime pack of its own. It is deliberately not on by
+    default: with PublishAot set, an ordinary build runs the trimmer and the native compiler too, because an
+    Android app carries its code as a native library inside the apk. The launcher asks for it when it publishes.
+  -->
+  <PropertyGroup Condition="$(TargetFramework.Contains('-android')) And '$(SundewAndroidAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <!-- Mono.Android and Java.Interop report AOT analysis warnings of their own, which are not ours to fix. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
 </Project>

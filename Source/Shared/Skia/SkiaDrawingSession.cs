@@ -18,6 +18,22 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
     private readonly SKCanvas canvas;
 
     /// <summary>
+    /// The path and the paint are built once and reset for each fill rather than made again. A border is drawn in
+    /// hundreds of fills, almost all of them slices of a corner, and a native object apiece for every one of them
+    /// was the greater part of what drawing a sheet allocated.
+    /// </summary>
+    private readonly SKPath path = new SKPath();
+
+    private readonly SKPaint paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+    /// <summary>
+    /// The ends of a two stop gradient, which is what every slice of a corner is.
+    /// </summary>
+    private readonly SKColor[] pairColors = new SKColor[2];
+
+    private readonly float[] pairOffsets = new float[2];
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SkiaDrawingSession"/> class.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
@@ -29,42 +45,42 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
     /// <inheritdoc/>
     public void Fill(SideQuad sideQuad, Paint paint)
     {
-        using var path = new SKPath();
-        path.MoveTo(ToPoint(sideQuad.Outer.Start));
-        path.LineTo(ToPoint(sideQuad.Outer.End));
-        path.LineTo(ToPoint(sideQuad.Inner.End));
-        path.LineTo(ToPoint(sideQuad.Inner.Start));
-        path.Close();
-        this.Fill(path, paint);
+        this.path.Reset();
+        this.path.MoveTo(ToPoint(sideQuad.Outer.Start));
+        this.path.LineTo(ToPoint(sideQuad.Outer.End));
+        this.path.LineTo(ToPoint(sideQuad.Inner.End));
+        this.path.LineTo(ToPoint(sideQuad.Inner.Start));
+        this.path.Close();
+        this.Fill(paint);
     }
 
     /// <inheritdoc/>
     public void Fill(CornerWedge cornerWedge, Paint paint)
     {
-        using var path = new SKPath();
-        path.MoveTo(ToPoint(cornerWedge.Outer.Start));
-        path.QuadTo(ToPoint(cornerWedge.Outer.Control), ToPoint(cornerWedge.Outer.End));
-        path.LineTo(ToPoint(cornerWedge.Inner.Start));
-        path.QuadTo(ToPoint(cornerWedge.Inner.Control), ToPoint(cornerWedge.Inner.End));
-        path.Close();
-        this.Fill(path, paint);
+        this.path.Reset();
+        this.path.MoveTo(ToPoint(cornerWedge.Outer.Start));
+        this.path.QuadTo(ToPoint(cornerWedge.Outer.Control), ToPoint(cornerWedge.Outer.End));
+        this.path.LineTo(ToPoint(cornerWedge.Inner.Start));
+        this.path.QuadTo(ToPoint(cornerWedge.Inner.Control), ToPoint(cornerWedge.Inner.End));
+        this.path.Close();
+        this.Fill(paint);
     }
 
     /// <inheritdoc/>
     public void Fill(RoundedFigure figure, Paint paint)
     {
-        using var path = new SKPath();
-        path.MoveTo(ToPoint(figure.Start));
-        path.LineTo(ToPoint(figure.Edges.Left.End));
-        path.QuadTo(ToPoint(figure.Controls.TopLeft), ToPoint(figure.Edges.Top.Start));
-        path.LineTo(ToPoint(figure.Edges.Top.End));
-        path.QuadTo(ToPoint(figure.Controls.TopRight), ToPoint(figure.Edges.Right.Start));
-        path.LineTo(ToPoint(figure.Edges.Right.End));
-        path.QuadTo(ToPoint(figure.Controls.BottomRight), ToPoint(figure.Edges.Bottom.Start));
-        path.LineTo(ToPoint(figure.Edges.Bottom.End));
-        path.QuadTo(ToPoint(figure.Controls.BottomLeft), ToPoint(figure.Edges.Left.Start));
-        path.Close();
-        this.Fill(path, paint);
+        this.path.Reset();
+        this.path.MoveTo(ToPoint(figure.Start));
+        this.path.LineTo(ToPoint(figure.Edges.Left.End));
+        this.path.QuadTo(ToPoint(figure.Controls.TopLeft), ToPoint(figure.Edges.Top.Start));
+        this.path.LineTo(ToPoint(figure.Edges.Top.End));
+        this.path.QuadTo(ToPoint(figure.Controls.TopRight), ToPoint(figure.Edges.Right.Start));
+        this.path.LineTo(ToPoint(figure.Edges.Right.End));
+        this.path.QuadTo(ToPoint(figure.Controls.BottomRight), ToPoint(figure.Edges.Bottom.Start));
+        this.path.LineTo(ToPoint(figure.Edges.Bottom.End));
+        this.path.QuadTo(ToPoint(figure.Controls.BottomLeft), ToPoint(figure.Edges.Left.Start));
+        this.path.Close();
+        this.Fill(paint);
     }
 
     /// <inheritdoc/>
@@ -79,7 +95,10 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
     /// <inheritdoc/>
     public void Dispose()
     {
-        // The canvas belongs to the element, which hands it over for the duration of the draw only.
+        // The canvas belongs to the element, which hands it over for the duration of the draw only. The path and
+        // the paint are this session's own and go with it.
+        this.path.Dispose();
+        this.paint.Dispose();
     }
 
     private static SKPoint ToPoint(Position position)
@@ -92,38 +111,41 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
         return new SKColor(color.R, color.G, color.B, color.A);
     }
 
-    private void Fill(SKPath path, Paint paint)
+    private void Fill(Paint paint)
     {
-        using var skPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-        if (paint.IsGradient)
+        if (!paint.IsGradient)
         {
-            var colors = new SKColor[paint.Stops.Count];
-            var offsets = new float[paint.Stops.Count];
-            for (var index = 0; index < colors.Length; index++)
-            {
-                colors[index] = ToColor(paint.Stops[index].Color);
-                offsets[index] = (float)paint.Stops[index].Offset;
-            }
-
-            var bounds = path.Bounds;
-            paint.ResolveEnds(
-                new Bounds(bounds.Left, bounds.Top, bounds.Width, bounds.Height),
-                out var start,
-                out var end);
-            skPaint.Shader = SKShader.CreateLinearGradient(
-                ToPoint(start),
-                ToPoint(end),
-                colors,
-                offsets,
-                SKShaderTileMode.Clamp);
-        }
-        else
-        {
-            skPaint.Color = ToColor(paint.Color);
+            this.paint.Color = ToColor(paint.Color);
+            this.canvas.DrawPath(this.path, this.paint);
+            return;
         }
 
-        this.canvas.DrawPath(path, skPaint);
-        skPaint.Shader?.Dispose();
+        var count = paint.Stops.Count;
+        var colors = count == 2 ? this.pairColors : new SKColor[count];
+        var offsets = count == 2 ? this.pairOffsets : new float[count];
+        for (var index = 0; index < count; index++)
+        {
+            colors[index] = ToColor(paint.Stops[index].Color);
+            offsets[index] = (float)paint.Stops[index].Offset;
+        }
+
+        var bounds = this.path.Bounds;
+        paint.ResolveEnds(
+            new Bounds(bounds.Left, bounds.Top, bounds.Width, bounds.Height),
+            out var start,
+            out var end);
+        var shader = SKShader.CreateLinearGradient(
+            ToPoint(start),
+            ToPoint(end),
+            colors,
+            offsets,
+            SKShaderTileMode.Clamp);
+        this.paint.Shader = shader;
+        this.canvas.DrawPath(this.path, this.paint);
+
+        // Taken off again so that the next fill, which may be a plain colour, does not inherit it.
+        this.paint.Shader = null;
+        shader.Dispose();
     }
 
     private sealed class Layer : IDisposable

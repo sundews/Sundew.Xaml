@@ -14,7 +14,10 @@
     <File Path="Build/Development/stylecop.json" />
   </Folder>
   <Folder Name="/Testers/">
-    <Project Path="Sundew.Xaml.Development.Launcher/Sundew.Xaml.Development.Launcher.csproj" />
+    <Project Path="Sundew.Xaml.Development.Launcher/Sundew.Xaml.Development.Launcher.csproj">
+      <!-- A WinUI app builds for an architecture, never Any CPU, so the solution has to say which one. -->
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Sundew.Xaml.Avalonia.Development.Tester/Sundew.Xaml.Avalonia.Development.Tester.csproj" />
     <Project Path="Sundew.Xaml.Maui.Development.Tester/Sundew.Xaml.Maui.Development.Tester.csproj" />
     <Project Path="Sundew.Xaml.Uno.Development.Tester/Sundew.Xaml.Uno.Development.Tester.csproj">

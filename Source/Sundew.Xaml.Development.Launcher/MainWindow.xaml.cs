@@ -202,9 +202,9 @@ public sealed partial class MainWindow : Window
                 // emulator resumed from a snapshot is often still running the app from the last session, so an
                 // answer given before this one was deployed is about the previous one and latches the wrong
                 // thing: deploying then stops it to install, and that looks like it went away.
-                return !item.Started || item.Device == null || item.Tester.ApplicationId == null
+                return !item.Started || item.Tester.ApplicationId == null
                     ? null
-                    : Android.IsRunning(item.Device, item.Tester.ApplicationId);
+                    : Android.IsRunningAnywhere(item.Tester.ApplicationId);
 
             case TesterKind.Browser:
                 // The head serves a page and the launcher opened a window onto it. Closing that window is how a
