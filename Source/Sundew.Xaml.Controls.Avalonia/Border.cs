@@ -7,6 +7,7 @@
 
 namespace Sundew.Xaml.Controls;
 
+using System.Collections.Generic;
 using global::Avalonia;
 using global::Avalonia.Controls;
 using global::Avalonia.Layout;
@@ -137,6 +138,8 @@ public class Border : Decorator
     private DrawStep? backgroundStep;
     private DrawStep?[]? sideSteps;
     private CornerSteps[]? cornerSteps;
+    private Position[]? cornerAnchors;
+    private PlacedCorner?[]? placedCorners;
 
     static Border()
     {
@@ -356,8 +359,21 @@ public class Border : Decorator
             return;
         }
 
-        foreach (var corner in corners)
+        var anchors = this.cornerAnchors;
+        if (anchors == null)
         {
+            return;
+        }
+
+        for (var index = 0; index < corners.Length; index++)
+        {
+            var corner = corners[index];
+            var anchor = anchors[index];
+
+            // The corner was worked out in its own coordinates, so that resizing the border moves it rather than
+            // making it again. This is where it is put back.
+            using var placement = context.PushTransform(Matrix.CreateTranslation(anchor.X, anchor.Y));
+
             // Where the slices overlap they would blend with each other, which a see through border would show as a
             // band at every seam. Taking the alpha off the slices and applying it to the corner as a whole
             // composites it once, at which point the overlaps are opaque and leave nothing behind. It has to be a
@@ -424,17 +440,46 @@ public class Border : Decorator
             BuildSide(quads.Bottom, sideBrushes.Bottom),
         };
 
-        this.cornerSteps = new[]
-        {
-            BuildCorner(layout.Corners.TopLeft, blends.TopLeft, this.TopLeftStops, metrics.Scale),
-            BuildCorner(layout.Corners.TopRight, blends.TopRight, this.TopRightStops, metrics.Scale),
-            BuildCorner(layout.Corners.BottomRight, blends.BottomRight, this.BottomRightStops, metrics.Scale),
-            BuildCorner(layout.Corners.BottomLeft, blends.BottomLeft, this.BottomLeftStops, metrics.Scale),
-        };
+        this.cornerSteps ??= new CornerSteps[4];
+        this.cornerAnchors ??= new Position[4];
+        this.placedCorners ??= new PlacedCorner?[4];
+        this.PlaceCorner(0, layout.Corners.TopLeft, blends.TopLeft, this.TopLeftStops, metrics.Scale);
+        this.PlaceCorner(1, layout.Corners.TopRight, blends.TopRight, this.TopRightStops, metrics.Scale);
+        this.PlaceCorner(2, layout.Corners.BottomRight, blends.BottomRight, this.BottomRightStops, metrics.Scale);
+        this.PlaceCorner(3, layout.Corners.BottomLeft, blends.BottomLeft, this.BottomLeftStops, metrics.Scale);
 
         this.drawingMetrics = metrics;
         this.drawingOffset = offset;
         this.hasDrawing = true;
+    }
+
+    /// <summary>
+    /// Works a corner out in its own coordinates and notes where to put it, reusing the one already worked out when
+    /// all that has changed is where it goes.
+    /// </summary>
+    /// <remarks>
+    /// A corner's shape follows from the border's thickness and corner radius, not from its width and height, so
+    /// resizing a border leaves all four corners the same shape and only moves them. The corners are the bulk of
+    /// what a border costs to work out, so keeping them across a resize is what makes an animated one cheap.
+    /// </remarks>
+    /// <param name="index">Which corner.</param>
+    /// <param name="cornerWedge">The corner, where the border has it.</param>
+    /// <param name="blend">The blend between the two sides meeting at the corner.</param>
+    /// <param name="stops">The stops controlling how abrupt the transition is.</param>
+    /// <param name="scale">The device pixel scale.</param>
+    private void PlaceCorner(int index, CornerWedge cornerWedge, CornerBlend blend, Stops stops, Scale scale)
+    {
+        var anchor = cornerWedge.Anchor;
+        var local = cornerWedge.Translate(-anchor.X, -anchor.Y);
+        var placed = this.placedCorners![index];
+        if (placed is not { } corner || corner.Wedge != local || corner.Scale != scale)
+        {
+            corner = new PlacedCorner(local, scale, BuildCorner(local, blend, stops, scale));
+            this.placedCorners[index] = corner;
+        }
+
+        this.cornerAnchors![index] = anchor;
+        this.cornerSteps![index] = corner.Steps;
     }
 
     private static DrawStep? BuildSide(SideQuad sideQuad, IBrush? brush)
@@ -466,20 +511,21 @@ public class Border : Decorator
             return new CornerSteps(1, default, solid);
         }
 
-        var count = cornerWedge.GetSliceCount(scale);
-        var steps = new DrawStep[count];
-        for (var index = 0; index < count; index++)
+        // Two sides of the same colour have nothing to sweep between, so the whole corner is that one colour.
+        if (blend.IsConstant)
         {
-            var from = (double)index / count;
-            var to = (double)(index + 1) / count;
-            var slice = cornerWedge.GetSlice(from, to);
-
-            // The slice is filled a little past its own end, and the next one then paints over that overrun.
-            var filled = cornerWedge.GetSlice(from, System.Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
-            steps[index] = new DrawStep(CreateSliceBrush(slice, blend, stops, from, to), filled.ToGeometry());
+            var flat = new[] { new DrawStep(new ImmutableSolidColorBrush(blend.ColorAt(stops, 0)), cornerWedge.ToGeometry()) };
+            return new CornerSteps(blend.Opacity, GetExtent(cornerWedge), flat);
         }
 
-        return new CornerSteps(blend.Opacity, GetExtent(cornerWedge), steps);
+        var sweep = new CornerSweep(cornerWedge, stops, scale);
+        var steps = new List<DrawStep>(sweep.MaximumCount);
+        foreach (var slice in sweep)
+        {
+            steps.Add(new DrawStep(CreateSliceBrush(slice, blend, stops), slice.Filled.ToGeometry()));
+        }
+
+        return new CornerSteps(blend.Opacity, GetExtent(cornerWedge), steps.ToArray());
     }
 
     /// <inheritdoc/>
@@ -522,10 +568,10 @@ public class Border : Decorator
         }
     }
 
-    private static IBrush CreateSliceBrush(CornerWedge slice, CornerBlend blend, Stops stops, double from, double to)
+    private static IBrush CreateSliceBrush(CornerSlice slice, CornerBlend blend, Stops stops)
     {
-        var startColor = blend.ColorAt(stops, from);
-        var endColor = blend.ColorAt(stops, to);
+        var startColor = blend.ColorAt(stops, slice.From);
+        var endColor = blend.ColorAt(stops, slice.To);
         if (startColor == endColor)
         {
             return new ImmutableSolidColorBrush(startColor);
@@ -676,6 +722,12 @@ public class Border : Decorator
     /// <param name="Geometry">The shape.</param>
     private sealed record DrawStep(IBrush Brush, Geometry Geometry);
 
+    /// <summary>A corner worked out in its own coordinates, kept so that resizing the border only moves it.</summary>
+    /// <param name="Wedge">The corner in its own coordinates, which is what decides whether it can be reused.</param>
+    /// <param name="Scale">The device pixel scale it was worked out at, which decides how fine the sweep is.</param>
+    /// <param name="Steps">What to draw.</param>
+    private readonly record struct PlacedCorner(CornerWedge Wedge, Scale Scale, CornerSteps Steps);
+
     /// <summary>What a corner is made of.</summary>
     /// <param name="Opacity">How see through the corner is as a whole, which is applied as one layer.</param>
     /// <param name="Extent">The area that layer covers.</param>
@@ -689,6 +741,8 @@ public class Border : Decorator
         this.backgroundStep = null;
         this.sideSteps = null;
         this.cornerSteps = null;
+        this.cornerAnchors = null;
+        this.placedCorners = null;
     }
 
     private Corners<CornerBlend> EnsureCornerBlends(Sides<IBrush?> sides)
@@ -775,6 +829,12 @@ public class Border : Decorator
         /// underneath it without the overlap showing.
         /// </summary>
         public bool IsOpaque => this.IsBlended && this.start.A == byte.MaxValue && this.end.A == byte.MaxValue;
+
+        /// <summary>
+        /// Gets a value indicating whether the two sides meeting at the corner are the same colour, in which case the
+        /// sweep comes out as that one colour and the corner can be filled in a single go.
+        /// </summary>
+        public bool IsConstant => this.IsBlended && this.start == this.end;
 
         /// <summary>
         /// Gets the alpha the corner as a whole is drawn at, which is that of whichever of the two colours is the

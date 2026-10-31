@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="BorderRenderer.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -123,20 +123,20 @@ public static class BorderRenderer
         var layer = blend.Opacity < 1 ? session.CreateOpacityLayer(blend.Opacity) : null;
         try
         {
-            var count = cornerWedge.GetSliceCount(scale);
-            for (var index = 0; index < count; index++)
+            // Two sides of the same colour have nothing to sweep between, so the whole corner is that one colour.
+            if (blend.IsConstant)
             {
-                var from = (double)index / count;
-                var to = (double)(index + 1) / count;
-                var slice = cornerWedge.GetSlice(from, to);
+                session.Fill(cornerWedge, Paint.Solid(blend.ColorAt(stops, 0)));
+                return;
+            }
 
-                // The slice is filled a little past its own end, and the next one then paints over that overrun.
-                var filled = cornerWedge.GetSlice(from, Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
+            foreach (var slice in new CornerSweep(cornerWedge, stops, scale))
+            {
                 session.Fill(
-                    filled,
+                    slice.Filled,
                     Paint.Linear(
-                        blend.ColorAt(stops, from),
-                        blend.ColorAt(stops, to),
+                        blend.ColorAt(stops, slice.From),
+                        blend.ColorAt(stops, slice.To),
                         slice.StartCutCentre,
                         slice.EndCutCentre));
             }

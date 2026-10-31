@@ -313,26 +313,28 @@ public class Border : System.Windows.Controls.Border
             drawingGroup.Children.Add(target);
         }
 
-        var count = cornerWedge.GetSliceCount(scale);
-        for (var index = 0; index < count; index++)
+        // Two sides of the same colour have nothing to sweep between, so the whole corner is that one colour.
+        if (blend.IsConstant)
         {
-            var from = (double)index / count;
-            var to = (double)(index + 1) / count;
-            var slice = cornerWedge.GetSlice(from, to);
+            var flat = new SolidColorBrush(blend.ColorAt(stops, 0));
+            flat.Freeze();
+            target.Children.Add(new GeometryDrawing(flat, BackgroundPen, cornerWedge.ToGeometry()));
+            return;
+        }
 
-            // The slice is filled a little past its own end, and the next one then paints over that overrun.
-            var filled = cornerWedge.GetSlice(from, System.Math.Min(1, to + (CornerWedge.SliceOverlap / count)));
+        foreach (var slice in new CornerSweep(cornerWedge, stops, scale))
+        {
             target.Children.Add(new GeometryDrawing(
-                CreateSliceBrush(slice, blend, stops, from, to),
+                CreateSliceBrush(slice, blend, stops),
                 BackgroundPen,
-                filled.ToGeometry()));
+                slice.Filled.ToGeometry()));
         }
     }
 
-    private static Brush CreateSliceBrush(CornerWedge slice, CornerBlend blend, Stops stops, double from, double to)
+    private static Brush CreateSliceBrush(CornerSlice slice, CornerBlend blend, Stops stops)
     {
-        var startColor = blend.ColorAt(stops, from);
-        var endColor = blend.ColorAt(stops, to);
+        var startColor = blend.ColorAt(stops, slice.From);
+        var endColor = blend.ColorAt(stops, slice.To);
         Brush brush = startColor == endColor
             ? new SolidColorBrush(startColor)
             : new LinearGradientBrush(
@@ -516,6 +518,12 @@ public class Border : System.Windows.Controls.Border
         /// underneath it without the overlap showing.
         /// </summary>
         public bool IsOpaque => this.IsBlended && this.start.A == byte.MaxValue && this.end.A == byte.MaxValue;
+
+        /// <summary>
+        /// Gets a value indicating whether the two sides meeting at the corner are the same colour, in which case the
+        /// sweep comes out as that one colour and the corner can be filled in a single go.
+        /// </summary>
+        public bool IsConstant => this.IsBlended && this.start == this.end;
 
         /// <summary>
         /// Gets the alpha the corner as a whole is drawn at, which is that of whichever of the two colours is the

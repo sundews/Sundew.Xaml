@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CornerBlend.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -49,6 +49,12 @@ public readonly record struct CornerBlend
     /// underneath it without the overlap showing.
     /// </summary>
     public bool IsOpaque => this.IsBlended && this.start.A == byte.MaxValue && this.end.A == byte.MaxValue;
+
+    /// <summary>
+    /// Gets a value indicating whether the two sides meeting at the corner are the same colour, in which case the
+    /// sweep comes out as that one colour and the corner can be filled in a single go.
+    /// </summary>
+    public bool IsConstant => this.IsBlended && this.start == this.end;
 
     /// <summary>
     /// Gets the alpha the corner as a whole is drawn at, which is that of whichever of the two colours is the more

@@ -48,6 +48,12 @@ public readonly record struct CornerWedge(CornerArc Outer, CornerArc Inner)
     private const int MaximumSliceCount = 20;
 
     /// <summary>
+    /// Gets the point the two sides meeting at this corner would have met at, which is the corner of the border
+    /// itself and so the point the corner stays put relative to as the border is resized.
+    /// </summary>
+    public Position Anchor => this.Outer.Control;
+
+    /// <summary>
     /// Gets the point on the inner boundary that the cut from the start of the outer arc leaves.
     /// </summary>
     public Position StartCut => this.Inner.End;
@@ -68,6 +74,22 @@ public readonly record struct CornerWedge(CornerArc Outer, CornerArc Inner)
     /// of the side leaving it.
     /// </summary>
     public Position EndCutCentre => Centre(this.Outer.End, this.Inner.Start);
+
+    /// <summary>
+    /// Gets the corner translated by the specified amounts.
+    /// </summary>
+    /// <remarks>
+    /// A corner's shape follows from the thickness and the corner radius alone, so the same corner reappears,
+    /// translated, as a border is resized. Working one out in its own coordinates and translating it is what lets a
+    /// resize reuse it rather than build it again.
+    /// </remarks>
+    /// <param name="x">The horizontal translation.</param>
+    /// <param name="y">The vertical translation.</param>
+    /// <returns>The translated corner.</returns>
+    public CornerWedge Translate(double x, double y)
+    {
+        return new CornerWedge(this.Outer.Translate(x, y), this.Inner.Translate(x, y));
+    }
 
     /// <summary>
     /// Gets the number of slices the corner should be cut into to blend the two sides meeting it smoothly.

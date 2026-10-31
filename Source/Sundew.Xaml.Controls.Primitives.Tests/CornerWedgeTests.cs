@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CornerWedgeTests.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -104,6 +104,25 @@ public class CornerWedgeTests
 
         single.Should().Be(4);
         doubled.Should().Be(single * 2);
+    }
+
+    [Test]
+    public void Translate_Then_ResultShouldBeTheSameCornerSomewhereElse()
+    {
+        var wedge = Wedge();
+
+        var result = wedge.Translate(100, 40);
+
+        // A corner's shape is its own, so moving it leaves everything about it but where it is.
+        result.Translate(-100, -40).Should().Be(wedge);
+        result.Anchor.Should().Be(wedge.Anchor.Translate(100, 40));
+        result.GetSliceCount(Scale.Identity).Should().Be(wedge.GetSliceCount(Scale.Identity));
+    }
+
+    [Test]
+    public void Anchor_Then_ResultShouldBeWhereTheTwoSidesWouldHaveMet()
+    {
+        Wedge().Anchor.Should().Be(new Position(0, 0));
     }
 
     [Test]

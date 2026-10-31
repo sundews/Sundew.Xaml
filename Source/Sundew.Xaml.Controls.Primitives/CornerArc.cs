@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="CornerArc.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -29,6 +29,17 @@ public readonly record struct CornerArc(Position Start, Position Control, Positi
         return new Position(
             (start * this.Start.X) + (control * this.Control.X) + (end * this.End.X),
             (start * this.Start.Y) + (control * this.Control.Y) + (end * this.End.Y));
+    }
+
+    /// <summary>
+    /// Gets an arc translated by the specified amounts.
+    /// </summary>
+    /// <param name="x">The horizontal translation.</param>
+    /// <param name="y">The vertical translation.</param>
+    /// <returns>The translated arc.</returns>
+    public CornerArc Translate(double x, double y)
+    {
+        return new CornerArc(this.Start.Translate(x, y), this.Control.Translate(x, y), this.End.Translate(x, y));
     }
 
     /// <summary>
