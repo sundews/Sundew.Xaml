@@ -39,7 +39,7 @@
               <ColumnDefinition Width="210"/>
               <ColumnDefinition Width="80"/>
               <ColumnDefinition Width="200"/>
-              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
