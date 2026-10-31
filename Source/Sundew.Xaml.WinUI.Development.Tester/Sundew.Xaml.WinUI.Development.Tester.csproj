@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Overlays.WinUI\Sundew.Xaml.Controls.Overlays.WinUI.csproj" />
     <ProjectReference Include="..\Sundew.Xaml.Controls.WinUI\Sundew.Xaml.Controls.WinUI.csproj" />
   </ItemGroup>
 

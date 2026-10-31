@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TesterItem.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -22,6 +22,7 @@ public sealed class TesterItem : INotifyPropertyChanged
     public const string DefaultVirtualDevice = "(default)";
 
     private string status = "Not running";
+    private string runtime = string.Empty;
     private string virtualDevice = DefaultVirtualDevice;
     private bool isRunning;
     private bool started;
@@ -128,6 +129,19 @@ public sealed class TesterItem : INotifyPropertyChanged
     {
         get => this.status;
         set => this.Set(ref this.status, value);
+    }
+
+    /// <summary>
+    /// Gets or sets how the running head was compiled, which is empty while nothing is running.
+    /// </summary>
+    /// <remarks>
+    /// Only the launcher knows this before the head is up, because the launcher is what chose between the two.
+    /// Each tester says the same of itself once it has a window, and the two should agree.
+    /// </remarks>
+    public string Runtime
+    {
+        get => this.runtime;
+        set => this.Set(ref this.runtime, value);
     }
 
     /// <summary>

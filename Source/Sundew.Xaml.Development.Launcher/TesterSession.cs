@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TesterSession.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -40,6 +40,12 @@ public sealed class TesterSession : IDisposable
     /// Raised for every line the build and the tester write.
     /// </summary>
     public event EventHandler<string>? Output;
+
+    /// <summary>
+    /// Gets a value indicating whether the head that was started is the one compiled ahead of time, rather than
+    /// the same code run by the just in time compiler.
+    /// </summary>
+    public bool IsNative { get; private set; }
 
     /// <summary>
     /// Raised when the process backing the tester ends on its own.
@@ -159,6 +165,7 @@ public sealed class TesterSession : IDisposable
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
 
+        this.IsNative = nativeBinary != null;
         var startedBy = nativeBinary == null ? "dotnet " + startInfo.Arguments : "native " + nativeBinary;
         this.Output?.Invoke(this, startedBy);
         this.process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
@@ -213,7 +220,8 @@ public sealed class TesterSession : IDisposable
     /// has to be started as one.
     /// </summary>
     /// <param name="projectPath">The project directory.</param>
-    /// <returns>The binary, or null when the head cannot be published that way or has not been.</returns>
+    /// <returns>The binary, or null when the head cannot be published that way, has not been, or was published
+    /// before the code it was published from was last built.</returns>
     private string? FindNativeBinary(string projectPath)
     {
         if (!this.tester.SupportsNativeAot || this.tester.ProcessName == null)
@@ -225,7 +233,38 @@ public sealed class TesterSession : IDisposable
         // left alone.
         var path = Path.Combine(
             projectPath, "bin", "Debug", this.tester.TargetFramework, "win-x64", "publish", this.tester.ProcessName + ".exe");
-        return File.Exists(path) ? path : null;
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        // A published head is whatever it was when it was published, and nothing republishes it: building the
+        // solution leaves it exactly as it was. Running it regardless means running code that may be days behind
+        // the source, and looking at the result as though it were the change just made. So it is used only while
+        // it is no older than the assembly an ordinary build writes, which the publish does not touch, since it
+        // writes its own under the runtime identifier.
+        //
+        // When it was published is taken from the folder rather than from the binary in it. Publishing copies the
+        // binary with the time it was compiled at, which can be older than a build that came after it and left
+        // the binary alone; the folder is written to whenever something is actually published into it.
+        var assembly = Path.Combine(
+            projectPath, "bin", "Debug", this.tester.TargetFramework, this.tester.ProcessName + ".dll");
+        var publishedAt = File.GetLastWriteTimeUtc(path);
+        var publishedInto = Directory.GetLastWriteTimeUtc(Path.GetDirectoryName(path)!);
+        if (publishedInto > publishedAt)
+        {
+            publishedAt = publishedInto;
+        }
+
+        if (File.Exists(assembly) && File.GetLastWriteTimeUtc(assembly) > publishedAt)
+        {
+            this.Output?.Invoke(
+                this,
+                $"The head published ahead of time is older than the last build, so it is being skipped. Publish it again to run it: dotnet publish \"{projectPath}\" -f {this.tester.TargetFramework} -c Debug -p:SppDisable=true");
+            return null;
+        }
+
+        return path;
     }
 
     /// <summary>

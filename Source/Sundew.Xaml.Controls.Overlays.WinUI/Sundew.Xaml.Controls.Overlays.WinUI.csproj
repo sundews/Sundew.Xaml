@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows10.0.19041.0;net9.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sundew.Xaml.Controls.Overlays</RootNamespace>
+    <Description>Enables creating WinUI overlay windows, such as subtitles.
+    </Description>
+    <!-- A library is built AnyCPU on purpose; the consuming app picks the platform Win2D needs. -->
+    <Win2DWarnNoPlatform>false</Win2DWarnNoPlatform>
+    <!-- The XAML markup compiler runs an intermediate compile without a PDB, which source embedding forbids. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Same reason as the property above: the intermediate compile emits no PDB, so nothing may be embedded. -->
+    <EmbeddedFiles Remove="@(EmbeddedFiles)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.WinUI\Sundew.Xaml.Controls.WinUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+
+  <!--
+    The window manager calls behind a click through overlay are the same whichever framework draws into the window,
+    so each overlay library compiles its own copy from one source, the way the XAML surface types are shared.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Overlays\*.cs" LinkBase="Shared\Overlays" />
+  </ItemGroup>
+
+</Project>

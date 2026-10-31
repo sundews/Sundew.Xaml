@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MainView.xaml.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -21,6 +21,11 @@ public partial class MainView : UserControl
     }
 
     /// <summary>
+    /// Gets the toggle that asks for the subtitle overlay, which the window that can host one answers.
+    /// </summary>
+    internal CheckBox OverlayToggle => this.SubtitleOverlayToggle;
+
+    /// <summary>
     /// Shows how this head is running and how long it took to get here. The time is settled on the way in, the
     /// sheet being up being exactly what was being waited for.
     /// </summary>
@@ -35,7 +40,20 @@ public partial class MainView : UserControl
     /// is what tells it apart from a JIT run of the very same build. A browser head is neither: it is called out by
     /// name rather than reported as ahead of time, which it is not.
     /// </summary>
-    private static string RuntimeName => OperatingSystem.IsBrowser()
-        ? "wasm"
-        : System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported ? "JIT" : "Native AOT";
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "SingleFile",
+        "IL3000:Avoid accessing Assembly file path when publishing as a single file",
+        Justification = "The empty location is what is being asked about, so the warning is the answer.")]
+    private static string RuntimeName
+    {
+        get
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                return "wasm";
+            }
+
+            return typeof(object).Assembly.Location.Length == 0 ? "Native AOT" : "JIT";
+        }
+    }
 }

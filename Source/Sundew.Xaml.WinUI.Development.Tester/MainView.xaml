@@ -45,6 +45,7 @@
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition/>
           <ColumnDefinition Width="50"/>
+          <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <!-- Which tester this is, so that the sheet says so itself rather than only the window title. -->
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,12,0">
@@ -54,6 +55,7 @@
         </StackPanel>
         <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
         <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="2" VerticalAlignment="Center"/>
+        <CheckBox x:Name="SubtitleOverlayToggle" Grid.Column="3" Content="Subtitle overlay" VerticalAlignment="Center" Margin="12,0,4,0"/>
       </Grid>
       <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Disabled">

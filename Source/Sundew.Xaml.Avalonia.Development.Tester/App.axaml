@@ -1,6 +1,18 @@
-<Application xmlns="https://github.com/avaloniaui"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sundew.Xaml.Avalonia.Development.Tester.App">
+  <!--
+    The overlay library's theme, merged here rather than by the overlay itself. A dictionary named in markup is
+    resolved when this is compiled, which is what a head compiled ahead of time needs; one built in code is loaded
+    by reflection and cannot be published that way.
+  -->
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Sundew.Xaml.Controls.Overlays.Avalonia/Themes/Generic.axaml"/>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
   <Application.Styles>
     <FluentTheme />
   </Application.Styles>

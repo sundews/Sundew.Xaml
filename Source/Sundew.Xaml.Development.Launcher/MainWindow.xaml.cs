@@ -1,4 +1,4 @@
-// --------------------------------------------------------------------------------------------------------------------
+﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MainWindow.xaml.cs" company="Sundews">
 // Copyright (c) Sundews. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
@@ -8,8 +8,12 @@
 namespace Sundew.Xaml.Development.Launcher;
 
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Windows.Graphics;
 
 public sealed partial class MainWindow : Window
 {
@@ -56,6 +60,7 @@ public sealed partial class MainWindow : Window
         }
 
         this.TesterList.ItemsSource = this.items;
+        this.SizeToContent();
         this.Refresh();
         this.Closed += this.OnClosed;
 
@@ -293,8 +298,17 @@ public sealed partial class MainWindow : Window
         if (!session.Start())
         {
             item.Status = "Could not start";
+            item.Runtime = string.Empty;
             item.IsRunning = false;
             item.Session = null;
+            return;
+        }
+
+        // Only a head that runs here is one of these two. An Android or browser head is neither compiled ahead of
+        // time by the launcher nor run by it, so it is left to say for itself what it is.
+        if (item.Tester.Kind == TesterKind.Windows)
+        {
+            item.Runtime = session.IsNative ? "Native AOT" : "JIT";
         }
     }
 
@@ -310,6 +324,28 @@ public sealed partial class MainWindow : Window
             .SelectMany(item => item.Session!.GetProcessIds());
     }
 
+    /// <summary>
+    /// Gives the window a size of its own, rather than whatever share of the display it would otherwise be given.
+    /// The list is as wide as its columns and no wider, so the rest of the screen is left to the testers.
+    /// </summary>
+    private void SizeToContent()
+    {
+        var windowHandle = Win32Interop.GetWindowFromWindowId(this.AppWindow.Id);
+        var scale = GetDpiForWindow(windowHandle) / 96.0;
+        if (scale <= 0)
+        {
+            scale = 1;
+        }
+
+        var workArea = DisplayArea.GetFromWindowId(this.AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
+        var width = (int)Math.Min(1120 * scale, workArea.Width);
+        var height = (int)Math.Min(880 * scale, workArea.Height);
+        this.AppWindow.Resize(new SizeInt32(width, height));
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(nint windowHandle);
+
     private void Stop(TesterItem item)
     {
         item.Session?.Stop();
@@ -322,6 +358,7 @@ public sealed partial class MainWindow : Window
 
         item.IsRunning = false;
         item.Started = false;
+        item.Runtime = string.Empty;
         item.Status = "Not running";
     }
 

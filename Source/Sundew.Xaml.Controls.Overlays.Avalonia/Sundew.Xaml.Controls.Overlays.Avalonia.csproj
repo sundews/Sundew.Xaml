@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Sundew.Xaml.Controls.Overlays</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Description>Enables creating Avalonia overlay windows, such as subtitles.
+    </Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Avalonia\Sundew.Xaml.Controls.Avalonia.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+
+  <!--
+    The window manager calls behind a click through overlay are the same whichever framework draws into the window,
+    so each overlay library compiles its own copy from one source, the way the XAML surface types are shared.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Overlays\*.cs" LinkBase="Shared\Overlays" />
+  </ItemGroup>
+
+</Project>
