@@ -277,6 +277,17 @@ public sealed partial class MainWindow : Window
             item.Started = true;
             item.Status = "Serving at " + url;
         });
+        session.Running += (_, _) => this.queue.TryEnqueue(() =>
+        {
+            // Only a head that runs here is one of these two. An Android or browser head is neither compiled
+            // ahead of time by the launcher nor run by it, so it is left to say for itself what it is. It is
+            // said here rather than when the session starts because a head the launcher publishes first has
+            // nothing to say until the publish has finished and the tester itself is up.
+            if (item.Tester.Kind == TesterKind.Windows)
+            {
+                item.Runtime = session.IsNative ? "Native AOT" : "JIT";
+            }
+        });
         session.Exited += (_, _) => this.queue.TryEnqueue(() =>
         {
             // An Android deployment ends as soon as the app is on the device, so the tester outlives it.
@@ -304,11 +315,11 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // Only a head that runs here is one of these two. An Android or browser head is neither compiled ahead of
-        // time by the launcher nor run by it, so it is left to say for itself what it is.
-        if (item.Tester.Kind == TesterKind.Windows)
+        if (session.IsPublishing)
         {
-            item.Runtime = session.IsNative ? "Native AOT" : "JIT";
+            // Compiling a head ahead of time takes long enough that saying it is starting would be a poor
+            // account of what the launcher is actually doing.
+            item.Status = "Publishing";
         }
     }
 

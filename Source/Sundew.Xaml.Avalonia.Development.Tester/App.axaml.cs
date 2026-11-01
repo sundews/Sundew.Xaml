@@ -15,6 +15,18 @@ public partial class App : Application
 {
     public override void Initialize()
     {
+        this.InitializeComponent();
+    }
+
+    /// <remarks>
+    /// Through a method of this name rather than calling the loader from Initialize itself. The XAML compiler
+    /// rewrites the body of an InitializeComponent into a direct call to what it compiled from App.axaml;
+    /// written anywhere else the call stays as it reads and looks the compiled XAML up by name at runtime, which
+    /// a head compiled ahead of time has nothing left of, and the head then starts only as far as saying it has
+    /// no precompiled XAML. The window and the view beside this are written the same way, for the same reason.
+    /// </remarks>
+    private void InitializeComponent()
+    {
         AvaloniaXamlLoader.Load(this);
     }
 

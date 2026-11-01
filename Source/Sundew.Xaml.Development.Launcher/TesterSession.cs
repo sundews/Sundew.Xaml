@@ -22,6 +22,10 @@ public sealed class TesterSession : IDisposable
     private bool browserSeen;
     private readonly JobObject job = new JobObject();
     private Process? process;
+    private string source = string.Empty;
+    private string projectPath = string.Empty;
+    private bool publishing;
+    private bool stopped;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TesterSession"/> class.
@@ -48,6 +52,12 @@ public sealed class TesterSession : IDisposable
     public bool IsNative { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether what is running is the publish a head compiled ahead of time needs,
+    /// rather than the tester itself. The tester follows once the publish has finished.
+    /// </summary>
+    public bool IsPublishing => this.publishing;
+
+    /// <summary>
     /// Raised when the process backing the tester ends on its own.
     /// </summary>
     public event EventHandler? Exited;
@@ -56,6 +66,12 @@ public sealed class TesterSession : IDisposable
     /// Raised with the url a browser head is serving on, once it says what it is.
     /// </summary>
     public event EventHandler<string>? Served;
+
+    /// <summary>
+    /// Raised once the process that is the tester itself has started, which for a head compiled ahead of time is
+    /// after the publish it needed. Until then nothing can say how it is going to run.
+    /// </summary>
+    public event EventHandler? Running;
 
     /// <summary>
     /// Gets what the tester ended with, once it has.
@@ -154,43 +170,22 @@ public sealed class TesterSession : IDisposable
             return false;
         }
 
-        var projectPath = Path.Combine(source, this.tester.ProjectName);
-        var nativeBinary = this.FindNativeBinary(projectPath);
-        var startInfo = nativeBinary == null
-            ? new ProcessStartInfo("dotnet", this.GetArguments(projectPath))
-            : new ProcessStartInfo(nativeBinary, this.applicationArguments ?? string.Empty);
-        startInfo.WorkingDirectory = source;
-        startInfo.RedirectStandardOutput = true;
-        startInfo.RedirectStandardError = true;
-        startInfo.UseShellExecute = false;
-        startInfo.CreateNoWindow = true;
+        this.source = source;
+        this.projectPath = Path.Combine(source, this.tester.ProjectName);
+        var nativeBinary = this.FindNativeBinary(this.projectPath);
 
-        this.IsNative = nativeBinary != null;
-        var startedBy = nativeBinary == null ? "dotnet " + startInfo.Arguments : "native " + nativeBinary;
-        this.Output?.Invoke(this, startedBy);
-        this.process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
-        this.process.OutputDataReceived += this.OnData;
-        this.process.ErrorDataReceived += this.OnData;
-        this.process.Exited += (_, _) =>
+        // With nothing published to run, a head that can be compiled ahead of time is published rather than
+        // started through the CLI. Starting it that way runs the very same build under the JIT, which is not what
+        // launching a head that says it is native asks for, and the publish is the only thing that was missing.
+        // The tester itself follows once the publish has finished, the way an Android head is installed once its
+        // own publish has.
+        if (nativeBinary == null && this.CanPublish)
         {
-            this.ExitCode = this.process?.ExitCode ?? 0;
-            if (this.tester.Kind == TesterKind.Android && this.tester.SupportsNativeAot && this.ExitCode == 0)
-            {
-                this.InstallAndStart(projectPath);
-            }
-
-            this.Exited?.Invoke(this, EventArgs.Empty);
-        };
-        if (!this.process.Start())
-        {
-            return false;
+            this.publishing = true;
+            return this.StartProcess(this.CreatePublishStartInfo());
         }
 
-        // Into the job before it has a chance to start anything of its own, so that the whole tree is covered.
-        this.job.Add(this.process);
-        this.process.BeginOutputReadLine();
-        this.process.BeginErrorReadLine();
-        return true;
+        return this.StartTester(nativeBinary);
     }
 
     /// <summary>
@@ -198,6 +193,10 @@ public sealed class TesterSession : IDisposable
     /// </summary>
     public void Stop()
     {
+        // Before the job goes, so that a publish that is killed with it is not taken for one that finished and
+        // the tester started behind the back of whoever asked for it to stop.
+        this.stopped = true;
+
         // An Android tester is not a child process at all; it runs on the device, so it has to be told to stop.
         if (this.tester.Kind == TesterKind.Android && this.tester.ApplicationId != null)
         {
@@ -212,6 +211,158 @@ public sealed class TesterSession : IDisposable
     public void Dispose()
     {
         this.Stop();
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this is a head the launcher can publish ahead of time itself. An Android
+    /// head is published too, but as part of being deployed, which is a path of its own.
+    /// </summary>
+    private bool CanPublish =>
+        this.tester.Kind == TesterKind.Windows && this.tester.SupportsNativeAot && this.tester.ProcessName != null;
+
+    /// <summary>
+    /// Starts the tester, either the binary published ahead of time or the same build under the JIT.
+    /// </summary>
+    /// <param name="nativeBinary">The published binary, or null to go through the CLI.</param>
+    /// <returns><c>true</c> when it started.</returns>
+    private bool StartTester(string? nativeBinary)
+    {
+        this.IsNative = nativeBinary != null;
+        var startInfo = nativeBinary == null
+            ? new ProcessStartInfo("dotnet", this.GetArguments(this.projectPath))
+            : new ProcessStartInfo(nativeBinary, this.applicationArguments ?? string.Empty);
+        if (!this.StartProcess(startInfo))
+        {
+            return false;
+        }
+
+        this.Running?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    /// <summary>
+    /// Starts one of the processes this session is made of, and takes its output as the session's own.
+    /// </summary>
+    /// <param name="startInfo">What to start.</param>
+    /// <returns><c>true</c> when it started.</returns>
+    private bool StartProcess(ProcessStartInfo startInfo)
+    {
+        startInfo.WorkingDirectory = this.source;
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+        this.Output?.Invoke(
+            this,
+            startInfo.FileName == "dotnet" ? "dotnet " + startInfo.Arguments : "native " + startInfo.FileName);
+        var started = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        started.OutputDataReceived += this.OnData;
+        started.ErrorDataReceived += this.OnData;
+        started.Exited += (_, _) => this.OnExited(started);
+        this.process = started;
+        if (!started.Start())
+        {
+            return false;
+        }
+
+        // Into the job before it has a chance to start anything of its own, so that the whole tree is covered.
+        this.job.Add(started);
+        started.BeginOutputReadLine();
+        started.BeginErrorReadLine();
+        return true;
+    }
+
+    /// <summary>
+    /// Takes one of this session's processes ending, which for the publish is where the tester is started and
+    /// for the tester itself is where the session is over.
+    /// </summary>
+    /// <param name="ended">The process that ended.</param>
+    private void OnExited(Process ended)
+    {
+        if (this.stopped)
+        {
+            return;
+        }
+
+        this.ExitCode = ended.ExitCode;
+        if (this.publishing)
+        {
+            this.publishing = false;
+            this.StartPublished();
+            return;
+        }
+
+        if (this.tester.Kind == TesterKind.Android && this.tester.SupportsNativeAot && this.ExitCode == 0)
+        {
+            this.InstallAndStart(this.projectPath);
+        }
+
+        this.Exited?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Starts what the publish produced. Whatever came of it, the tester is still worth having, so anything
+    /// short of a binary to run falls back to the CLI, which is how these heads were started before there was a
+    /// publish to prefer. The sheet then says it is under the JIT, and says so truthfully.
+    /// </summary>
+    private void StartPublished()
+    {
+        if (this.ExitCode == 0)
+        {
+            // Looked for again rather than taken for granted: a publish can finish without leaving anything
+            // where the binary is expected.
+            var published = this.FindNativeBinary(this.projectPath);
+            if (published != null)
+            {
+                this.StartTester(published);
+                return;
+            }
+
+            this.Output?.Invoke(this, "Published, but no native binary was found to run");
+        }
+        else
+        {
+            this.Output?.Invoke(
+                this, "Could not publish ahead of time, so the same build is being run under the JIT");
+        }
+
+        this.StartTester(null);
+    }
+
+    /// <summary>
+    /// The publish that produces the native binary, which is the Debug publish of this one head that the
+    /// message printed in its place used to ask whoever read it to run by hand.
+    /// </summary>
+    /// <returns>What to start.</returns>
+    private ProcessStartInfo CreatePublishStartInfo()
+    {
+        var arguments = "publish \"" + this.projectPath + "\" -f " + this.tester.TargetFramework
+                        + " -c Debug -p:SppDisable=true";
+        if (!string.IsNullOrEmpty(this.tester.ExtraArguments))
+        {
+            arguments += " " + this.tester.ExtraArguments;
+        }
+
+        var startInfo = new ProcessStartInfo("dotnet", arguments);
+
+        // The native link step finds the C++ toolchain by calling vswhere, which it expects on the PATH; it is
+        // not there by default, even where Visual Studio is installed. What is written when it cannot be found
+        // goes into the same output the path to the linker is then read out of, so the link is attempted with
+        // that complaint in front of it and fails. A developer command prompt has the installer directory on the
+        // PATH and the publish works there, so the publish the launcher runs is given it too.
+        var installer = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            "Microsoft Visual Studio",
+            "Installer");
+        if (Directory.Exists(installer))
+        {
+            startInfo.Environment["PATH"] =
+                startInfo.Environment.TryGetValue("PATH", out var path) && !string.IsNullOrEmpty(path)
+                    ? path + Path.PathSeparator + installer
+                    : installer;
+        }
+
+        return startInfo;
     }
 
     /// <summary>
@@ -260,7 +411,7 @@ public sealed class TesterSession : IDisposable
         {
             this.Output?.Invoke(
                 this,
-                $"The head published ahead of time is older than the last build, so it is being skipped. Publish it again to run it: dotnet publish \"{projectPath}\" -f {this.tester.TargetFramework} -c Debug -p:SppDisable=true");
+                "The head published ahead of time is older than the last build, so it is being published again");
             return null;
         }
 

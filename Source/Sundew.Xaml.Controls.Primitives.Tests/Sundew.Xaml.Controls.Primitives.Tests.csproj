@@ -4,6 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Sundew.Xaml.Controls.Primitives.Tests</RootNamespace>
+    <!--
+      The shared renderer documents itself in terms of the Border control that hosts it, and there is no Border
+      here. Only the unresolved cref is excused, so a real documentation mistake is still an error everywhere.
+    -->
+    <NoWarn>$(NoWarn);CS1574</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +22,14 @@
   -->
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <!--
+    The shared renderer, which every backend compiles its own copy of and so none of them owns the tests for.
+    It reaches a backend only through IBorderDrawingSession, so it needs no graphics library to be tested.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Rendering\*.cs" LinkBase="Shared\Rendering" />
   </ItemGroup>
 
 </Project>

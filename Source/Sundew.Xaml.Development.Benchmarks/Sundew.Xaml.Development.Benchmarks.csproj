@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sundew.Xaml.Development.Benchmarks</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <!--
+      The shared renderer documents itself in terms of the Border control that hosts it, and there is no Border
+      here: this project compiles the renderer and nothing above it, which is the point of it. Only the unresolved
+      cref is excused, so a real documentation mistake in the shared sources is still an error everywhere.
+    -->
+    <NoWarn>$(NoWarn);CS1574</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sundew.Xaml.Controls.Primitives\Sundew.Xaml.Controls.Primitives.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+
+  <!--
+    The same two sets of sources the WinUI and MAUI libraries compile, which together are the whole of the shared
+    renderer. Nothing else is needed, because BorderRenderer reaches a backend only through IBorderDrawingSession
+    and knows nothing about any graphics library: the benchmark implements that interface itself, so there is no
+    Skia, no Win2D and no platform to start up.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+    <Compile Include="..\Shared\Rendering\*.cs" LinkBase="Shared\Rendering" />
+  </ItemGroup>
+
+</Project>

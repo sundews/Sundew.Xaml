@@ -34,25 +34,51 @@ public class BorderLayoutCalculatorTests
     }
 
     [Test]
-    public void CalculateBorder_Then_CornerWedgesShouldBendAroundTheCornerOfTheBox()
+    public void CalculateBorder_When_TheCornersAreSquare_Then_EachOuterArcShouldTurnThroughTheCornerOfTheBox()
     {
         var metrics = Metrics(100, 50, thickness: 2, cornerRadius: 0);
 
         var result = BorderLayoutCalculator.CalculateBorder(metrics);
 
-        // The radius is no larger than the thickness, so each inner arc has collapsed onto the inner corner point.
+        // With no radius a corner reaches exactly as far as each band is thick, its outer boundary turns through
+        // the corner of the box rather than bending across it, and its inner arc collapses onto the point where
+        // the two inner edges cross.
         result.Corners.TopLeft.Should().Be(new CornerWedge(
-            new CornerArc(new Position(0, 2), new Position(0, 0), new Position(2, 0)),
+            new CornerArc(new Position(0, 2), new Position(0, 0), new Position(2, 0), true),
             new CornerArc(new Position(2, 2), new Position(2, 2), new Position(2, 2))));
         result.Corners.TopRight.Should().Be(new CornerWedge(
-            new CornerArc(new Position(98, 0), new Position(100, 0), new Position(100, 2)),
+            new CornerArc(new Position(98, 0), new Position(100, 0), new Position(100, 2), true),
             new CornerArc(new Position(98, 2), new Position(98, 2), new Position(98, 2))));
         result.Corners.BottomRight.Should().Be(new CornerWedge(
-            new CornerArc(new Position(100, 48), new Position(100, 50), new Position(98, 50)),
+            new CornerArc(new Position(100, 48), new Position(100, 50), new Position(98, 50), true),
             new CornerArc(new Position(98, 48), new Position(98, 48), new Position(98, 48))));
         result.Corners.BottomLeft.Should().Be(new CornerWedge(
-            new CornerArc(new Position(2, 50), new Position(0, 50), new Position(0, 48)),
+            new CornerArc(new Position(2, 50), new Position(0, 50), new Position(0, 48), true),
             new CornerArc(new Position(2, 48), new Position(2, 48), new Position(2, 48))));
+    }
+
+    [Test]
+    public void CalculateBorder_When_TheCornersAreSquareAndTheThicknessIsNonUniform_Then_EachCornerShouldReachAsFarAsEachBandIsThick()
+    {
+        var metrics = new BorderMetrics(
+            100,
+            50,
+            new Sides<double>(6, 2, 4, 8),
+            new Corners<double>(0),
+            Scale.Identity);
+
+        var result = BorderLayoutCalculator.CalculateBorder(metrics);
+
+        // This is the case one radius per corner cannot express: the top left square is as wide as the left band
+        // and as tall as the top one, so its cuts land on the inner edge of each.
+        result.Corners.TopLeft.Outer.Should().Be(
+            new CornerArc(new Position(0, 2), new Position(0, 0), new Position(6, 0), true));
+        result.Corners.TopLeft.Inner.Should().Be(
+            new CornerArc(new Position(6, 2), new Position(6, 2), new Position(6, 2)));
+
+        // The straight sections start where the corners leave off, so the sides and the corners still tile.
+        result.Sides.Top.Outer.Start.X.Should().Be(6);
+        result.Sides.Left.Outer.End.Y.Should().Be(2);
     }
 
     [Test]
@@ -338,8 +364,22 @@ public class BorderLayoutCalculatorTests
         var result = BorderLayoutCalculator.CalculateBorder(metrics);
 
         // Both boundaries of the ring, rather than the former stroke centre lines, are what has to snap now.
-        result.Guidelines.X.Should().Equal(0d, 2d, 98d, 100d);
-        result.Guidelines.Y.Should().Equal(0d, 2d, 48d, 50d);
+        result.CalculateGuidelines().X.Should().Equal(0d, 2d, 98d, 100d);
+        result.CalculateGuidelines().Y.Should().Equal(0d, 2d, 48d, 50d);
+    }
+
+    [Test]
+    public void CalculateGuidelines_When_TheCornersAreRounded_Then_TheyShouldKeepTheOrderTheyFirstAppearIn()
+    {
+        var metrics = Metrics(100, 50, thickness: 2, cornerRadius: 10);
+
+        var result = BorderLayoutCalculator.CalculateBorder(metrics).CalculateGuidelines();
+
+        // Where the corners start and end is two more coordinates per axis, and each of them turns up twice. They
+        // are dropped where they repeat and the rest keep the order they came in, which is the order the four
+        // edges of the ring are read off the layout in before the corners are.
+        result.X.Should().Equal(0d, 2d, 98d, 100d, 10d, 90d);
+        result.Y.Should().Equal(0d, 2d, 48d, 50d, 10d, 40d);
     }
 
     [Test]

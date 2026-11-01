@@ -56,13 +56,26 @@ internal static class PrimitiveExtensions
         using (var context = geometry.Open())
         {
             context.BeginFigure(cornerWedge.Outer.Start.ToPoint(), true);
-            context.QuadraticBezierTo(cornerWedge.Outer.Control.ToPoint(), cornerWedge.Outer.End.ToPoint());
+            AddArc(context, cornerWedge.Outer);
             context.LineTo(cornerWedge.Inner.Start.ToPoint());
-            context.QuadraticBezierTo(cornerWedge.Inner.Control.ToPoint(), cornerWedge.Inner.End.ToPoint());
+            AddArc(context, cornerWedge.Inner);
             context.EndFigure(true);
         }
 
         return geometry;
+
+        static void AddArc(StreamGeometryContext context, CornerArc arc)
+        {
+            // A square corner turns through its control point rather than bending towards it.
+            if (arc.IsSharp)
+            {
+                context.LineTo(arc.Control.ToPoint());
+                context.LineTo(arc.End.ToPoint());
+                return;
+            }
+
+            context.QuadraticBezierTo(arc.Control.ToPoint(), arc.End.ToPoint());
+        }
     }
 
     public static Geometry ToGeometry(this RoundedFigure figure)

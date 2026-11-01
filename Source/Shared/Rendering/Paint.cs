@@ -25,14 +25,23 @@ using System.Collections.Generic;
 /// </remarks>
 public readonly struct Paint : IEquatable<Paint>
 {
-    private static readonly PaintStop[] NoStops = [];
-
     private readonly IReadOnlyList<PaintStop>? stops;
+    private readonly PaintColor endColor;
+    private readonly bool isPair;
 
-    private Paint(PaintColor color, IReadOnlyList<PaintStop>? stops, Position start, Position end, bool isRelative)
+    private Paint(
+        PaintColor color,
+        PaintColor endColor,
+        IReadOnlyList<PaintStop>? stops,
+        bool isPair,
+        Position start,
+        Position end,
+        bool isRelative)
     {
         this.Color = color;
+        this.endColor = endColor;
         this.stops = stops;
+        this.isPair = isPair;
         this.Start = start;
         this.End = end;
         this.IsRelative = isRelative;
@@ -41,7 +50,7 @@ public readonly struct Paint : IEquatable<Paint>
     /// <summary>
     /// Gets a value indicating whether the fill is a gradient rather than a single colour.
     /// </summary>
-    public bool IsGradient => this.stops is { Count: > 0 };
+    public bool IsGradient => this.isPair || this.stops is { Count: > 0 };
 
     /// <summary>
     /// Gets the colour the region is filled with, when it is not a gradient.
@@ -51,7 +60,11 @@ public readonly struct Paint : IEquatable<Paint>
     /// <summary>
     /// Gets the stops of the gradient, in order, when it is one.
     /// </summary>
-    public IReadOnlyList<PaintStop> Stops => this.stops ?? NoStops;
+    /// <remarks>
+    /// A blend between two colours keeps them here in the paint itself rather than in a list of its own, so
+    /// reading them costs nothing. <see cref="PaintStops"/> says why that matters.
+    /// </remarks>
+    public PaintStops Stops => new PaintStops(this.stops, this.Color, this.endColor, this.isPair);
 
     /// <summary>
     /// Gets a value indicating whether <see cref="Start"/> and <see cref="End"/> are fractions of the bounds of
@@ -81,7 +94,7 @@ public readonly struct Paint : IEquatable<Paint>
     /// <returns>The paint.</returns>
     public static Paint Solid(PaintColor color)
     {
-        return new Paint(color, null, default, default, false);
+        return new Paint(color, default, null, false, default, default, false);
     }
 
     /// <summary>
@@ -99,7 +112,7 @@ public readonly struct Paint : IEquatable<Paint>
             return Solid(start);
         }
 
-        return new Paint(start, new[] { new PaintStop(start, 0), new PaintStop(end, 1) }, from, to, false);
+        return new Paint(start, end, null, true, from, to, false);
     }
 
     /// <summary>
@@ -113,7 +126,14 @@ public readonly struct Paint : IEquatable<Paint>
     /// <returns>The paint.</returns>
     public static Paint Gradient(IReadOnlyList<PaintStop> stops, Position start, Position end, bool isRelative)
     {
-        return new Paint(stops.Count > 0 ? stops[0].Color : default, stops, start, end, isRelative);
+        return new Paint(
+            stops.Count > 0 ? stops[0].Color : default,
+            stops.Count > 0 ? stops[stops.Count - 1].Color : default,
+            stops,
+            false,
+            start,
+            end,
+            isRelative);
     }
 
     /// <summary>
@@ -136,6 +156,8 @@ public readonly struct Paint : IEquatable<Paint>
     public bool Equals(Paint other)
     {
         return this.Color.Equals(other.Color)
+               && this.endColor.Equals(other.endColor)
+               && this.isPair == other.isPair
                && ReferenceEquals(this.stops, other.stops)
                && this.Start.Equals(other.Start)
                && this.End.Equals(other.End)
@@ -148,7 +170,8 @@ public readonly struct Paint : IEquatable<Paint>
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Color, this.stops, this.Start, this.End, this.IsRelative);
+        return HashCode.Combine(
+            this.Color, this.endColor, this.isPair, this.stops, this.Start, this.End, this.IsRelative);
     }
 
     /// <summary>

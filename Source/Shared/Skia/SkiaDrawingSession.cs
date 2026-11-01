@@ -59,11 +59,24 @@ public sealed class SkiaDrawingSession : IBorderDrawingSession
     {
         this.path.Reset();
         this.path.MoveTo(ToPoint(cornerWedge.Outer.Start));
-        this.path.QuadTo(ToPoint(cornerWedge.Outer.Control), ToPoint(cornerWedge.Outer.End));
+        AddArc(this.path, cornerWedge.Outer);
         this.path.LineTo(ToPoint(cornerWedge.Inner.Start));
-        this.path.QuadTo(ToPoint(cornerWedge.Inner.Control), ToPoint(cornerWedge.Inner.End));
+        AddArc(this.path, cornerWedge.Inner);
         this.path.Close();
         this.Fill(paint);
+
+        static void AddArc(SKPath path, CornerArc arc)
+        {
+            // A square corner turns through its control point rather than bending towards it.
+            if (arc.IsSharp)
+            {
+                path.LineTo(ToPoint(arc.Control));
+                path.LineTo(ToPoint(arc.End));
+                return;
+            }
+
+            path.QuadTo(ToPoint(arc.Control), ToPoint(arc.End));
+        }
     }
 
     /// <inheritdoc/>

@@ -54,6 +54,23 @@ public readonly record struct CornerWedge(CornerArc Outer, CornerArc Inner)
     public Position Anchor => this.Outer.Control;
 
     /// <summary>
+    /// Gets a value indicating whether the corner is square, which it is when it was given no radius: its outside
+    /// turns through the corner of the box rather than bending across it, and its inside is the single point where
+    /// the inner edges of the two sides cross.
+    /// </summary>
+    public bool IsSquare => this.Outer.IsSharp;
+
+    /// <summary>
+    /// Gets where the two sides meet across a square corner, as a position around it.
+    /// </summary>
+    /// <remarks>
+    /// The line from there to the inside of the corner is the mitre, and it is the one place a square corner can
+    /// hand over from the one side to the other without a sweep: everything before it belongs to the side entering
+    /// the corner and everything after it to the side leaving.
+    /// </remarks>
+    public double Mitre => this.Outer.Turn;
+
+    /// <summary>
     /// Gets the point on the inner boundary that the cut from the start of the outer arc leaves.
     /// </summary>
     public Position StartCut => this.Inner.End;

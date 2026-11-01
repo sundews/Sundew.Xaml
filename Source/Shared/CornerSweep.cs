@@ -17,9 +17,17 @@ using System;
 /// the blend does not move everywhere along the sweep: outside the two <see cref="Stops"/> it holds at the colour of
 /// the side, so the slices there are all the same one colour. Those are handed out as a single slice instead, which
 /// is the same picture drawn in fewer fills, and a flat fill rather than a gradient one at that.
+/// A square corner is not swept at all. There is no arc for a blend to follow across one, so the two sides meet
+/// along the mitre as they do on an ordinary border: two slices, each the flat colour of its own side, with a hard
+/// line between them.
 /// </remarks>
 public readonly record struct CornerSweep
 {
+    /// <summary>
+    /// How many slices a square corner comes to: one of each colour, either side of the mitre.
+    /// </summary>
+    private const int MitreCount = 2;
+
     private readonly CornerWedge wedge;
     private readonly Stops stops;
     private readonly int count;
@@ -43,9 +51,10 @@ public readonly record struct CornerSweep
     }
 
     /// <summary>
-    /// Gets the most slices the sweep can hand out, which is what it would be without any of them being merged.
+    /// Gets the most slices the sweep can hand out, which is what it would be without any of them being merged, or
+    /// the two sides of the mitre when the corner is square.
     /// </summary>
-    public int MaximumCount => this.count;
+    public int MaximumCount => this.wedge.IsSquare ? MitreCount : this.count;
 
     /// <summary>
     /// Returns an enumerator over the slices.
@@ -86,6 +95,11 @@ public readonly record struct CornerSweep
         /// <returns><c>true</c>, if there was one, otherwise <c>false</c>.</returns>
         public bool MoveNext()
         {
+            if (this.wedge.IsSquare)
+            {
+                return this.MoveNextMitre();
+            }
+
             if (this.index >= this.count)
             {
                 return false;
@@ -114,6 +128,38 @@ public readonly record struct CornerSweep
             var cuts = this.wedge.GetSlice(from, to);
             this.Current = new CornerSlice(filled, cuts.StartCutCentre, cuts.EndCutCentre, from, to);
             this.index = last;
+            return true;
+        }
+
+        /// <summary>
+        /// Hands out the two sides of the mitre a square corner is cut along.
+        /// </summary>
+        /// <remarks>
+        /// Each takes its colour from one end of the blend and nowhere in between, so what the renderer makes of it
+        /// is a flat fill rather than a gradient, and the two meet along a hard line. The stops have nothing to say
+        /// here: there is no distance across a square corner for a transition to be gradual over.
+        /// </remarks>
+        /// <returns><c>true</c>, if there was another side, otherwise <c>false</c>.</returns>
+        private bool MoveNextMitre()
+        {
+            if (this.index >= MitreCount)
+            {
+                return false;
+            }
+
+            var isFirst = this.index == 0;
+            var mitre = this.wedge.Mitre;
+            var cuts = isFirst ? this.wedge.GetSlice(0, mitre) : this.wedge.GetSlice(mitre, 1);
+
+            // The first side is filled a little past the mitre and the second then paints over that overrun, so
+            // that the background cannot show through the hard line between them. One slice's worth of the sweep
+            // this corner would otherwise have had is what it takes to cover an antialiased edge.
+            var filled = isFirst
+                ? this.wedge.GetSlice(0, Math.Min(1, mitre + (CornerWedge.SliceOverlap / this.count)))
+                : cuts;
+            var side = isFirst ? 0d : 1d;
+            this.Current = new CornerSlice(filled, cuts.StartCutCentre, cuts.EndCutCentre, side, side);
+            this.index++;
             return true;
         }
 

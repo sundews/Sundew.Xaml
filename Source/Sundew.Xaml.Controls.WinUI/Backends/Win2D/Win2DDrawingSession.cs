@@ -78,11 +78,24 @@ public sealed class Win2DDrawingSession : IBorderDrawingSession
     {
         using var builder = new CanvasPathBuilder(session);
         builder.BeginFigure(ToVector(cornerWedge.Outer.Start));
-        builder.AddQuadraticBezier(ToVector(cornerWedge.Outer.Control), ToVector(cornerWedge.Outer.End));
+        AddArc(builder, cornerWedge.Outer);
         builder.AddLine(ToVector(cornerWedge.Inner.Start));
-        builder.AddQuadraticBezier(ToVector(cornerWedge.Inner.Control), ToVector(cornerWedge.Inner.End));
+        AddArc(builder, cornerWedge.Inner);
         builder.EndFigure(CanvasFigureLoop.Closed);
         return CanvasGeometry.CreatePath(builder);
+
+        static void AddArc(CanvasPathBuilder builder, CornerArc arc)
+        {
+            // A square corner turns through its control point rather than bending towards it.
+            if (arc.IsSharp)
+            {
+                builder.AddLine(ToVector(arc.Control));
+                builder.AddLine(ToVector(arc.End));
+                return;
+            }
+
+            builder.AddQuadraticBezier(ToVector(arc.Control), ToVector(arc.End));
+        }
     }
 
     private static CanvasGeometry CreateGeometry(CanvasDrawingSession session, RoundedFigure figure)

@@ -52,28 +52,31 @@ public static class BorderLayoutCalculator
 
         // Each corner is traversed from the side entering it to the side leaving it, and each inner arc bends around
         // the point where the inner edges of those two sides would have met, so the inside of a corner is rounded
-        // wherever the two sides leave room for it.
+        // wherever the two sides leave room for it. A corner given no radius turns through the outer point instead
+        // of bending towards it, which leaves it square, and its inner arc collapses onto the point the two inner
+        // edges cross at.
+        var radius = metrics.CornerRadius;
         var corners = new Corners<CornerWedge>(
             new CornerWedge(
-                new CornerArc(new Position(0, bounds.LeftTop), new Position(0, 0), new Position(bounds.TopLeft, 0)),
+                new CornerArc(new Position(0, bounds.LeftTop), new Position(0, 0), new Position(bounds.TopLeft, 0), IsSquare(radius.TopLeft, scale)),
                 new CornerArc(
                     new Position(bounds.TopLeft, thickness.Top),
                     new Position(thickness.Left, thickness.Top),
                     new Position(thickness.Left, bounds.LeftTop))),
             new CornerWedge(
-                new CornerArc(new Position(bounds.TopRight, 0), new Position(width, 0), new Position(width, bounds.RightTop)),
+                new CornerArc(new Position(bounds.TopRight, 0), new Position(width, 0), new Position(width, bounds.RightTop), IsSquare(radius.TopRight, scale)),
                 new CornerArc(
                     new Position(right, bounds.RightTop),
                     new Position(right, thickness.Top),
                     new Position(bounds.TopRight, thickness.Top))),
             new CornerWedge(
-                new CornerArc(new Position(width, bounds.RightBottom), new Position(width, height), new Position(bounds.BottomRight, height)),
+                new CornerArc(new Position(width, bounds.RightBottom), new Position(width, height), new Position(bounds.BottomRight, height), IsSquare(radius.BottomRight, scale)),
                 new CornerArc(
                     new Position(bounds.BottomRight, bottom),
                     new Position(right, bottom),
                     new Position(right, bounds.RightBottom))),
             new CornerWedge(
-                new CornerArc(new Position(bounds.BottomLeft, height), new Position(0, height), new Position(0, bounds.LeftBottom)),
+                new CornerArc(new Position(bounds.BottomLeft, height), new Position(0, height), new Position(0, bounds.LeftBottom), IsSquare(radius.BottomLeft, scale)),
                 new CornerArc(
                     new Position(thickness.Left, bounds.LeftBottom),
                     new Position(thickness.Left, bottom),
@@ -93,13 +96,7 @@ public static class BorderLayoutCalculator
                 new Position(right + BackgroundOverdraw, bottom + BackgroundOverdraw),
                 new Position(thickness.Left - BackgroundOverdraw, bottom + BackgroundOverdraw)));
 
-        // Both boundaries of the ring, and every cut between one of its regions and the next, have to land on whole
-        // device pixels, otherwise the shared edges blend against each other and show as seams.
-        var guidelines = Guidelines.From(
-            [0, thickness.Left, right, width, bounds.TopLeft, bounds.TopRight, bounds.BottomLeft, bounds.BottomRight],
-            [0, thickness.Top, bottom, height, bounds.LeftTop, bounds.LeftBottom, bounds.RightTop, bounds.RightBottom]);
-
-        return new BorderLayout(sides, corners, background, guidelines);
+        return new BorderLayout(sides, corners, background);
     }
 
     /// <summary>
@@ -199,41 +196,97 @@ public static class BorderLayoutCalculator
         }
     }
 
-    private static double LimitRadius(double radius, double verticalThickness, double horizontalThickness, double limit, Scale scale)
+    /// <summary>
+    /// Says whether a corner is square, which it is when it is given no radius at all.
+    /// </summary>
+    /// <param name="radius">The corner radius.</param>
+    /// <param name="scale">The device pixel scale.</param>
+    /// <returns><c>true</c>, if the corner is square.</returns>
+    private static bool IsSquare(double radius, Scale scale)
     {
-        // The floor is the thicker of the two sides, not the thinner. A corner's cuts sit a radius away from it along
-        // each side, so a radius under the thickness of either side puts that side's cut inside the band of the other
-        // one, and the inner boundary then runs outside the inner rectangle and bulges into the thicker side.
-        // The cost is that a radius under the thicker side is drawn at that thickness, with a square inner corner.
+        return DevicePixel.Round(radius, scale.Minimum) <= 0;
+    }
+
+    /// <summary>
+    /// Works out how far a corner reaches along each of the two sides meeting it.
+    /// </summary>
+    /// <param name="radius">The corner radius.</param>
+    /// <param name="verticalThickness">The thickness of the horizontal side meeting the corner.</param>
+    /// <param name="horizontalThickness">The thickness of the vertical side meeting the corner.</param>
+    /// <param name="limit">Half the smaller of the two dimensions, which no corner may exceed.</param>
+    /// <param name="scale">The device pixel scale.</param>
+    /// <returns>How far the corner reaches horizontally and vertically.</returns>
+    private static (double Horizontal, double Vertical) LimitRadius(
+        double radius,
+        double verticalThickness,
+        double horizontalThickness,
+        double limit,
+        Scale scale)
+    {
+        // A square corner reaches exactly as far as each of the two bands meeting it is thick, so that its cuts
+        // land on their inner edges and the inside of it is the single point where those edges cross. That is the
+        // one case where the two reaches differ, and it is why they are worked out per axis at all.
+        if (IsSquare(radius, scale))
+        {
+            return (Limit(horizontalThickness), Limit(verticalThickness));
+        }
+
+        // A rounded corner can be no tighter than the thicker of the two sides, not the thinner. Its cuts sit a
+        // radius away from it along each side, so a radius under the thickness of either side puts that side's cut
+        // inside the band of the other one, and the inner boundary then runs outside the inner rectangle and bulges
+        // into the thicker side. The cost is that a radius between nothing and the thicker side is drawn at that
+        // thickness.
         var rounded = DevicePixel.Round(radius, scale.Minimum);
-        var atLeastThickness = Math.Max(rounded, Math.Max(verticalThickness, horizontalThickness));
-        return DevicePixel.Round(Math.Min(atLeastThickness, limit), scale.Minimum);
+        var atLeastThickness = Limit(Math.Max(rounded, Math.Max(verticalThickness, horizontalThickness)));
+        return (atLeastThickness, atLeastThickness);
+
+        double Limit(double value)
+        {
+            return DevicePixel.Round(Math.Min(value, limit), scale.Minimum);
+        }
     }
 
     private static EdgeBounds CalculateEdgeBounds(double width, double height, Sides<double> thickness, Corners<double> cornerRadius, Scale scale)
     {
-        // A corner can be no tighter than the thicker of the two sides meeting it, so that its inner arc stays within
-        // the inner rectangle, and no larger than half the smaller dimension.
+        // No corner may be larger than half the smaller dimension, whatever it was asked for.
         var limit = Math.Min(width, height) / 2;
-        var radius = new Corners<double>(
-            LimitRadius(cornerRadius.TopLeft, thickness.Top, thickness.Left, limit, scale),
-            LimitRadius(cornerRadius.TopRight, thickness.Top, thickness.Right, limit, scale),
-            LimitRadius(cornerRadius.BottomRight, thickness.Bottom, thickness.Right, limit, scale),
-            LimitRadius(cornerRadius.BottomLeft, thickness.Bottom, thickness.Left, limit, scale));
+        var topLeft = LimitRadius(cornerRadius.TopLeft, thickness.Top, thickness.Left, limit, scale);
+        var topRight = LimitRadius(cornerRadius.TopRight, thickness.Top, thickness.Right, limit, scale);
+        var bottomRight = LimitRadius(cornerRadius.BottomRight, thickness.Bottom, thickness.Right, limit, scale);
+        var bottomLeft = LimitRadius(cornerRadius.BottomLeft, thickness.Bottom, thickness.Left, limit, scale);
 
-        return CalculateEdgeBounds(width, height, radius, scale);
+        return CalculateEdgeBounds(
+            width,
+            height,
+            new Corners<double>(topLeft.Horizontal, topRight.Horizontal, bottomRight.Horizontal, bottomLeft.Horizontal),
+            new Corners<double>(topLeft.Vertical, topRight.Vertical, bottomRight.Vertical, bottomLeft.Vertical),
+            scale);
     }
 
-    private static EdgeBounds CalculateEdgeBounds(double width, double height, Corners<double> radius, Scale scale)
+    /// <summary>
+    /// Turns how far each corner reaches into the coordinates the straight section of each side runs between.
+    /// </summary>
+    /// <param name="width">The rendered width.</param>
+    /// <param name="height">The rendered height.</param>
+    /// <param name="across">How far each corner reaches along the horizontal side meeting it.</param>
+    /// <param name="down">How far each corner reaches along the vertical side meeting it.</param>
+    /// <param name="scale">The device pixel scale.</param>
+    /// <returns>The bounds.</returns>
+    private static EdgeBounds CalculateEdgeBounds(
+        double width,
+        double height,
+        Corners<double> across,
+        Corners<double> down,
+        Scale scale)
     {
-        var leftTop = DevicePixel.Round(radius.TopLeft, scale.Y);
-        var leftBottom = DevicePixel.Round(height - radius.BottomLeft, scale.Y);
-        var topLeft = DevicePixel.Round(radius.TopLeft, scale.X);
-        var topRight = DevicePixel.Round(width - radius.TopRight, scale.X);
-        var rightTop = DevicePixel.Round(radius.TopRight, scale.Y);
-        var rightBottom = DevicePixel.Round(height - radius.BottomRight, scale.Y);
-        var bottomLeft = DevicePixel.Round(radius.BottomLeft, scale.X);
-        var bottomRight = DevicePixel.Round(width - radius.BottomRight, scale.X);
+        var leftTop = DevicePixel.Round(down.TopLeft, scale.Y);
+        var leftBottom = DevicePixel.Round(height - down.BottomLeft, scale.Y);
+        var topLeft = DevicePixel.Round(across.TopLeft, scale.X);
+        var topRight = DevicePixel.Round(width - across.TopRight, scale.X);
+        var rightTop = DevicePixel.Round(down.TopRight, scale.Y);
+        var rightBottom = DevicePixel.Round(height - down.BottomRight, scale.Y);
+        var bottomLeft = DevicePixel.Round(across.BottomLeft, scale.X);
+        var bottomRight = DevicePixel.Round(width - across.BottomRight, scale.X);
 
         // When the corners take up more room than there is, collapse the straight section between them rather than
         // letting it run backwards.

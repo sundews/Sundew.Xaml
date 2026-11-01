@@ -13,6 +13,9 @@
   <Folder Name="/Build/Development/">
     <File Path="Build/Development/stylecop.json" />
   </Folder>
+  <Folder Name="/Benchmarks/">
+    <Project Path="Sundew.Xaml.Development.Benchmarks/Sundew.Xaml.Development.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/Testers/">
     <Project Path="Sundew.Xaml.Development.Launcher/Sundew.Xaml.Development.Launcher.csproj">
       <!-- A WinUI app builds for an architecture, never Any CPU, so the solution has to say which one. -->

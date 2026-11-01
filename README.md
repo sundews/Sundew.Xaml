@@ -9,8 +9,9 @@
 
 
 ### Known issues/Todo:
-* CornerRadius 0 is not properly supported: a corner is never drawn tighter than the thicker of the two sides meeting
-  it, so the corners of a square border are rounded by that thickness rather than left square.
+* A corner radius between nothing and the thickness of the thicker of the two sides meeting it is drawn at that
+  thickness. A radius of 0 is square and mitred, and a radius over the thickness is drawn as asked, but the range
+  in between cannot be: the inner boundary would have to leave the inner rectangle and bulge into the thicker side.
 * Performance optimizations
 * The Avalonia tester’s `--render` writes a blank image. It renders the view detached from a top level, which
   leaves it unstyled and undrawn. The Avalonia captures in the table below were taken another way.
@@ -156,10 +157,16 @@ and the two browser ones, and it can start all of them in one go.
   likewise: restore applies `-r win-x64` to every target framework in the project, and asking for a win-x64 Mono
   runtime pack for the Android and browser heads fails, there being no such thing.
 * The link step wants `vswhere.exe` on the PATH, which it is not by default even where Visual Studio is
-  installed. A developer command prompt has it; otherwise add the installer directory.
-* The launcher runs the published native binary for those three heads when one is there, and falls back to the
-  CLI when it is not. Starting them through the CLI would run the same build under the JIT, and the sheet would
-  say so.
+  installed. A developer command prompt has it; otherwise add the installer directory. What is written when it
+  cannot be found goes into the same output the path to the linker is then read out of, so the link is attempted
+  with that complaint in front of it and fails with it quoted back. The launcher puts the installer directory on
+  the PATH of the publish it runs itself, so it does not depend on where it was started from.
+* The launcher runs the published native binary for those heads, and publishes one first when there is none or
+  when the one there is older than the last build: the publish is the only thing such a head is missing, and
+  running whatever happened to be published last is no way to look at a change just made. The tester starts once
+  the publish has finished, the way an Android head is installed once its own publish has. Starting a head
+  through the CLI instead runs the same build under the JIT, which is what happens when the publish fails, and
+  the sheet then says so.
 * Each tester names itself in its own sheet, next to the zoom, because on a phone or a tablet there is no window
   title to say which one is being looked at.
 
@@ -263,6 +270,12 @@ half a pixel apart, because Uno rounds some layout to the pixel grid of the disp
   it resolves through, but the `#name` form of a compiled binding is resolved against the XAML itself and can.
   The MAUI tester cannot do the same: its equivalent, `x:Reference`, compiles and throws nothing but leaves the
   page blank, so its slider is wired in the code behind.
+* The desktop head is compiled ahead of time, and every class with XAML of its own loads it through a method
+  called `InitializeComponent`. That name is not a convention here: the XAML compiler rewrites the body of a
+  method with it into a direct call to what it compiled, and a call written anywhere else, in an override of
+  `Application.Initialize` say, is left as it reads and looks the compiled XAML up by name at runtime. A head
+  compiled ahead of time has nothing left to find that way, and starts only as far as saying it has no
+  precompiled XAML.
 * WPF clips a child to the space it was arranged into whenever the child wanted more, so content that does not fit is
   cut off at the border. Avalonia has no such layout clip, so the border applies the same thing itself and content
   that overflows is cut off on both platforms rather than being drawn over the border and beyond it.

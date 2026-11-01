@@ -234,7 +234,7 @@ public class Border : System.Windows.Controls.Border
         var sideBrushes = new Sides<Brush?>(this.LeftBrush, this.TopBrush, this.RightBrush, this.BottomBrush);
         var cornerBlends = this.EnsureCornerBlends(sideBrushes);
 
-        var drawingGroup = new DrawingGroup { GuidelineSet = layout.Guidelines.ToGuidelineSet() };
+        var drawingGroup = new DrawingGroup { GuidelineSet = layout.CalculateGuidelines().ToGuidelineSet() };
 
         drawingGroup.Children.Add(new GeometryDrawing(this.Background, BackgroundPen, layout.Background.ToGeometry()));
 

@@ -52,17 +52,24 @@ internal static class PrimitiveExtensions
 
     public static Geometry ToGeometry(this CornerWedge cornerWedge)
     {
-        return new PathGeometry(
-        [
-            new PathFigure(
-                cornerWedge.Outer.Start.ToPoint(),
-                [
-                    new QuadraticBezierSegment(cornerWedge.Outer.Control.ToPoint(), cornerWedge.Outer.End.ToPoint(), true),
-                    new LineSegment(cornerWedge.Inner.Start.ToPoint(), true),
-                    new QuadraticBezierSegment(cornerWedge.Inner.Control.ToPoint(), cornerWedge.Inner.End.ToPoint(), true),
-                ],
-                true),
-        ]);
+        var segments = new PathSegmentCollection();
+        AddArc(segments, cornerWedge.Outer);
+        segments.Add(new LineSegment(cornerWedge.Inner.Start.ToPoint(), true));
+        AddArc(segments, cornerWedge.Inner);
+        return new PathGeometry([new PathFigure(cornerWedge.Outer.Start.ToPoint(), segments, true)]);
+
+        static void AddArc(PathSegmentCollection segments, CornerArc arc)
+        {
+            // A square corner turns through its control point rather than bending towards it.
+            if (arc.IsSharp)
+            {
+                segments.Add(new LineSegment(arc.Control.ToPoint(), true));
+                segments.Add(new LineSegment(arc.End.ToPoint(), true));
+                return;
+            }
+
+            segments.Add(new QuadraticBezierSegment(arc.Control.ToPoint(), arc.End.ToPoint(), true));
+        }
     }
 
     public static PathGeometry ToGeometry(this RoundedFigure figure)

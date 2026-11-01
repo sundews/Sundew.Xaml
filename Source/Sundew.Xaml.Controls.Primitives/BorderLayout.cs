@@ -21,9 +21,22 @@ namespace Sundew.Xaml.Controls;
 /// <param name="Sides">The filled region of each side's straight section.</param>
 /// <param name="Corners">The filled region of each corner.</param>
 /// <param name="Background">The closed figure covering the area inside the ring.</param>
-/// <param name="Guidelines">The horizontal and vertical pixel snapping guidelines the geometry falls on.</param>
 public readonly record struct BorderLayout(
     Sides<SideQuad> Sides,
     Corners<CornerWedge> Corners,
-    RoundedFigure Background,
-    Guidelines Guidelines);
+    RoundedFigure Background)
+{
+    /// <summary>
+    /// Works out the coordinates the geometry falls on, for a renderer that snaps to pixel guidelines.
+    /// </summary>
+    /// <remarks>
+    /// WPF is the only one of the backends that has anything to snap to, and it keeps the drawing it builds, so
+    /// these are worked out when they are asked for rather than laid down with the rest of the layout. Every
+    /// other backend lays a border out on every render, and was building these and dropping them unread.
+    /// </remarks>
+    /// <returns>The guidelines.</returns>
+    public Guidelines CalculateGuidelines()
+    {
+        return Guidelines.From(this);
+    }
+}
