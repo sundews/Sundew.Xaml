@@ -13,11 +13,42 @@ using Sundew.Xaml.Development;
 
 public partial class MainView : UserControl
 {
+    private FullWindowDemo? fullWindow;
+
     public MainView()
     {
         this.InitializeComponent();
         this.RuntimeLabel.Text = RuntimeName;
         this.Loaded += this.ShowRuntime;
+
+        // Wired here rather than in a window of the tester's own, this head having none: the app hands the view
+        // straight to a window of the framework's. A head with no second window to open keeps the button away.
+        this.FullWindowButton.Visibility = HasWindows ? Visibility.Visible : Visibility.Collapsed;
+        this.FullWindowButton.Click += (_, _) => this.ShowFullWindow();
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this head hands out windows at all. A phone, a tablet and the browser give
+    /// the application one surface and no more, so there is nothing for a second window to be.
+    /// </summary>
+    private static bool HasWindows => !OperatingSystem.IsBrowser() && !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
+
+    /// <summary>
+    /// Opens the full window, one at a time, brought forward again rather than stacked up, since it is the
+    /// window itself that is being looked at.
+    /// </summary>
+    private void ShowFullWindow()
+    {
+        if (this.fullWindow != null)
+        {
+            this.fullWindow.Activate();
+            return;
+        }
+
+        var fullWindowDemo = new FullWindowDemo();
+        this.fullWindow = fullWindowDemo;
+        fullWindowDemo.Closed += (_, _) => this.fullWindow = null;
+        fullWindowDemo.Activate();
     }
 
     /// <summary>

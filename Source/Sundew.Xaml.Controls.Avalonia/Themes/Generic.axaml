@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="using:Sundew.Xaml.Controls.Overlays"
-                    xmlns:sx="http://sundew.dev/xaml">
+                    xmlns:overlays="using:Sundew.Xaml.Controls.Overlays"
+                    xmlns:sx="using:Sundew.Xaml.Controls">
 
-  <local:StringNotNullOrEmptyToBooleanConverter x:Key="StringNotNullOrEmptyToBooleanConverter"/>
+  <overlays:StringNotNullOrEmptyToBooleanConverter x:Key="StringNotNullOrEmptyToBooleanConverter"/>
 
   <!-- Transparent at the middle and opaque at the rim, so that as an opacity mask it leaves a hole where the
        cursor is. The radius is in device independent pixels, which Avalonia takes a plain number to mean. -->
@@ -13,7 +13,7 @@
     <GradientStop Color="Black" Offset="1"/>
   </RadialGradientBrush>
 
-  <ControlTheme x:Key="{x:Type local:SubtitleOverlay}" TargetType="local:SubtitleOverlay">
+  <ControlTheme x:Key="{x:Type overlays:SubtitleOverlay}" TargetType="overlays:SubtitleOverlay">
     <Setter Property="Background" Value="#990C0A0A"/>
     <Setter Property="Foreground" Value="White"/>
     <Setter Property="Padding" Value="16,8"/>
@@ -24,7 +24,7 @@
     <Setter Property="MaxHeight" Value="{Binding $self.MonitorHeight}"/>
     <Setter Property="RevealBrush" Value="{StaticResource RevealBrush}"/>
     <Setter Property="Template">
-      <ControlTemplate TargetType="local:SubtitleOverlay">
+      <ControlTemplate TargetType="overlays:SubtitleOverlay">
         <Panel>
           <!-- What a top level paints with when the window manager cannot give it a transparent window. It is
                found by name, so it is here even though an overlay has nothing else to say about it. -->

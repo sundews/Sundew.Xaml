@@ -1,0 +1,79 @@
+<sx:FullWindow x:Class="Sundew.Xaml.Uno.Development.Tester.FullWindowDemo"
+                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:sx="using:Sundew.Xaml.Controls"
+                     Title="Full window"
+                     Backdrop="Mica">
+  <!--
+    No background of its own: a backdrop is the window manager's to draw behind the content, and a panel painting
+    over the whole window is all that would be seen of it.
+  -->
+  <Grid>
+    <Grid.Resources>
+      <!--
+        A caption button of one's own, which is the whole point of a window with no title bar. Only the resting
+        look is said here; the theme still lights it up under the pointer and greys it out when the command it is
+        bound to says it cannot be used.
+      -->
+      <Style x:Key="CaptionButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="12,0"/>
+      </Style>
+    </Grid.Resources>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="40"/>
+      <RowDefinition/>
+    </Grid.RowDefinitions>
+
+    <!--
+      What the window puts between the backdrop and the content, for seeing how much of one the other lets through.
+      It is the first child, so everything else is drawn over it.
+    -->
+    <Border x:Name="Tint" Grid.RowSpan="2" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Opacity="0"/>
+
+    <!-- The caption, drawn as content like everything else. -->
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <!--
+        Handed to the window manager as the caption, where the head this runs on has one to tell. The buttons sit
+        outside it, so a press on one of them is a press on a button and not on the caption.
+      -->
+      <Border x:Name="DragArea">
+        <TextBlock Text="Full window" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0"/>
+      </Border>
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <!--
+          Said in words rather than drawn as the glyphs a system caption uses. This head also runs on Linux, macOS,
+          Android and the browser, where no icon font can be taken for granted.
+        -->
+        <Button Style="{StaticResource CaptionButton}" Content="Minimize" Command="{x:Bind MinimizeCommand}"/>
+        <Button Style="{StaticResource CaptionButton}" Content="Maximize" Command="{x:Bind MaximizeCommand}"/>
+        <Button Style="{StaticResource CaptionButton}" Content="Restore" Command="{x:Bind RestoreCommand}"/>
+        <Button Style="{StaticResource CaptionButton}" Content="Close" Command="{x:Bind CloseCommand}"/>
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Grid.Row="1" Margin="16,8,16,16" Spacing="8">
+      <TextBlock TextWrapping="Wrap"
+                 Text="Nothing above this is the system's. The strip is content, named to the window manager as the caption, so dragging it moves the window where the head this runs on lets it be said at all."/>
+      <TextBlock TextWrapping="Wrap"
+                 Text="The four buttons are bound to the window's own commands. Maximize and restore disable themselves, each knowing the window is already the way it would put it."/>
+      <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="8">
+        <TextBlock Text="Backdrop" VerticalAlignment="Center"/>
+        <ComboBox x:Name="BackdropSelector" Width="140"/>
+        <TextBlock x:Name="BackdropLabel" VerticalAlignment="Center" Opacity="0.7"/>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Tint" VerticalAlignment="Center"/>
+        <Slider x:Name="TintSlider" Width="140" Minimum="0" Maximum="1" StepFrequency="0.01" Value="0" VerticalAlignment="Center"/>
+        <TextBlock x:Name="TintLabel" VerticalAlignment="Center" Opacity="0.7"/>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</sx:FullWindow>

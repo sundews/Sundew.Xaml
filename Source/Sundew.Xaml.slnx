@@ -33,9 +33,6 @@
   </Folder>
   <Project Path="Sundew.Xaml.Controls.Avalonia/Sundew.Xaml.Controls.Avalonia.csproj" />
   <Project Path="Sundew.Xaml.Controls.Maui/Sundew.Xaml.Controls.Maui.csproj" />
-  <Project Path="Sundew.Xaml.Controls.Overlays.Avalonia/Sundew.Xaml.Controls.Overlays.Avalonia.csproj" />
-  <Project Path="Sundew.Xaml.Controls.Overlays.WinUI/Sundew.Xaml.Controls.Overlays.WinUI.csproj" />
-  <Project Path="Sundew.Xaml.Controls.Overlays.Wpf/Sundew.Xaml.Controls.Overlays.Wpf.csproj" Id="47d1821f-414d-4473-bfa2-328cbd5f3fe6" />
   <Project Path="Sundew.Xaml.Controls.Primitives.Tests/Sundew.Xaml.Controls.Primitives.Tests.csproj" />
   <Project Path="Sundew.Xaml.Controls.Primitives/Sundew.Xaml.Controls.Primitives.csproj" />
   <Project Path="Sundew.Xaml.Controls.WinUI/Sundew.Xaml.Controls.WinUI.csproj" />

@@ -1,10 +1,10 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Sundew.Xaml.Controls.Overlays"
+    xmlns:overlays="using:Sundew.Xaml.Controls.Overlays"
     xmlns:sx="using:Sundew.Xaml.Controls">
 
-  <local:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
+  <overlays:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
 
   <!-- Transparent at the middle and opaque at the rim, so that as a mask it leaves a hole where the cursor is.
        The radius is stated absolutely, which is in device independent pixels. -->
@@ -14,7 +14,7 @@
     <GradientStop Color="Black" Offset="1"/>
   </RadialGradientBrush>
 
-  <Style TargetType="local:SubtitleBanner">
+  <Style TargetType="overlays:SubtitleBanner">
     <Setter Property="Background" Value="#990C0A0A"/>
     <Setter Property="Foreground" Value="White"/>
     <Setter Property="Padding" Value="16,8"/>
@@ -24,7 +24,7 @@
     <Setter Property="RevealBrush" Value="{StaticResource SubtitleRevealBrush}"/>
     <Setter Property="Template">
       <Setter.Value>
-        <ControlTemplate TargetType="local:SubtitleBanner">
+        <ControlTemplate TargetType="overlays:SubtitleBanner">
           <Grid Visibility="{Binding Subtitle, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
             <Grid.RowDefinitions>
               <RowDefinition Height="*"/>

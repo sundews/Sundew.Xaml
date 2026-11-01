@@ -54,6 +54,12 @@
           <TextBlock Text="Uno" FontWeight="Bold"/>
           <!-- Whether this head is running compiled ahead of time, which only some of them can be. -->
           <TextBlock x:Name="RuntimeLabel" Margin="6,0,0,0" Opacity="0.7"/>
+          <!--
+            A window of its own, so only a head that hands out windows shows it. It sits by the label rather than
+            at the far end of the toolbar, as it does in the other testers, because this sheet is laid out wider
+            than the window it is in and the right hand end of the toolbar is off the edge of it.
+          -->
+          <Button x:Name="FullWindowButton" Content="Full window" VerticalAlignment="Center" Margin="12,0,4,0" Padding="8,2"/>
         </StackPanel>
         <Slider Grid.Column="1" x:Name="ZoomSlider" Minimum="0.5" Maximum="4" Value="1" StepFrequency="0.1" HorizontalAlignment="Stretch"/>
         <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value}" Grid.Column="2" VerticalAlignment="Center"/>

@@ -174,6 +174,21 @@ and the two browser ones, and it can start all of them in one go.
 * `Sundew.Xaml.Wpf.Development.Tester`, `Sundew.Xaml.Avalonia.Development.Tester`,
   `Sundew.Xaml.Uno.Development.Tester` and `Sundew.Xaml.Maui.Development.Tester` are all in the solution. WinUI has
   no AnyCPU platform, so the solution maps its own Any CPU onto that project's x64.
+* Every tester with a window to hand out has a `Full window` button beside the subtitle overlay toggle. It
+  opens a window drawing its own caption and the buttons in it, with a picker for the backdrop and a label saying
+  which one is actually in effect, that being the only way to tell what a system will really give. Beside it is a
+  tint slider, which fades the window's own background in over the backdrop: how much of one shows through the
+  other is not the same from framework to framework, and this is how the difference is looked at. The WinUI one
+  also has the toggle for keeping the backdrop drawn while the window is behind another, which is the one place
+  the option exists. The WPF and
+  WinUI ones draw the caption buttons as the system's own glyphs; the Avalonia and Uno ones say them in words,
+  those heads also running where no icon font can be taken for granted.
+* The Uno desktop head lays its content out wider than the window it is in, by about the display scale, so the
+  right hand end of anything that reaches across the window is off the edge of it. The zoom readout at the end of
+  that tester's toolbar has always been, which is why the `Full window` button sits beside the runtime label
+  there rather than at the end, and the caption buttons of its full window go the same way on a display that
+  is not at 100%. That head also opens the full window on its own with `--full-window`, which is how the
+  window is looked at without the sheet around it.
 * The Uno tester is one Uno single project with four heads: `net10.0-desktop`, `net10.0-android`, `net10.0-ios` and
   `net10.0-browserwasm`. The last three need the android, ios and wasm-tools workloads, which a plain build agent
   does not have, so the main CI job passes `-p:SundewUnoAllHeads=false` and builds the desktop head alone. Build
@@ -286,6 +301,100 @@ half a pixel apart, because Uno rounds some layout to the pixel grid of the disp
 * ThemeResourceDictionary - A caching resource dictionary for managing themes.
 * ThemeModeResourceDictionary - A caching resource dictionary for managing theme modes.
 
-## Controls.Overlays (WPF):
-* OverlayWindow - A Window for overlays.
-* SubtitleOverlay - A Window for displaying subtitles.
+## Overlays:
+The overlay windows live in the controls libraries themselves, in the `Sundew.Xaml.Controls.Overlays` namespace,
+rather than in packages of their own.
+* OverlayWindow - A click through overlay window, covering the work area of the monitor it is on. (WPF, Avalonia,
+  WinUI)
+* SubtitleOverlay - An overlay window for displaying subtitles. (WPF, Avalonia, WinUI)
+
+### Overlay notes:
+* WPF and Avalonia overlays are windows of the framework's, told not to take the mouse. WinUI cannot do that: a
+  `Window` is given an opaque surface to be drawn onto when the window manager creates it and nothing said
+  afterwards takes that away, so the WinUI overlay is a window created by `OverlayHostWindow`, with the styles a
+  transparent overlay needs, drawn into as a XAML island.
+* The window manager calls behind a click through overlay are the same whichever framework draws into the window,
+  so `WindowsOverlayInterop` and `WindowsMouseHook` live in `Source/Shared/Overlays` and each platform library
+  compiles its own copy, the way the XAML surface types are shared.
+* Avalonia says the click through in three ways, because it is a window manager matter and not a framework one: an
+  extended window style on Windows, `ignoresMouseEvents` on macOS, and an empty input shape on X11. A Wayland
+  session proper has no way to say it from here, and there the overlay takes the mouse.
+* The reveal effect, which punches a hole in the overlay around the cursor, is an opacity mask in WPF and Avalonia.
+  WinUI has no such thing on an element, so `RevealMask` says it in composition instead: the element is captured
+  onto a visual surface and drawn through a mask brush.
+
+## Full windows:
+* FullWindow - A window with no non client area, so that the caption, and the minimize, maximize and close
+  buttons in it, are drawn as content like anything else. (WPF, Avalonia, WinUI, Uno)
+
+### Full window notes:
+* Each framework gives up its chrome in its own words. WPF sets `WindowStyle` to `None` and a `WindowChrome` with
+  no caption buttons; Avalonia defaults `WindowDecorations` to `BorderOnly` with the client area extended over the
+  decorations; WinUI tells the window's `OverlappedPresenter` to leave the title bar off. In all three the border
+  is kept by default, so the window is still a window to the window manager: it resizes from its edges, snaps, and
+  maximizes to the work area.
+* The WinUI window is also the Uno one. The overlays beside it are WinUI 3 only, being drawn as a XAML island and
+  placed with Win32, but a full window says everything it needs in `Microsoft.UI.Windowing` and
+  `Microsoft.UI.Input`, which every Uno head has. Two things are not the same there: `MicaBackdrop.Kind` is not
+  implemented in Uno, so Mica Alt asked for is Mica given, and the heads with one surface and no second window to
+  open, a phone, a tablet and the browser, have nothing for such a window to be.
+* `ExtendsContentIntoTitleBar` is deliberately not what the WinUI window does. That one only draws the content up
+  behind the title bar and leaves the system's caption buttons sitting on top of it, which is the opposite of
+  letting the application make its own.
+* `MinimizeCommand`, `MaximizeCommand`, `RestoreCommand`, `ToggleMaximizedCommand` and `CloseCommand` are what the
+  buttons of a caption drawn as content bind to, and `IsMaximized` is what a button offering to maximize or restore
+  reads to know which of the two it is showing. Each command knows when it cannot be used, so a button bound to one
+  is disabled rather than doing nothing. They are a `WindowCommand`, shared as source from
+  `Source/Shared/Windows`, because all three frameworks take an `ICommand` on a button.
+* Moving the window by a caption of one's own is said differently in each. WPF hands a strip of the content back to
+  the window manager with `CaptionHeight`; Avalonia answers the pointer press itself with `Window.BeginMoveDrag`;
+  the WinUI window names the elements that are the caption, `FullWindow.SetCaption`, and their bounds are
+  given to `InputNonClientPointerSource` as caption regions. Where the window manager is told, as in WPF and WinUI,
+  double clicking the caption maximizes and restores and right clicking it opens the system menu, with nothing
+  wired up for either.
+* Telling the window manager about the press afterwards does not work in WinUI, which is why the caption is said as
+  regions. `WM_NCLBUTTONDOWN` with `HTCAPTION` sent from a pointer handler leaves the window following the pointer
+  with no button down, and it settles where the pointer is when the button comes up: the content of a WinUI window
+  is drawn in an island of its own, which still holds the pointer when the move begins.
+* In WPF, a button inside the strip that `CaptionHeight` hands back to the window manager has to say
+  `WindowChrome.IsHitTestVisibleInChrome="True"`, or the caption takes the click before the button hears about it.
+  `CaptionHeight` is zero by default, so there is no such strip until it is asked for.
+* `Backdrop` asks the window manager to draw something of its own behind the content, `Mica`, `MicaAlt` or
+  `Acrylic`, and `ActualBackdrop` says what came of the asking. A window with none of the system's chrome left over
+  it is the very place for one. Only Windows 11 has any of them, so every other system the Avalonia window runs on
+  answers `None` and the window is as opaque as any other. The value is a `WindowBackdrop`, shared as source from
+  `Source/Shared/Windows` so that all three windows are asked the same way.
+* Each framework is asked in its own words. WinUI is named a `SystemBackdrop` on the window and runs the controller
+  behind it; Avalonia is asked for a `WindowTransparencyLevel` and reports the one it was given, Mica and Mica Alt
+  both being Mica there; WPF has nothing of the sort, so `DWMWA_SYSTEMBACKDROP_TYPE` is said to the window manager
+  directly.
+* Asking for a backdrop hands the window's background over: it is made transparent while one is in effect and given
+  back to the theme where none could be had. Without the second half, a system with no backdrop to give would show
+  a black hole instead of an ordinary window.
+* WPF needs two further things that nothing says out loud. Its render target has to be cleared to transparent as
+  well, through `HwndTarget.BackgroundColor`, or WPF paints the window's own colour over the backdrop; and the
+  glass frame has to reach over the whole window, a `WindowChrome.GlassFrameThickness` of -1, because the backdrop
+  is drawn into the frame the window manager keeps behind the window and a window with no frame has nowhere to put
+  it. The asking also has to wait until the window is on screen, `Loaded` rather than `SourceInitialized`: before
+  that the window manager turns it down.
+* Nothing here says whether a backdrop is tinted light or dark. That follows the theme each framework reports to
+  the window manager on its own.
+* A backdrop the window manager draws is only drawn while the window is in the foreground. Measured on Windows 11
+  with the window behind another, Mica goes from 238,244,249 to a flat 243,243,243 and acrylic likewise, in WPF and
+  WinUI alike: both ask for a system backdrop, and that is what a system backdrop does. Avalonia does not change,
+  what it draws there not being the window manager's backdrop at all.
+* `IsBackdropAlwaysDrawn` on the WinUI window says to go on drawing it anyway. The backdrop is then not named on
+  the window but run by a controller of the window's own, a `MicaController` or a `DesktopAcrylicController` given
+  a `SystemBackdropConfiguration` whose `IsInputActive` is true whatever the window is doing. It is the same
+  backdrop, and measured behind another window it does not change: Mica stays at 238,244,249 and acrylic at
+  252,249,252, where without it they go flat. The light and dark of it is still followed, that being the window's
+  to say and not the window manager's.
+* There is no such option on the WPF window, and the reason is worth writing down. The only way to keep a system
+  backdrop drawn is to run that controller, which wants a composition target a WinUI 3 window has and a WPF window
+  does not. The older way, an undocumented accent policy asking for blur behind the window, no longer draws
+  anything on Windows 11: tried on build 26300 with both `ACCENT_ENABLE_ACRYLICBLURBEHIND` and
+  `ACCENT_ENABLE_BLURBEHIND`, and with two different tints, it reports success and leaves the window a flat
+  colour, so it is not shipped. Uno has the controller types but none of what they do, so the option is not there
+  either and a full window keeps the backdrop the framework hands out.
+* MAUI has no full window. Its `Window` is not a window of the platform's but a page host, and what chrome
+  there is belongs to the native window underneath it, which MAUI exposes nothing to say this to.

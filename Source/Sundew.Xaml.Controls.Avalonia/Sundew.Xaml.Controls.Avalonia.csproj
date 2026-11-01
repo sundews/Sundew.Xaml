@@ -6,6 +6,9 @@
     <RootNamespace>Sundew.Xaml.Controls</RootNamespace>
     <Description>Various Avalonia controls:
 - Border - A border supporting individual brushes for each side.
+- FullWindow - A Window with no decorations, so that the caption and its buttons can be drawn as content.
+- Overlays.OverlayWindow - A click through overlay Window.
+- Overlays.SubtitleOverlay - An overlay Window for displaying subtitles.
     </Description>
   </PropertyGroup>
 
@@ -24,6 +27,22 @@
   -->
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <!--
+    The window manager calls behind a click through overlay are the same whichever framework draws into the window,
+    so each platform library compiles its own copy from one source, the way the XAML surface types are shared.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Overlays\*.cs" LinkBase="Shared\Overlays" />
+  </ItemGroup>
+
+  <!--
+    What a full window can be told to do is the same wherever it is drawn, so the commands its caption binds
+    its buttons to are shared as source too.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Windows\*.cs" LinkBase="Shared\Windows" />
   </ItemGroup>
 
 </Project>

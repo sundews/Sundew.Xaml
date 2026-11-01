@@ -26,6 +26,11 @@ public partial class MainView : UserControl
     internal CheckBox OverlayToggle => this.SubtitleOverlayToggle;
 
     /// <summary>
+    /// Gets the button that asks for the full window, which the window hosting this sheet answers.
+    /// </summary>
+    internal Button FullWindowOpener => this.FullWindowButton;
+
+    /// <summary>
     /// Shows how this head is running and how long it took to get here. The time is settled on the way in, the
     /// sheet being up being exactly what was being waited for.
     /// </summary>

@@ -17,6 +17,7 @@ public sealed partial class MainWindow : Window
     private SubtitleOverlay? overlay;
     private SubtitleDemo? subtitleDemo;
     private DispatcherTimer? animationTimer;
+    private FullWindowDemo? fullWindow;
 
     public MainWindow()
     {
@@ -30,9 +31,31 @@ public sealed partial class MainWindow : Window
         {
             mainView.OverlayToggle.Checked += (_, _) => this.ShowOverlay();
             mainView.OverlayToggle.Unchecked += (_, _) => this.HideOverlay();
+
+            // One such window at a time, brought forward again rather than stacked up, since it is the window
+            // itself that is being looked at.
+            mainView.FullWindowOpener.Click += (_, _) => this.ShowFullWindow();
         }
 
-        this.Closed += (_, _) => this.HideOverlay();
+        this.Closed += (_, _) =>
+        {
+            this.HideOverlay();
+            this.fullWindow?.Close();
+        };
+    }
+
+    private void ShowFullWindow()
+    {
+        if (this.fullWindow != null)
+        {
+            this.fullWindow.Activate();
+            return;
+        }
+
+        var fullWindowDemo = new FullWindowDemo();
+        this.fullWindow = fullWindowDemo;
+        fullWindowDemo.Closed += (_, _) => this.fullWindow = null;
+        fullWindowDemo.Activate();
     }
 
     private void ShowOverlay()

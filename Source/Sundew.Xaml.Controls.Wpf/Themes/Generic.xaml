@@ -1,11 +1,11 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Sundew.Xaml.Controls.Overlays"
-    xmlns:sx="http://sundew.dev/xaml">
+    xmlns:overlays="clr-namespace:Sundew.Xaml.Controls.Overlays"
+    xmlns:sx="clr-namespace:Sundew.Xaml.Controls">
 
-    <local:AvoidNaNConverter x:Key="AvoidNaNConverter"/>
-    <local:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
+    <overlays:AvoidNaNConverter x:Key="AvoidNaNConverter"/>
+    <overlays:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
 
     <RadialGradientBrush x:Key="RevealBrush" RadiusX="50" RadiusY="50" >
         <GradientStop Color="Transparent" Offset="0"/>
@@ -13,7 +13,7 @@
         <GradientStop Color="Black" Offset="1"/>
     </RadialGradientBrush>
 
-    <Style TargetType="{x:Type local:SubtitleOverlay}">
+    <Style TargetType="{x:Type overlays:SubtitleOverlay}">
         <Setter Property="Background" Value="#990C0A0A"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="Padding" Value="16,8"/>
@@ -25,7 +25,7 @@
         <Setter Property="RevealBrush" Value="{StaticResource RevealBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type local:SubtitleOverlay}">
+                <ControlTemplate TargetType="{x:Type overlays:SubtitleOverlay}">
                     <ControlTemplate.Resources>
                         <Storyboard x:Key="AnimateSizeStoryboard" TargetName="PART_Border">
                             <DoubleAnimation Storyboard.TargetProperty="Width"

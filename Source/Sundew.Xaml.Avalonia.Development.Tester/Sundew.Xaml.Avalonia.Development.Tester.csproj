@@ -81,7 +81,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.Avalonia\Sundew.Xaml.Controls.Avalonia.csproj" />
-    <ProjectReference Include="..\Sundew.Xaml.Controls.Overlays.Avalonia\Sundew.Xaml.Controls.Overlays.Avalonia.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,9 @@
     <RootNamespace>Sundew.Xaml.Controls</RootNamespace>
     <Description>Various WinUI and Uno Platform controls:
 - Border - A border supporting individual brushes for each side.
+- FullWindow - A Window with no border or title bar, so that the caption and its buttons can be drawn as content.
+- Overlays.OverlayWindow - A click through overlay window. (WinUI only)
+- Overlays.SubtitleOverlay - An overlay window for displaying subtitles. (WinUI only)
     </Description>
   </PropertyGroup>
 
@@ -23,12 +26,20 @@
     <UseWinUI>true</UseWinUI>
     <!-- A library is built AnyCPU on purpose; the consuming app picks the platform Win2D needs. -->
     <Win2DWarnNoPlatform>false</Win2DWarnNoPlatform>
-    <DefineConstants>$(DefineConstants);SUNDEW_WIN2D;SUNDEW_CREATE_FROM_STRING</DefineConstants>
+    <!-- The XAML markup compiler runs an intermediate compile without a PDB, which source embedding forbids. -->
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <!-- SUNDEW_WINUI says WinUI 3 proper rather than Uno, which is the same target said for a different reason. -->
+    <DefineConstants>$(DefineConstants);SUNDEW_WIN2D;SUNDEW_WINUI;SUNDEW_CREATE_FROM_STRING</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsWin2DTarget)' != 'true'">
     <DefineConstants>$(DefineConstants);SUNDEW_SKIA;SUNDEW_CREATE_FROM_STRING</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsWin2DTarget)' == 'true'">
+    <!-- Same reason as the property above: the intermediate compile emits no PDB, so nothing may be embedded. -->
+    <EmbeddedFiles Remove="@(EmbeddedFiles)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Sundew.Xaml.Controls.Primitives\Sundew.Xaml.Controls.Primitives.csproj" />
@@ -38,8 +49,45 @@
     <Compile Remove="Backends\**\*.cs" />
   </ItemGroup>
 
+  <!--
+    An overlay is a window of our own making, drawn into as a XAML island and placed with Win32, which is WinUI 3
+    only. Its control theme goes with it, because the theme names types that only that target compiles. The
+    full window is not: it is the framework's own window told what the window manager is to leave off, and
+    every Uno target has the Microsoft.UI.Windowing and Microsoft.UI.Input that says it.
+  -->
+  <ItemGroup>
+    <Compile Remove="Overlays\**\*.cs" />
+    <!--
+      Running the backdrop controller rather than naming a backdrop is WinUI 3 only. Uno has the types but none of
+      what they do, so a full window there is left with the backdrop the framework hands out.
+    -->
+    <Compile Remove="AlwaysDrawnBackdrop.cs" />
+  </ItemGroup>
+
+  <!--
+    What a full window can be told to do is the same wherever it is drawn, so the commands its caption
+    binds its buttons to are shared as source too.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Windows\*.cs" LinkBase="Shared\Windows" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsWin2DTarget)' != 'true'">
+    <Page Remove="Themes\**\*.xaml" />
+    <None Remove="Themes\**\*.xaml" />
+    <UpToDateCheckInput Remove="Themes\**\*.xaml" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(IsWin2DTarget)' == 'true'">
     <Compile Include="Backends\Win2D\**\*.cs" />
+    <Compile Include="Overlays\**\*.cs" />
+    <Compile Include="AlwaysDrawnBackdrop.cs" />
+    <!--
+      The window manager calls behind a click through overlay are the same whichever framework draws into the
+      window, so each platform library compiles its own copy from one source, the way the XAML surface types are
+      shared.
+    -->
+    <Compile Include="..\Shared\Overlays\*.cs" LinkBase="Shared\Overlays" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Graphics.Win2D" />
   </ItemGroup>

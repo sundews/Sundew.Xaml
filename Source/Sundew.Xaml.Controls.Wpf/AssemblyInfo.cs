@@ -18,4 +18,5 @@ using Sundew.Xaml.Controls;
                                                 ////  app, or any theme specific resource dictionaries)
 
 [assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls")]
+[assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls.Overlays")]
 [assembly: XmlnsPrefix(Constants.SundewXamlXmlNamespace, "sx")]

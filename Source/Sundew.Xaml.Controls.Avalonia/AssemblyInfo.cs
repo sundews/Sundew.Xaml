@@ -9,4 +9,5 @@ using Avalonia.Metadata;
 using Sundew.Xaml.Controls;
 
 [assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls")]
+[assembly: XmlnsDefinition(Constants.SundewXamlXmlNamespace, "Sundew.Xaml.Controls.Overlays")]
 [assembly: XmlnsPrefix(Constants.SundewXamlXmlNamespace, "sx")]

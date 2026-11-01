@@ -21,6 +21,7 @@ public partial class MainView : UserControl
         // itself, which leaves the generated one, and with it the assigning of the x:Name fields, out of the
         // build: the field is there to compile against but nothing ever sets it.
         this.OverlayToggle = this.FindControl<CheckBox>("SubtitleOverlayToggle");
+        this.FullWindowOpener = this.FindControl<Button>("FullWindowButton");
         var runtimeLabel = this.FindControl<TextBlock>("RuntimeLabel");
         if (runtimeLabel != null)
         {
@@ -37,6 +38,11 @@ public partial class MainView : UserControl
     /// Gets the toggle that asks for the subtitle overlay, which only a head with windows can answer.
     /// </summary>
     internal CheckBox? OverlayToggle { get; }
+
+    /// <summary>
+    /// Gets the button that asks for the full window, which only a head with windows can answer.
+    /// </summary>
+    internal Button? FullWindowOpener { get; }
 
     /// <summary>
     /// Gets how this head is running. NativeAOT is the one case where the runtime cannot compile code as it goes, which

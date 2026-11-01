@@ -21,6 +21,8 @@ public partial class App : Application
 {
     private const string RenderOption = "--render";
 
+    private const string FullWindowOption = "--full-window";
+
     /// <summary>
     /// The device pixel scale a captured sheet is rounded to, stated rather than taken from the display,
     /// so that the sheet is the same whatever the display it was captured on.
@@ -44,7 +46,11 @@ public partial class App : Application
             return;
         }
 
-        this.window = new Window { Content = new MainView() };
+        // The full window can also be the window this head opens with, rather than one opened from the
+        // sheet, so that it can be looked at on its own.
+        this.window = Array.IndexOf(commandLine, FullWindowOption) >= 0
+            ? new FullWindowDemo()
+            : new Window { Content = new MainView() };
         this.window.Activate();
     }
 

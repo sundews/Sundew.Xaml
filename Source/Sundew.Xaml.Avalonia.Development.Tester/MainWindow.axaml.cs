@@ -17,10 +17,21 @@ public partial class MainWindow : Window
 {
     private SubtitleOverlay? overlay;
     private DispatcherTimer? animationTimer;
+    private FullWindowDemo? fullWindow;
 
     public MainWindow()
     {
         this.InitializeComponent();
+
+        // One such window at a time, brought forward again rather than stacked up, since it is the window itself
+        // that is being looked at.
+        if (this.Content is MainView { FullWindowOpener: { } fullWindowButton })
+        {
+            fullWindowButton.IsVisible = true;
+            fullWindowButton.Click += (_, _) => this.ShowFullWindow();
+        }
+
+        this.Closed += (_, _) => this.fullWindow?.Close();
 
         // The overlay is a window of its own, always on top, so it sits over whatever else is being compared.
         // That is the point of it, and a nuisance when the border is what is being looked at, so it is off until
@@ -47,6 +58,20 @@ public partial class MainWindow : Window
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
+    }
+
+    private void ShowFullWindow()
+    {
+        if (this.fullWindow != null)
+        {
+            this.fullWindow.Activate();
+            return;
+        }
+
+        var fullWindowDemo = new FullWindowDemo();
+        this.fullWindow = fullWindowDemo;
+        fullWindowDemo.Closed += (_, _) => this.fullWindow = null;
+        fullWindowDemo.Show();
     }
 
     private void ShowOverlay()

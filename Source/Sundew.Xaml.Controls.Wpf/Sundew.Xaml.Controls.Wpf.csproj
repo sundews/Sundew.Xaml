@@ -7,6 +7,9 @@
 		<RootNamespace>Sundew.Xaml.Controls</RootNamespace>
 		<Description>Various WPF controls:
 - Border - A border supporting individual brushes for each side.
+- FullWindow - A Window with no non client area, so that the caption and its buttons can be drawn as content.
+- Overlays.OverlayWindow - A click through overlay Window.
+- Overlays.SubtitleOverlay - An overlay Window for displaying subtitles.
 		</Description>
   </PropertyGroup>
 
@@ -21,6 +24,14 @@
   -->
   <ItemGroup>
     <Compile Include="..\Shared\*.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <!--
+    What a full window can be told to do is the same wherever it is drawn, so the commands its caption binds
+    its buttons to are shared as source too.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\Windows\*.cs" LinkBase="Shared\Windows" />
   </ItemGroup>
 
 </Project>

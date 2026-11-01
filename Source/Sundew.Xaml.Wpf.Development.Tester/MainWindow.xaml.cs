@@ -17,10 +17,16 @@ public partial class MainWindow : Window
 {
     private SubtitleOverlay? overlay;
     private DispatcherTimer? animationTimer;
+    private FullWindowDemo? fullWindow;
 
     public MainWindow()
     {
         this.InitializeComponent();
+
+        // One such window at a time, brought forward again rather than stacked up, since it is the window itself
+        // that is being looked at.
+        this.View.FullWindowButton.Click += (_, _) => this.ShowFullWindow();
+        this.Closed += (_, _) => this.fullWindow?.Close();
 
         // The overlay is a window of its own, always on top, so it sits over whatever else is being compared.
         // That is the point of it, and a nuisance when the border is what is being looked at, so it is off until
@@ -28,6 +34,19 @@ public partial class MainWindow : Window
         this.View.SubtitleOverlayToggle.Checked += (_, _) => this.ShowOverlay();
         this.View.SubtitleOverlayToggle.Unchecked += (_, _) => this.HideOverlay();
         this.Closed += (_, _) => this.HideOverlay();
+    }
+
+    private void ShowFullWindow()
+    {
+        if (this.fullWindow != null)
+        {
+            this.fullWindow.Activate();
+            return;
+        }
+
+        this.fullWindow = new FullWindowDemo();
+        this.fullWindow.Closed += (_, _) => this.fullWindow = null;
+        this.fullWindow.Show();
     }
 
     private void ShowOverlay()

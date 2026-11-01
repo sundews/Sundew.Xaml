@@ -1,0 +1,71 @@
+<sx:FullWindow xmlns="https://github.com/avaloniaui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:sx="using:Sundew.Xaml.Controls"
+                     xmlns:tester="using:Sundew.Xaml.Avalonia.Development.Tester"
+                     x:Class="Sundew.Xaml.Avalonia.Development.Tester.FullWindowDemo"
+                     x:DataType="tester:FullWindowDemo"
+                     Title="Full window" Width="620" Height="440"
+                     Backdrop="Mica">
+  <sx:FullWindow.Styles>
+    <!--
+      A caption button of one's own, which is the whole point of a window with no decorations. Only the resting
+      look is said here; the theme still lights it up under the pointer and greys it out when the command it is
+      bound to says it cannot be used.
+    -->
+    <Style Selector="Button.caption">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="12,0"/>
+      <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+  </sx:FullWindow.Styles>
+  <Grid RowDefinitions="40,*">
+
+    <!--
+      What the window puts between the backdrop and the content, for seeing how much of one the other lets through.
+      It is the first child, so everything else is drawn over it, and its colour follows the theme from the code
+      behind, this framework shipping no one key for it.
+    -->
+    <Border x:Name="Tint" Grid.RowSpan="2" Opacity="0"/>
+
+    <!-- The caption, drawn as content like everything else. -->
+    <Grid ColumnDefinitions="*,Auto">
+      <!--
+        Transparent rather than left unset, so that the strip is something the pointer can land on at all, which is
+        what makes it the part that drags the window. The buttons sit outside it, so a press on one of them is never
+        a press on the caption.
+      -->
+      <Border x:Name="DragArea" Background="Transparent">
+        <TextBlock Text="Full window" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0"/>
+      </Border>
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <!--
+          Said in words rather than drawn as the glyphs a system caption uses. This head also runs on Linux,
+          Android and the browser, where no icon font can be taken for granted.
+        -->
+        <Button Classes="caption" Content="Minimize" Command="{Binding MinimizeCommand}"/>
+        <Button Classes="caption" Content="Maximize" Command="{Binding MaximizeCommand}"/>
+        <Button Classes="caption" Content="Restore" Command="{Binding RestoreCommand}"/>
+        <Button Classes="caption" Content="Close" Command="{Binding CloseCommand}"/>
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Grid.Row="1" Margin="16,8,16,16" Spacing="8">
+      <TextBlock TextWrapping="Wrap"
+                 Text="Nothing above this is the system's. The strip is content: pressing it hands the pointer to the window manager, which moves the window from there, and double tapping it maximizes and restores."/>
+      <TextBlock TextWrapping="Wrap"
+                 Text="The four buttons are bound to the window's own commands. Maximize and restore disable themselves, each knowing the window is already the way it would put it."/>
+      <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Spacing="8">
+        <TextBlock Text="Backdrop" VerticalAlignment="Center"/>
+        <ComboBox x:Name="BackdropSelector" Width="140"/>
+        <TextBlock x:Name="BackdropLabel" VerticalAlignment="Center" Opacity="0.7"/>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Tint" VerticalAlignment="Center"/>
+        <Slider x:Name="TintSlider" Width="140" Minimum="0" Maximum="1" Value="0" VerticalAlignment="Center"/>
+        <TextBlock x:Name="TintLabel" VerticalAlignment="Center" Opacity="0.7"/>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</sx:FullWindow>

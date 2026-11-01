@@ -49,10 +49,13 @@
             <!-- Shown by whatever head can actually host an overlay, which is the one that hands out windows.
                  A single view head has no second window to put an overlay in, so there the toggle stays away. -->
             <CheckBox x:Name="SubtitleOverlayToggle" Grid.Column="3" Content="Subtitle overlay" VerticalAlignment="Center" Margin="12,0,4,0" IsVisible="False"/>
+            <!-- A window of its own, so it too waits for the head that hands out windows. -->
+            <Button x:Name="FullWindowButton" Grid.Column="4" Content="Full window" VerticalAlignment="Center" Margin="8,0,4,0" Padding="8,2" IsVisible="False"/>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition />
               <ColumnDefinition Width="50"/>
+              <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
         </Grid>
