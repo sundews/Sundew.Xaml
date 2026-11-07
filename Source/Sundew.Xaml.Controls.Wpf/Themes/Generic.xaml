@@ -5,7 +5,7 @@
     xmlns:sx="clr-namespace:Sundew.Xaml.Controls">
 
     <overlays:AvoidNaNConverter x:Key="AvoidNaNConverter"/>
-    <overlays:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
+    <sx:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
 
     <RadialGradientBrush x:Key="RevealBrush" RadiusX="50" RadiusY="50" >
         <GradientStop Color="Transparent" Offset="0"/>
@@ -46,7 +46,7 @@
                             </DoubleAnimation>
                         </Storyboard>
                     </ControlTemplate.Resources>
-                    <Grid Visibility="{TemplateBinding Subtitle, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
+                    <Grid sx:Appearance.Visibility="{TemplateBinding Subtitle, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
                         <sx:Border x:Name="PART_MeasureBorder"
                                HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"
                                CornerRadius="{TemplateBinding CornerRadius}"

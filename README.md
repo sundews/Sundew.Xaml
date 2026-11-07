@@ -398,3 +398,148 @@ rather than in packages of their own.
   either and a full window keeps the backdrop the framework hands out.
 * MAUI has no full window. Its `Window` is not a window of the platform's but a page host, and what chrome
   there is belongs to the native window underneath it, which MAUI exposes nothing to say this to.
+
+## Visibility:
+* `Appearance.Visibility` - An attached property saying how an element is to be seen, adding to the three states a
+  framework's own visibility has a fourth, `Invisible`, for an element that draws nothing and is still there in full.
+  (WPF, Avalonia, WinUI, Uno, MAUI)
+* `StringNotNullOrEmptyToVisibilityConverter` - A converter giving `Visible` for a string with something in it and
+  `NotVisibleVisibility` for one without, to the `Visibility` of this library rather than the framework's, so it is
+  bound to `Appearance.Visibility`. `NotVisibleVisibility` is `Collapsed` unless it is said otherwise.
+  (WPF, Avalonia, WinUI, Uno, MAUI)
+
+```xaml
+<Button sx:Appearance.Visibility="Invisible" Content="Still read out, never seen"/>
+```
+
+It is an ordinary attached property, so it is said in a style or a trigger as readily as on the element:
+
+```xaml
+<Style TargetType="Button">
+  <Setter Property="sx:Appearance.Visibility" Value="Collapsed"/>
+</Style>
+```
+
+What `Invisible` is for is the affordance that is only shown once it is reached for, and the trigger wants
+`IsKeyboardFocused` beside `IsMouseOver` rather than `IsMouseOver` alone. A command nobody can see is one nobody
+can tab to either unless focusing it shows it, and the pairing costs one more trigger:
+
+```xaml
+<Style TargetType="Button">
+  <Setter Property="sx:Appearance.Visibility" Value="Invisible"/>
+  <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True">
+      <Setter Property="sx:Appearance.Visibility" Value="Visible"/>
+    </Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True">
+      <Setter Property="sx:Appearance.Visibility" Value="Visible"/>
+    </Trigger>
+  </Style.Triggers>
+</Style>
+```
+
+A binding says the same four states through the converter, and which of them an empty string comes to is the
+converter's own `NotVisibleVisibility`:
+
+```xaml
+<sx:StringNotNullOrEmptyToVisibilityConverter x:Key="SubtitleVisibility" NotVisibleVisibility="Invisible"/>
+...
+<TextBlock Text="{Binding Subtitle}"
+           sx:Appearance.Visibility="{Binding Subtitle, Converter={StaticResource SubtitleVisibility}}"/>
+```
+
+Left unsaid it is `Collapsed`, which is what such a converter is usually taken to mean. Saying `Invisible` is what
+keeps the element's place in the layout and its place in the automation tree while the string is empty, so nothing
+below it moves as the text comes and goes and a test can still find it by name. `Hidden` keeps the place and gives
+up the rest.
+
+### Visibility notes:
+* `Visible`, `Hidden` and `Collapsed` are the framework's own visibility and nothing more, so an element asked for
+  one of those behaves exactly as it would had its own property been set. `Invisible` is the one that is added: the
+  element is laid out where it was, takes the mouse, is focusable and is found by UI automation, and nothing of it
+  is seen. Being found is what tells it apart from `Hidden`, which is not drawn either but is out of reach. The
+  name says only the half of it that is obvious: an invisible element is as live as a visible one, and a pointer
+  that lands on it still lands on it.
+* The value is one `Visibility` on every platform, and each framework is told it in whichever of its own terms
+  comes closest. Where a framework has no word for a state, it is said the way it would otherwise be written by
+  hand rather than left out, so the same XAML reads the same everywhere.
+* `Sundew.Xaml.Controls.Visibility` deliberately carries the same name as the framework's own, and the cost of that
+  is worth stating. Inside this library it hides `System.Windows.Visibility` and `Microsoft.UI.Xaml.Visibility`
+  outright, because C# looks in enclosing namespaces before using directives, so every place here that means the
+  framework's one says so in full. In code of your own the two namespaces together give `CS0104` on a bare
+  `Visibility`, which is a compiler error rather than a silent swap, and a `using Visibility = ...` alias settles
+  it. The name is kept because the property is `Visibility`, the four states read as visibility, and the alternative
+  was a second name for one idea.
+* An invisible element is still focusable, and that is on purpose, but it has one edge worth knowing. WPF draws
+  `FocusVisualStyle` into the adorner layer, which is not the element's own visual and so is not under its opacity
+  mask: an invisible element that takes keyboard focus draws its dotted focus rectangle around nothing at all, seen
+  on screen with the rest of the button not there. Reading it as a bug in the mask is the wrong way round. It is the
+  framework saying that something reachable is being kept unseen, which is exactly what asking for `Invisible`
+  without a focus trigger does, and the fix is the trigger above rather than taking focus away. Taking it away
+  instead would leave the command reachable by UI automation and by the mouse and by nothing else, which is a worse
+  place to be than a stray rectangle.
+* WPF and Avalonia have the thing `Invisible` is said with. An opacity mask is applied after an element has drawn
+  itself and is no part of hit testing or of automation, so a mask with no alpha in it is exactly this state:
+  `UIElement.OpacityMask` in WPF and `Visual.OpacityMask` in Avalonia.
+* How far apart `Invisible` and `Hidden` are under automation is worth stating plainly, because on WPF it is
+  further than it sounds. Driven with FlaUI against a window of buttons, an invisible button comes back from
+  `FindFirstDescendant` by automation id with `IsOffscreen` false, its real bounding rectangle, `IsKeyboardFocusable`
+  true and a clickable point, and it can be clicked by `Invoke`, by `Click(moveMouse: false)` and by
+  `Click(moveMouse: true)` alike, including a button with no reveal trigger at all that is never drawn at any
+  point. A hidden one and a collapsed one are not returned by that search at all. They are not merely marked as
+  off screen, they are not there to be found, so a test or a screen reader cannot reach them by name.
+* Neither WinUI nor Uno has an opacity mask on an element, which is the same gap `Overlays.RevealMask` fills with
+  composition. A mask that is empty needs none of that, so it is said with `Opacity` instead, which comes to the
+  same picture and costs nothing. Opacity is no part of hit testing and no part of what the automation tree holds,
+  so the element is still there in full.
+* MAUI has no opacity mask either, and opacity is the wrong thing to reach for in its place: a view at no opacity is
+  taken off the Apple platforms' accessibility tree and out of their hit testing altogether, which is the one thing
+  this state is for. `Clip` is the thing that does hold. It is a mask the platform applies to what the view drew, by
+  a layer mask on the Apple platforms, a clip path on Android and a composition clip on Windows, none of which the
+  platform asks about when it hit tests or when it walks its accessibility tree, so clipped to nothing the element
+  is still laid out, still touchable and still read out.
+* Avalonia and MAUI say visibility with one `IsVisible` rather than with three states, and a view that is not
+  visible is not laid out either, which is `Collapsed`. There is nothing for `Hidden` to be on either of them, nor
+  on WinUI and Uno, whose visibility has the two states and no more, so there it is the element left visible, and so
+  still laid out, drawn through the empty mask or at no opacity and taken out of input. One thing does not follow:
+  WPF puts a hidden element out of UI automation's reach entirely, and these leave it reachable and merely say it
+  is off screen, which is why `Invisible` is the state to ask for when being found matters and `Hidden` the one to
+  ask for when only the layout does.
+* The converter is the same type on every platform and is what the subtitle overlay's own template now uses: it
+  binds `sx:Appearance.Visibility` rather than the framework's visibility, which is what lets one converter serve
+  WPF, Avalonia, WinUI, Uno and MAUI alike and gives such a binding the fourth state for free. It moved out of
+  `Sundew.Xaml.Controls.Overlays` into `Sundew.Xaml.Controls` with that change, being no longer about overlays.
+  XAML written against the `sx` prefix does not notice, both namespaces being mapped to the one XML namespace, but
+  a direct `using:Sundew.Xaml.Controls.Overlays` reference to it does.
+* Only the empty half of the converter is open to being said. A string with something in it is `Visible` and there
+  is no property to say otherwise, because the converter would then no longer be a converter from a string to a
+  visibility but a pair of arbitrary states, which a binding to `Appearance.Visibility` can already say for itself.
+  What an empty string comes to is the half that genuinely differs between one use and the next, which is why
+  `NotVisibleVisibility` is the one of the two that is a property. A value that is not a string at all is not a
+  string that is there, and is converted the way an empty one is rather than being treated as an error.
+* `NotVisibleVisibility` is a plain property and not an attached or dependency one, so it is said on the converter
+  where the converter is declared and is not itself bindable. A converter instance carries that one answer for
+  every binding that uses it, so two different answers want two instances under two keys rather than one shared.
+* The property takes over the ones it says itself with. While an element is invisible or hidden, the mask, the
+  opacity, the clip and the hit testing flag are local values of this property's, and leaving that state clears them
+  rather than putting back values of the element's own, so an element that is already masked or clipped is not one
+  to make invisible this way. The framework's own visibility is likewise set directly, which overrides a style or a binding on it: an
+  element is told how to be seen in one of the two ways, not both.
+
+### The four states on Avalonia:
+Worth showing on its own, because Avalonia has the one `IsVisible` to say all of them with and it is the platform
+where it is least obvious that there is room for four. Measured on a 20 by 20 black border in a white window,
+rendered by Skia into a headless top level, with the space taken from the same border as the first of two children
+of a stack panel:
+
+| | centre pixel | space kept | hit tested | read as on screen |
+| --- | --- | --- | --- | --- |
+| `Visible` | black | 50x20 | yes | yes |
+| `Hidden` | white | 50x20 | **no** | yes |
+| `Collapsed` | white | **given up** | — | **no** |
+| `Invisible` | white | 50x20 | yes | yes |
+
+`Collapsed` is `IsVisible` false and nothing else: the panel asks 30 high with the border visible and 10 with it
+collapsed, which is the state Avalonia's one property already is. `Hidden` and `Invisible` both keep the space and
+draw nothing, and the hit testing is what tells them apart. The last column is `AutomationPeer.IsOffscreen`, and it
+is the one place Avalonia does not follow WPF: a hidden element is read as on screen here and is not there.

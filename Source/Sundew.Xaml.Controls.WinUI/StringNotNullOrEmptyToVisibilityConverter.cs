@@ -5,16 +5,36 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Sundew.Xaml.Controls.Overlays;
+namespace Sundew.Xaml.Controls;
 
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 
 /// <summary>
-/// A converter that converts a string to <see cref="Visibility.Visible"/> if the string is not null or empty, otherwise to <see cref="Visibility.Collapsed"/>.
+/// A converter that converts a string to <see cref="Visibility.Visible"/> when the string is neither null nor empty,
+/// and to <see cref="NotVisibleVisibility"/> when it is.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This converts to this library's <see cref="Visibility"/> and not the framework's, so it is bound to
+/// <see cref="Appearance.VisibilityProperty"/> rather than to the element's own visibility. That is what gives a
+/// binding the fourth state: <see cref="NotVisibleVisibility"/> may be said as <see cref="Visibility.Invisible"/>,
+/// and the element then keeps the space it was laid out into and stays in the automation tree while its string is
+/// empty, which is what neither <see cref="Visibility.Collapsed"/> nor <see cref="Visibility.Hidden"/> does.
+/// </para>
+/// <para>
+/// <see cref="NotVisibleVisibility"/> is <see cref="Visibility.Collapsed"/> unless it is said otherwise, which is
+/// what a converter from a string to a visibility is usually taken to mean. A value that is not a string is not a
+/// string that is there, and is converted the way an empty one is.
+/// </para>
+/// </remarks>
 public sealed partial class StringNotNullOrEmptyToVisibilityConverter : IValueConverter
 {
+    /// <summary>
+    /// Gets or sets how the element is to be seen while the string is null or empty.
+    /// The default is <see cref="Visibility.Collapsed"/>.
+    /// </summary>
+    public Visibility NotVisibleVisibility { get; set; } = Visibility.Collapsed;
+
     /// <summary>
     /// Converts the specified value.
     /// </summary>
@@ -25,12 +45,9 @@ public sealed partial class StringNotNullOrEmptyToVisibilityConverter : IValueCo
     /// <returns>The converted value.</returns>
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is string stringValue)
-        {
-            return !string.IsNullOrEmpty(stringValue) ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        return Visibility.Collapsed;
+        return value is string stringValue && !string.IsNullOrEmpty(stringValue)
+            ? Visibility.Visible
+            : this.NotVisibleVisibility;
     }
 
     /// <summary>

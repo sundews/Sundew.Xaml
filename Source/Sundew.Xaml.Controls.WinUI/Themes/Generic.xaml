@@ -4,7 +4,7 @@
     xmlns:overlays="using:Sundew.Xaml.Controls.Overlays"
     xmlns:sx="using:Sundew.Xaml.Controls">
 
-  <overlays:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
+  <sx:StringNotNullOrEmptyToVisibilityConverter x:Key="StringNotNullOrEmptyToVisibilityConverter"/>
 
   <!-- Transparent at the middle and opaque at the rim, so that as a mask it leaves a hole where the cursor is.
        The radius is stated absolutely, which is in device independent pixels. -->
@@ -25,7 +25,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="overlays:SubtitleBanner">
-          <Grid Visibility="{Binding Subtitle, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
+          <Grid sx:Appearance.Visibility="{Binding Subtitle, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource StringNotNullOrEmptyToVisibilityConverter}}">
             <Grid.RowDefinitions>
               <RowDefinition Height="*"/>
               <RowDefinition Height="0.04*"/>
