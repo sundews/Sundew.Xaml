@@ -183,12 +183,8 @@ and the two browser ones, and it can start all of them in one go.
   the option exists. The WPF and
   WinUI ones draw the caption buttons as the system's own glyphs; the Avalonia and Uno ones say them in words,
   those heads also running where no icon font can be taken for granted.
-* The Uno desktop head lays its content out wider than the window it is in, by about the display scale, so the
-  right hand end of anything that reaches across the window is off the edge of it. The zoom readout at the end of
-  that tester's toolbar has always been, which is why the `Full window` button sits beside the runtime label
-  there rather than at the end, and the caption buttons of its full window go the same way on a display that
-  is not at 100%. That head also opens the full window on its own with `--full-window`, which is how the
-  window is looked at without the sheet around it.
+* The Uno tester also opens the full window on its own with `--full-window`, which is how the window is looked at
+  without the sheet around it.
 * The Uno tester is one Uno single project with four heads: `net10.0-desktop`, `net10.0-android`, `net10.0-ios` and
   `net10.0-browserwasm`. The last three need the android, ios and wasm-tools workloads, which a plain build agent
   does not have, so the main CI job passes `-p:SundewUnoAllHeads=false` and builds the desktop head alone. Build
@@ -335,9 +331,10 @@ rather than in packages of their own.
   maximizes to the work area.
 * The WinUI window is also the Uno one. The overlays beside it are WinUI 3 only, being drawn as a XAML island and
   placed with Win32, but a full window says everything it needs in `Microsoft.UI.Windowing` and
-  `Microsoft.UI.Input`, which every Uno head has. Two things are not the same there: `MicaBackdrop.Kind` is not
-  implemented in Uno, so Mica Alt asked for is Mica given, and the heads with one surface and no second window to
-  open, a phone, a tablet and the browser, have nothing for such a window to be.
+  `Microsoft.UI.Input`, which every Uno head has. Three things are not the same there: a backdrop needs the
+  renderer chosen for it, as below; `MicaBackdrop.Kind` is not implemented in Uno, so Mica Alt asked for is Mica
+  given and `ActualBackdrop` says `Mica`; and the heads with one surface and no second window to open, a phone, a
+  tablet and the browser, have nothing for such a window to be.
 * `ExtendsContentIntoTitleBar` is deliberately not what the WinUI window does. That one only draws the content up
   behind the title bar and leaves the system's caption buttons sitting on top of it, which is the opposite of
   letting the application make its own.
@@ -371,6 +368,35 @@ rather than in packages of their own.
 * Asking for a backdrop hands the window's background over: it is made transparent while one is in effect and given
   back to the theme where none could be had. Without the second half, a system with no backdrop to give would show
   a black hole instead of an ordinary window.
+* Uno draws a backdrop too, Mica and acrylic both, but only once the application has said which renderer its
+  Windows head is to use. Left to choose, that head draws through OpenGL, and its OpenGL path never clears a
+  surface that has been made see through, which is what a backdrop does to a window: everything ever drawn over
+  the window stays on it. Open the backdrop picker in the tester, close it again, and the list it dropped is still
+  painted over the content; the text grows heavier the longer it is drawn, being laid over itself frame after
+  frame; and nothing covers it up, the tint slider at 1.00 included, nor does forcing the window to paint again
+  with `InvalidateRect` or a resize. Saying
+  `FeatureConfiguration.Rendering.UseVulkanOnWin32 = true` before the host is built settles it, with the drawing
+  still on the graphics card; `UseOpenGLOnWin32 = false` settles it too and leaves the drawing to the processor.
+  Both were measured with the picker opened and dismissed: clean content, crisp text, backdrop intact. Which
+  renderer is running cannot be read back, so the window does not try to guess, and the desktop head of the Uno
+  tester says the Vulkan line in its `Program.cs`.
+* A backdrop on Uno costs something the renderer does not settle, and it is worth knowing before asking for one:
+  that head draws no solid colour named as a `Background`. A `Border` or a panel given a `SolidColorBrush` to paint
+  itself with is simply not drawn, whatever the colour, wherever it sits and whether or not it has a child; the
+  child is drawn, and nothing behind it is covered. What is drawn is the same colour as a shape's `Fill`, and a
+  `LinearGradientBrush` named as a `Background`, which says it is the solid background in particular and not
+  backgrounds as such. Asking for a backdrop of `None` draws every one of them. The same window on WinUI draws
+  them all with Mica in effect.
+* That is what is behind the two things the tester shows. The tint over the backdrop is a shape rather than a
+  border for this reason; as a border it moved its slider and its reading and changed nothing on screen, at 1.00
+  as much as at 0.01. And the tint slider opens with no track behind its thumb and no fill in it, drawing in full
+  the moment the pointer goes over it and staying right from then on, because the parts missing are the ones the
+  theme paints with a solid background: the brush named before the first frame is dropped, while the one the theme
+  sets again on being hovered is drawn. Setting the brush over again from code, once the window is up, draws it
+  too. Neither renderer mends any of this, nor does turning the visual subtree skipping optimization off, nor
+  keeping the title bar, nor resizing the window.
+* None of it is this window's doing. A plain `Window` of that framework given a `MicaBackdrop`, with no full window
+  anywhere in it, loses a plain `Border` laid over its content in the same way.
 * WPF needs two further things that nothing says out loud. Its render target has to be cleared to transparent as
   well, through `HwndTarget.BackgroundColor`, or WPF paints the window's own colour over the backdrop; and the
   glass frame has to reach over the whole window, a `WindowChrome.GlassFrameThickness` of -1, because the backdrop
@@ -394,7 +420,7 @@ rather than in packages of their own.
   does not. The older way, an undocumented accent policy asking for blur behind the window, no longer draws
   anything on Windows 11: tried on build 26300 with both `ACCENT_ENABLE_ACRYLICBLURBEHIND` and
   `ACCENT_ENABLE_BLURBEHIND`, and with two different tints, it reports success and leaves the window a flat
-  colour, so it is not shipped. Uno has the controller types but none of what they do, so the option is not there
+  colour, so it is not shipped. Uno has the controller types and none of what they do, so the option is not there
   either and a full window keeps the backdrop the framework hands out.
 * MAUI has no full window. Its `Window` is not a window of the platform's but a page host, and what chrome
   there is belongs to the native window underneath it, which MAUI exposes nothing to say this to.

@@ -31,8 +31,12 @@
     <!--
       What the window puts between the backdrop and the content, for seeing how much of one the other lets through.
       It is the first child, so everything else is drawn over it.
+
+      A shape rather than a border with a background of its own, because this head draws no such background at all
+      once the window has a backdrop: a solid colour named as a Background is dropped, while the same colour as a
+      shape's Fill is drawn. See the full window notes in the readme.
     -->
-    <Border x:Name="Tint" Grid.RowSpan="2" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Opacity="0"/>
+    <Rectangle x:Name="Tint" Grid.RowSpan="2" Fill="{ThemeResource ApplicationPageBackgroundThemeBrush}" Opacity="0"/>
 
     <!-- The caption, drawn as content like everything else. -->
     <Grid>

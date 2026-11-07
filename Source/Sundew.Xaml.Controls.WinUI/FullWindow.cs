@@ -49,7 +49,26 @@ using Windows.Graphics;
 /// <see cref="ActualBackdrop"/> says which of the two happened. Whether the backdrop is tinted light or dark follows
 /// the theme of the content, which the framework keeps the backdrop in step with on its own. The window manager
 /// also draws a backdrop only while the window is in the foreground, and puts a flat colour in its place while it
-/// is not.
+/// is not, unless <see cref="IsBackdropAlwaysDrawn"/> says otherwise.
+/// </para>
+/// <para>
+/// Uno's Windows head draws a backdrop as well, but only once the application has told it not to draw through
+/// OpenGL: <c>FeatureConfiguration.Rendering.UseVulkanOnWin32 = true</c>, or
+/// <c>UseOpenGLOnWin32 = false</c> for the software one, said before the host is built. A backdrop makes the
+/// window's surface see through, and its OpenGL path never clears such a surface, so everything drawn over the
+/// window stays on it: a closed combo box leaves the list it dropped behind, and the content grows heavier the
+/// longer it is drawn. Which renderer is in use is the application's to say and cannot be read back, so this is
+/// left for it to get right rather than guessed at here.
+/// </para>
+/// <para>
+/// A backdrop costs something else on Uno that nothing here can mend: that head draws no solid colour named as a
+/// <c>Background</c>. A border or a panel given a solid brush to paint itself with is not drawn at all, while its
+/// child is, and the same colour as a shape's fill is drawn, as is a gradient named as a background. So a slider
+/// on such a window opens with no track behind its thumb and no fill in it, those being the parts the theme
+/// paints with a solid background, and draws in full the moment the pointer is over it, because the theme sets
+/// the brush again on hovering it. Setting such a brush over again from code, once the window is up, draws it
+/// too. Any window of that framework with a backdrop does this, one of its own as much as this one; WinUI draws
+/// them all from the first frame.
 /// </para>
 /// <para>
 /// A backdrop is only seen where the content does not cover it, and the root element of a window is usually a panel
